@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../online/firestore_game_repository.dart';
 import '../widgets/card_widget.dart';
+import '../widgets/deck_stack_widget.dart';
 
 class OnlineGameScreen extends StatefulWidget {
   final String roomCode;
@@ -28,6 +29,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   bool _revealing = false;
   final List<Timer> _pendingTimers = [];
   int _lastKnownVersionKey = -1;
+  bool _collectScheduled = false;
 
   PlayerSide get mySide =>
       widget.isHost ? PlayerSide.player1 : PlayerSide.player2;
@@ -41,15 +43,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     );
   }
 
-  /// Firestore'dan yeni bir durum geldiğinde, eğer bu bir "yeniden dağıtım"
-  /// (redeal) ile geldiyse görsel açılış animasyonunu tekrar oynat.
-  /// Basit tespit: tüm kolonların uzunluğu 1'e düştüyse (yeni dağıtım
-  /// sonrası her kolonda tek kart olur) ve önceki durumdan farklıysa.
   void _maybeStartReveal(Map<String, dynamic> data) {
     final columns = data['columns'] as List;
     final allSingleCard = columns.every((c) => (c as List).length == 1);
-    final versionKey = Object.hashAll(
-        columns.map((c) => (c as List).join(',')).toList());
+    final versionKey =
+        Object.hashAll(columns.map((c) => (c as List).join(',')).toList());
 
     if (allSingleCard && versionKey != _lastKnownVersionKey) {
       _lastKnownVersionKey = versionKey;
@@ -59,11 +57,28 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     }
   }
 
+  void _maybeScheduleCollect(bool isDeadlocked) {
+    if (!isDeadlocked) {
+      _collectScheduled = false;
+      return;
+    }
+    // Sadece host tetikler, çift toplamayı önlemek için.
+    if (widget.isHost && !_collectScheduled && !_revealing) {
+      _collectScheduled = true;
+      final timer = Timer(const Duration(seconds: 1), () {
+        _repo.attemptCollectAndRedeal(widget.roomCode);
+        _collectScheduled = false;
+      });
+      _pendingTimers.add(timer);
+    }
+  }
+
   void _startReveal() {
     for (final t in _pendingTimers) {
       t.cancel();
     }
     _pendingTimers.clear();
+    _collectScheduled = false;
     setState(() {
       revealed = List.filled(GameEngine.columnCount, false);
       _revealing = true;
@@ -134,7 +149,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
           _localView.loadFromMap(data);
           _maybeStartReveal(data);
           final finished = _localView.status != GameStatus.playing;
-          final active = _revealing ? <int>{} : _localView.activeColumns;
+          final isDeadlocked = _localView.isDeadlocked;
+          if (!finished) _maybeScheduleCollect(isDeadlocked);
+          final active =
+              (_revealing || isDeadlocked) ? <int>{} : _localView.activeColumns;
 
           final myStockCount = mySide == PlayerSide.player1
               ? _localView.player1Stock.length
@@ -143,59 +161,93 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               ? _localView.player2Stock.length
               : _localView.player1Stock.length;
 
+          final myCols = mySide == PlayerSide.player1
+              ? const [0, 1, 2, 3]
+              : const [4, 5, 6, 7];
+          final oppCols = mySide == PlayerSide.player1
+              ? const [4, 5, 6, 7]
+              : const [0, 1, 2, 3];
+
           return SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text('Rakip kaynağı: $oppStockCount',
-                      style: const TextStyle(color: Colors.white70)),
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(GameEngine.columnCount, (i) {
-                    final top = _localView.topOf(i);
-                    final isRevealed = revealed[i];
-                    final isActive = active.contains(i);
-                    return Padding(
-                      padding:
-                          EdgeInsets.only(left: i == 4 ? 20 : 4, right: 4),
-                      child: CardWidget(
-                        card: top,
-                        faceDown: !isRevealed || top == null,
-                        highlighted: isActive && isRevealed,
-                        onTap: (isActive && isRevealed && !finished)
-                            ? () => _tap(i)
-                            : null,
-                        width: 48,
-                        height: 70,
+                Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        DeckStackWidget(count: oppStockCount, label: 'Rakip'),
+                        const SizedBox(width: 16),
+                        ...oppCols.map((i) => _buildCard(i, active, enabled: !finished)),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (finished)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          (_localView.status == GameStatus.player1Wins) ==
+                                  (mySide == PlayerSide.player1)
+                              ? 'Kazandın!'
+                              : 'Kaybettin!',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    );
-                  }),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        DeckStackWidget(count: myStockCount, label: 'Sen'),
+                        const SizedBox(width: 16),
+                        ...myCols.map((i) => _buildCard(i, active, enabled: !finished)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const Spacer(),
-                if (finished)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      (_localView.status == GameStatus.player1Wins) ==
-                              (mySide == PlayerSide.player1)
-                          ? 'Kazandın!'
-                          : 'Kaybettin!',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
+                if (isDeadlocked && !_revealing)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Benzer Kalmadı',
+                        style: TextStyle(
+                            color: Colors.amber,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                Text('Kaynağın: $myStockCount',
-                    style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 24),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildCard(int i, Set<int> active, {bool enabled = true}) {
+    final top = _localView.topOf(i);
+    final isRevealed = revealed[i];
+    final isActive = active.contains(i);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: CardWidget(
+        card: top,
+        faceDown: !isRevealed || top == null,
+        highlighted: isActive && isRevealed,
+        onTap: (isActive && isRevealed && enabled) ? () => _tap(i) : null,
+        width: 52,
+        height: 74,
       ),
     );
   }

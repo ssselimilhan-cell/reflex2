@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../game/bot_ai.dart';
 import '../widgets/card_widget.dart';
+import '../widgets/deck_stack_widget.dart';
 
 class VsBotScreen extends StatefulWidget {
   const VsBotScreen({super.key});
@@ -17,6 +18,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
   double difficulty = 0.5;
   List<bool> revealed = List.filled(GameEngine.columnCount, true);
   bool _revealing = false;
+  bool _showNoMatch = false;
   final List<Timer> _pendingTimers = [];
 
   @override
@@ -26,14 +28,18 @@ class _VsBotScreenState extends State<VsBotScreen> {
   }
 
   void _startNewGame() {
-    engine = GameEngine();
-    engine.onRedeal = _startReveal;
-    engine.startNewGame();
-    bot = BotAi(engine, PlayerSide.player2, () {
-      if (mounted) setState(() {});
-    }, difficulty: difficulty)
+    engine = GameEngine()..startNewGame();
+    bot = BotAi(engine, PlayerSide.player2, _onBotMove, difficulty: difficulty)
       ..start();
     _startReveal();
+  }
+
+  void _onBotMove() {
+    if (!mounted) return;
+    setState(() {});
+    if (engine.isDeadlocked && !_showNoMatch && !_revealing) {
+      _handleDeadlock();
+    }
   }
 
   void _startReveal() {
@@ -44,6 +50,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
     setState(() {
       revealed = List.filled(GameEngine.columnCount, false);
       _revealing = true;
+      _showNoMatch = false;
     });
     const pairs = [
       [0, 4],
@@ -58,11 +65,27 @@ class _VsBotScreenState extends State<VsBotScreen> {
           for (final idx in pairs[i]) {
             revealed[idx] = true;
           }
-          if (i == pairs.length - 1) _revealing = false;
+          if (i == pairs.length - 1) {
+            _revealing = false;
+            if (engine.isDeadlocked) {
+              WidgetsBinding.instance
+                  .addPostFrameCallback((_) => _handleDeadlock());
+            }
+          }
         });
       });
       _pendingTimers.add(timer);
     }
+  }
+
+  void _handleDeadlock() {
+    setState(() => _showNoMatch = true);
+    final timer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      engine.collectAndRedeal();
+      _startReveal();
+    });
+    _pendingTimers.add(timer);
   }
 
   @override
@@ -75,16 +98,19 @@ class _VsBotScreenState extends State<VsBotScreen> {
   }
 
   void _tap(int columnIndex) {
-    if (_revealing) return;
+    if (_revealing || _showNoMatch) return;
     setState(() {
       engine.attemptPlay(PlayerSide.player1, columnIndex);
     });
+    if (engine.isDeadlocked) {
+      _handleDeadlock();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final finished = engine.status != GameStatus.playing;
-    final active = _revealing ? <int>{} : engine.activeColumns;
+    final active = (_revealing || _showNoMatch) ? <int>{} : engine.activeColumns;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B6E4F),
@@ -101,69 +127,107 @@ class _VsBotScreenState extends State<VsBotScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const Text('Zorluk:', style: TextStyle(color: Colors.white)),
-                  Expanded(
-                    child: Slider(
-                      value: difficulty,
-                      onChanged: (v) {
-                        setState(() {
-                          difficulty = v;
-                          bot.difficulty = v;
-                        });
-                      },
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Text('Zorluk:',
+                          style: TextStyle(color: Colors.white)),
+                      Expanded(
+                        child: Slider(
+                          value: difficulty,
+                          onChanged: (v) {
+                            setState(() {
+                              difficulty = v;
+                              bot.difficulty = v;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                // Bot sırası (üst)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    DeckStackWidget(
+                        count: engine.player2Stock.length, label: 'Bot'),
+                    const SizedBox(width: 16),
+                    ...[4, 5, 6, 7].map((i) => _buildCard(i, active)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Oyuncu sırası (alt)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    DeckStackWidget(
+                        count: engine.player1Stock.length, label: 'Sen'),
+                    const SizedBox(width: 16),
+                    ...[0, 1, 2, 3].map((i) => _buildCard(i, active)),
+                  ],
+                ),
+                const Spacer(),
+                if (finished)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Text(
+                      engine.status == GameStatus.player1Wins
+                          ? 'Kazandın!'
+                          : 'Bot Kazandı!',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
-              ),
+                  )
+                else
+                  const SizedBox(height: 24),
+              ],
             ),
-            Text('Bot kaynağı: ${engine.player2Stock.length}',
-                style: const TextStyle(color: Colors.white70)),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(GameEngine.columnCount, (i) {
-                final top = engine.topOf(i);
-                final isRevealed = revealed[i];
-                final isActive = active.contains(i);
-                return Padding(
-                  padding: EdgeInsets.only(left: i == 4 ? 20 : 4, right: 4),
-                  child: CardWidget(
-                    card: top,
-                    faceDown: !isRevealed || top == null,
-                    highlighted: isActive && isRevealed,
-                    onTap:
-                        (isActive && isRevealed) ? () => _tap(i) : null,
-                    width: 48,
-                    height: 70,
+            if (_showNoMatch)
+              Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              }),
-            ),
-            const Spacer(),
-            if (finished)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  engine.status == GameStatus.player1Wins
-                      ? 'Kazandın!'
-                      : 'Bot Kazandı!',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Benzer Kalmadı',
+                    style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            Text('Kaynak: ${engine.player1Stock.length}',
-                style: const TextStyle(color: Colors.white70)),
-            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCard(int i, Set<int> active) {
+    final top = engine.topOf(i);
+    final isRevealed = revealed[i];
+    final isActive = active.contains(i);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: CardWidget(
+        card: top,
+        faceDown: !isRevealed || top == null,
+        highlighted: isActive && isRevealed,
+        onTap: (isActive && isRevealed) ? () => _tap(i) : null,
+        width: 52,
+        height: 74,
       ),
     );
   }

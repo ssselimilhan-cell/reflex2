@@ -38,10 +38,6 @@ class GameEngine {
   GameStatus status = GameStatus.playing;
   final Random _random;
 
-  /// Kilitlenme sonrası yeniden dağıtım olduğunda tetiklenir (UI bunu
-  /// dinleyip "0.5 saniye aralıklarla açma" animasyonunu tekrar oynatabilir).
-  void Function()? onRedeal;
-
   GameEngine({int? seed}) : _random = seed != null ? Random(seed) : Random();
 
   bool _ownedByPlayer1(int columnIndex) => columnIndex < columnsPerPlayer;
@@ -109,16 +105,21 @@ class GameEngine {
       status = side == PlayerSide.player1
           ? GameStatus.player1Wins
           : GameStatus.player2Wins;
-      return true;
     }
-
-    if (activeColumns.isEmpty) {
-      _collectAndRedeal();
-    }
+    // NOT: Kilitlenme (activeColumns.isEmpty) burada OTOMATİK toplanmaz.
+    // Arayüz (UI) önce "Benzer Kalmadı" uyarısını göstermeli, 1 saniye
+    // beklemeli, sonra collectAndRedeal() çağırmalıdır.
     return true;
   }
 
-  void _collectAndRedeal() {
+  /// Oyun devam ederken aktif kolon kalmadıysa true döner (kilitlenme).
+  bool get isDeadlocked =>
+      status == GameStatus.playing && activeColumns.isEmpty;
+
+  /// Kural 13-14: her oyuncu kendi 4 kolonundaki kartları toplar, karar,
+  /// yeniden 4'er kart açar. UI, "Benzer Kalmadı" mesajını gösterip 1
+  /// saniye bekledikten SONRA bu metodu çağırmalıdır.
+  void collectAndRedeal() {
     for (var i = 0; i < columnCount; i++) {
       final target = _ownedByPlayer1(i) ? player1Stock : player2Stock;
       target.insertAll(0, columns[i]);
@@ -129,8 +130,6 @@ class GameEngine {
 
     _dealColumnsFor(PlayerSide.player1);
     _dealColumnsFor(PlayerSide.player2);
-
-    onRedeal?.call();
   }
 
   void _dealColumnsFor(PlayerSide side) {

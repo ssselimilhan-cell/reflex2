@@ -81,6 +81,24 @@ class OnlineRoomRepository {
     });
   }
 
+  /// Kilitlenme (aktif kolon kalmadığında) sonrası toplama + yeniden
+  /// dağıtımı uygular. Sadece host (Oyuncu 1 tarafı) tetikler, böylece
+  /// iki cihaz aynı anda çift toplama yapmaz.
+  Future<void> attemptCollectAndRedeal(String code) async {
+    final ref = _rooms.doc(code);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'active') return;
+
+      final engine = GameEngine()..loadFromMap(data);
+      if (!engine.isDeadlocked) return;
+      engine.collectAndRedeal();
+      tx.update(ref, engine.toMap());
+    });
+  }
+
   Future<void> leaveRoom(String code) async {
     await _rooms.doc(code).update({'roomStatus': 'finished'});
   }
