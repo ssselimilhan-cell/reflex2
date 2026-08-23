@@ -3,7 +3,6 @@ import 'local_pvp_screen.dart';
 import 'vs_bot_screen.dart';
 import 'online_lobby_screen.dart';
 import '../main.dart';
-import '../main.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
