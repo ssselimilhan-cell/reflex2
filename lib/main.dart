@@ -3,11 +3,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 
+/// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
+/// haldeyse) uygulamanın çökmesini engellemek için bu bayrak kullanılır.
+bool firebaseAvailable = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    firebaseAvailable = true;
+  } catch (e) {
+    firebaseAvailable = false;
+  }
   runApp(const StresApp());
 }
 
