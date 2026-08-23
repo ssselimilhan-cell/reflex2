@@ -1,0 +1,8 @@
+{
+  "name": "Flutter Dev Ortamı",
+  "image": "ghcr.io/cirruslabs/flutter:stable",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": { "version": "17" }
+  },
+  "postCreateCommand": "flutter pub get"
+}
