@@ -1,38 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'screens/home_screen.dart';
 
-/// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
-/// haldeyse) uygulamanın çökmesini engellemek için bu bayrak kullanılır.
-bool firebaseAvailable = false;
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    firebaseAvailable = true;
-  } catch (e) {
-    firebaseAvailable = false;
-  }
-  runApp(const StresApp());
+void main() {
+  runApp(const TestApp());
 }
 
-class StresApp extends StatelessWidget {
-  const StresApp({super.key});
+class TestApp extends StatelessWidget {
+  const TestApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Stres',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF0B6E4F),
-        useMaterial3: true,
+    return const MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.red,
+        body: Center(
+          child: Text(
+            'TEST BAŞARILI',
+            style: TextStyle(color: Colors.white, fontSize: 32),
+          ),
+        ),
       ),
-      home: const HomeScreen(),
     );
   }
 }
