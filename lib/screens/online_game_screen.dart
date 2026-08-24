@@ -51,10 +51,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   }
 
   void _maybeStartReveal(Map<String, dynamic> data) {
-    final columns = data['columns'] as List;
-    final allSingleCard = columns.every((c) => (c as List).length == 1);
-    final versionKey =
-        Object.hashAll(columns.map((c) => (c as List).join(',')).toList());
+    // NOT: 'columns' alanı artık her kolon için virgülle ayrılmış TEK bir
+    // metin dizisi (List<String>) — iç içe dizi (List<List>) değil.
+    final columns = (data['columns'] as List).cast<String>();
+    final allSingleCard =
+        columns.every((c) => c.isNotEmpty && !c.contains(','));
+    final versionKey = Object.hashAll(columns);
 
     if (allSingleCard && versionKey != _lastKnownVersionKey) {
       _lastKnownVersionKey = versionKey;
