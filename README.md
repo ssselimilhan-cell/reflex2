@@ -32,6 +32,25 @@ boyut katıyor (kuralları birebir bu şekilde tarif ettiğiniz için bu yorum
 üzerinden ilerledim; farklı bir davranış istersen `game_engine.dart`
 dosyasındaki `attemptPlay` fonksiyonunu güncelleriz).
 
+## Yeni: Ayarlar, Skor Tabelası, Dil Desteği
+
+- `lib/settings/app_settings.dart` — kalıcı (cihazda saklanan) ayarlar: kart
+  boyutu, yazı boyutu, arka plan rengi, kart arkası rengi, açılış animasyon
+  hızı, yüksek kontrast, dil (TR/EN)
+- `lib/settings/strings.dart` — basit çeviri sözlüğü
+- `lib/settings/score_board.dart` — oturum boyunca kalan skor sayaçları
+  (uygulama kapanınca sıfırlanır, kalıcı kaydedilmez)
+- `lib/screens/settings_screen.dart` — ayarlar ekranı, ana menüden erişilir
+- Bota karşı modda artık **Duraklat** düğmesi (bot durur, dokunuşlar kilitlenir)
+  ve zorluk kaydırıcısında **yeşilden kırmızıya geçen renk + yüzde göstergesi** var
+
+`shared_preferences` paketi eklendi — Codespace'te mutlaka:
+```bash
+flutter pub get
+```
+çalıştırman gerekiyor (yeni paketi indirmek için), sonra normal şekilde
+`flutter build apk --debug`.
+
 ## Proje yapısı
 
 - `lib/models/playing_card.dart` — kart modeli + Firestore için kod

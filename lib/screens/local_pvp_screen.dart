@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
+import '../widgets/score_bar_widget.dart';
+import '../settings/app_settings.dart';
+import '../settings/score_board.dart';
+import '../settings/strings.dart';
 
 /// Aynı cihazda 2 kişilik mod.
 ///
@@ -10,8 +14,7 @@ import '../widgets/deck_stack_widget.dart';
 /// mantıksal oyun durumu) simetrik biçimde gösterilir. Üstteki yarı
 /// 180° döndürülmüştür ki karşıda oturan oyuncu da düzgün okuyabilsin.
 /// Bu sayede her oyuncu kendi tarafına dokunarak TÜM 8 aktif sütuna
-/// erişebilir (kural 9 tam uygulanmış olur), ekranın "kimin dokunduğunu"
-/// anlaması ise hangi yarıya dokunulduğuna bakarak çözülür.
+/// erişebilir (kural 9 tam uygulanmış olur).
 class LocalPvpScreen extends StatefulWidget {
   const LocalPvpScreen({super.key});
 
@@ -24,6 +27,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
   List<bool> revealed = List.filled(GameEngine.columnCount, true);
   bool _revealing = false;
   bool _showNoMatch = false;
+  bool _scoreCounted = false;
   final List<Timer> _pendingTimers = [];
 
   @override
@@ -40,6 +44,8 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     }
     super.dispose();
   }
+
+  int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
 
   void _startReveal() {
     for (final t in _pendingTimers) {
@@ -58,7 +64,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       [3, 7],
     ];
     for (var i = 0; i < pairs.length; i++) {
-      final timer = Timer(Duration(milliseconds: 500 * i), () {
+      final timer = Timer(Duration(milliseconds: _stepMs * i), () {
         if (!mounted) return;
         setState(() {
           for (final idx in pairs[i]) {
@@ -82,6 +88,10 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     setState(() {
       engine.attemptPlay(side, columnIndex);
     });
+    if (engine.status != GameStatus.playing && !_scoreCounted) {
+      _scoreCounted = true;
+      ScoreBoard.instance.addLocal(engine.status == GameStatus.player1Wins);
+    }
     if (engine.isDeadlocked) {
       _handleDeadlock();
     }
@@ -102,7 +112,10 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     for (final t in _pendingTimers) {
       t.cancel();
     }
-    setState(() => engine.startNewGame());
+    setState(() {
+      engine.startNewGame();
+      _scoreCounted = false;
+    });
     _startReveal();
   }
 
@@ -112,95 +125,107 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     final active =
         (_revealing || _showNoMatch) ? <int>{} : engine.activeColumns;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B6E4F),
-      appBar: AppBar(
-        title: const Text('2 Kişilik - Aynı Cihaz'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _restart),
-        ],
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+    return AnimatedBuilder(
+      animation: AppSettings.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppSettings.instance.themeColor,
+          appBar: AppBar(
+            title: Text(t('menu_local')),
+            actions: [
+              IconButton(icon: const Icon(Icons.refresh), onPressed: _restart),
+            ],
+          ),
+          body: SafeArea(
+            child: Stack(
               children: [
-                // Oyuncu 2'nin yarısı (üst, 180° döndürülmüş — karşıdan okunur)
-                Expanded(
-                  child: RotatedBox(
-                    quarterTurns: 2,
-                    child: _FullBoardHalf(
-                      engine: engine,
-                      revealed: revealed,
-                      active: active,
-                      onTap: (i) => _tap(PlayerSide.player2, i),
-                      stockCount: engine.player2Stock.length,
-                      label: 'Oyuncu 2',
+                Column(
+                  children: [
+                    ListenableBuilder(
+                      listenable: ScoreBoard.instance,
+                      builder: (context, _) => ScoreBarWidget(
+                        leftLabel: t('player1'),
+                        leftScore: ScoreBoard.instance.localP1,
+                        rightLabel: t('player2'),
+                        rightScore: ScoreBoard.instance.localP2,
+                        onReset: ScoreBoard.instance.resetLocal,
+                      ),
+                    ),
+                    Expanded(
+                      child: RotatedBox(
+                        quarterTurns: 2,
+                        child: _FullBoardHalf(
+                          engine: engine,
+                          revealed: revealed,
+                          active: active,
+                          onTap: (i) => _tap(PlayerSide.player2, i),
+                          stockCount: engine.player2Stock.length,
+                          label: t('player2'),
+                        ),
+                      ),
+                    ),
+                    const Divider(color: Colors.white24, height: 1),
+                    Expanded(
+                      child: _FullBoardHalf(
+                        engine: engine,
+                        revealed: revealed,
+                        active: active,
+                        onTap: (i) => _tap(PlayerSide.player1, i),
+                        stockCount: engine.player1Stock.length,
+                        label: t('player1'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (finished)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        engine.status == GameStatus.player1Wins
+                            ? t('p1_won')
+                            : t('p2_won'),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
+                else if (_showNoMatch)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        t('no_match'),
+                        style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-                const Divider(color: Colors.white24, height: 1),
-                // Oyuncu 1'in yarısı (alt, normal yön)
-                Expanded(
-                  child: _FullBoardHalf(
-                    engine: engine,
-                    revealed: revealed,
-                    active: active,
-                    onTap: (i) => _tap(PlayerSide.player1, i),
-                    stockCount: engine.player1Stock.length,
-                    label: 'Oyuncu 1',
-                  ),
-                ),
               ],
             ),
-            if (finished)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    engine.status == GameStatus.player1Wins
-                        ? 'Oyuncu 1 Kazandı!'
-                        : 'Oyuncu 2 Kazandı!',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              )
-            else if (_showNoMatch)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Benzer Kalmadı',
-                    style: TextStyle(
-                        color: Colors.amber,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
 /// Tek bir oyuncunun yarısında, AYNI 8 sütunun tamamını 2 sıra x 4
-/// düzeninde gösterir (x y z t / a b c d). Herhangi bir aktif karta
-/// dokunmak, bu yarının sahibi olan oyuncunun kartını oynatır.
+/// düzeninde gösterir (x y z t / a b c d).
 class _FullBoardHalf extends StatelessWidget {
   final GameEngine engine;
   final List<bool> revealed;
@@ -218,7 +243,7 @@ class _FullBoardHalf extends StatelessWidget {
     required this.label,
   });
 
-  Widget _buildCard(int i) {
+  Widget _buildCard(int i, double w, double h) {
     final top = engine.topOf(i);
     final isRevealed = revealed[i];
     final isActive = active.contains(i);
@@ -229,31 +254,41 @@ class _FullBoardHalf extends StatelessWidget {
         faceDown: !isRevealed || top == null,
         highlighted: isActive && isRevealed,
         onTap: (isActive && isRevealed) ? () => onTap(i) : null,
-        width: 40,
-        height: 58,
+        width: w,
+        height: h,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppSettings.instance.cardScale;
+    final w = 78.0 * scale;
+    final h = 112.0 * scale;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        DeckStackWidget(count: stockCount, label: label),
+        DeckStackWidget(count: stockCount, label: label, scale: scale),
         const SizedBox(width: 12),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [0, 1, 2, 3].map(_buildCard).toList(),
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children:
+                      [0, 1, 2, 3].map((i) => _buildCard(i, w, h)).toList(),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children:
+                      [4, 5, 6, 7].map((i) => _buildCard(i, w, h)).toList(),
+                ),
+              ],
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [4, 5, 6, 7].map(_buildCard).toList(),
-            ),
-          ],
+          ),
         ),
       ],
     );

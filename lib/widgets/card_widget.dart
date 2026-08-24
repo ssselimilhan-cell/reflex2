@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/playing_card.dart';
+import '../settings/app_settings.dart';
 
 class CardWidget extends StatelessWidget {
   final PlayingCard? card;
@@ -21,9 +22,11 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = faceDown || card == null
-        ? _buildBack()
-        : _buildFace(card!);
+    final content =
+        faceDown || card == null ? _buildBack() : _buildFace(card!, context);
+
+    final highContrast = AppSettings.instance.highContrast;
+    final highlightColor = highContrast ? Colors.yellowAccent : Colors.amber;
 
     return GestureDetector(
       onTap: onTap,
@@ -34,10 +37,16 @@ class CardWidget extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: highlighted ? Colors.amber : Colors.black26,
-            width: highlighted ? 3 : 1,
+            color: highlighted ? highlightColor : Colors.black26,
+            width: highlighted ? (highContrast ? 4 : 3) : 1,
           ),
           boxShadow: [
+            if (highlighted && highContrast)
+              BoxShadow(
+                color: highlightColor.withOpacity(0.6),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
             BoxShadow(
               color: Colors.black.withOpacity(0.25),
               blurRadius: 3,
@@ -53,7 +62,7 @@ class CardWidget extends StatelessWidget {
   Widget _buildBack() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E4D8C),
+        color: AppSettings.instance.cardBackColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(
@@ -62,8 +71,10 @@ class CardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFace(PlayingCard c) {
+  Widget _buildFace(PlayingCard c, BuildContext context) {
     final color = c.isRed ? Colors.red.shade700 : Colors.black87;
+    final rankFontSize = (height / 92) * 16;
+    final suitFontSize = (height / 92) * 24;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -76,13 +87,15 @@ class CardWidget extends StatelessWidget {
           Text(
             c.rankLabel,
             style: TextStyle(
-                color: color, fontWeight: FontWeight.bold, fontSize: 16),
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: rankFontSize),
           ),
           Expanded(
             child: Center(
               child: Text(
                 c.suitSymbol,
-                style: TextStyle(color: color, fontSize: 24),
+                style: TextStyle(color: color, fontSize: suitFontSize),
               ),
             ),
           ),

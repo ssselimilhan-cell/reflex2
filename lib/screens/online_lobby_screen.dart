@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
 import '../online/device_id.dart';
+import '../settings/app_settings.dart';
+import '../settings/strings.dart';
 import 'online_game_screen.dart';
 
 class OnlineLobbyScreen extends StatefulWidget {
@@ -75,55 +77,63 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B6E4F),
-      appBar: AppBar(title: const Text('Online Oyun')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: _loading ? null : _createRoom,
-                child: const Text('Yeni Oda Kur'),
-              ),
-              const SizedBox(height: 32),
-              const Text('— veya —', style: TextStyle(color: Colors.white70)),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _codeController,
-                textAlign: TextAlign.center,
-                textCapitalization: TextCapitalization.characters,
-                style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 6),
-                maxLength: 4,
-                decoration: const InputDecoration(
-                  hintText: 'ODA KODU',
-                  hintStyle: TextStyle(color: Colors.white38),
-                  counterText: '',
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+    return AnimatedBuilder(
+      animation: AppSettings.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppSettings.instance.themeColor,
+          appBar: AppBar(title: Text(t('menu_online'))),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _loading ? null : _createRoom,
+                    child: Text(t('new_room')),
                   ),
-                ),
+                  const SizedBox(height: 32),
+                  Text(t('or'), style: const TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _codeController,
+                    textAlign: TextAlign.center,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 24, letterSpacing: 6),
+                    maxLength: 4,
+                    decoration: InputDecoration(
+                      hintText: t('room_code_hint'),
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      counterText: '',
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white54),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loading ? null : _joinRoom,
+                    child: Text(t('join_room')),
+                  ),
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text(_error!,
+                          style: const TextStyle(color: Colors.redAccent)),
+                    ),
+                ],
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loading ? null : _joinRoom,
-                child: const Text('Odaya Katıl'),
-              ),
-              if (_loading) const Padding(
-                padding: EdgeInsets.only(top: 24),
-                child: CircularProgressIndicator(),
-              ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-                ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
