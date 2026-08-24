@@ -162,8 +162,11 @@ class GameEngine {
     return {
       'player1Stock': player1Stock.map((c) => c.toCode()).toList(),
       'player2Stock': player2Stock.map((c) => c.toCode()).toList(),
-      'columns':
-          columns.map((col) => col.map((c) => c.toCode()).toList()).toList(),
+      // Firestore iç içe dizileri (array içinde array) desteklemediği için
+      // her kolon, kartları virgülle ayrılmış TEK bir metin olarak saklanır.
+      'columns': columns
+          .map((col) => col.map((c) => c.toCode()).join(','))
+          .toList(),
       'unlocked': _unlocked.toList(),
       'status': status.name,
     };
@@ -172,6 +175,10 @@ class GameEngine {
   void loadFromMap(Map<String, dynamic> map) {
     List<PlayingCard> decodeList(List raw) =>
         raw.map((e) => PlayingCard.fromCode(e as String)).toList();
+
+    List<PlayingCard> decodeColumnString(String raw) => raw.isEmpty
+        ? <PlayingCard>[]
+        : raw.split(',').map(PlayingCard.fromCode).toList();
 
     player1Stock
       ..clear()
@@ -184,7 +191,7 @@ class GameEngine {
     for (var i = 0; i < columnCount; i++) {
       columns[i]
         ..clear()
-        ..addAll(decodeList(rawColumns[i] as List));
+        ..addAll(decodeColumnString(rawColumns[i] as String));
     }
 
     _unlocked
