@@ -60,7 +60,14 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
     if (allSingleCard && versionKey != _lastKnownVersionKey) {
       _lastKnownVersionKey = versionKey;
-      _startReveal();
+      // ÖNEMLİ: Bu fonksiyon StreamBuilder'ın build() aşamasında
+      // çağrılıyor. setState()'i (dolayısıyla _startReveal()'ı) build
+      // sırasında DOĞRUDAN çağırmak "setState called during build"
+      // hatasına yol açar. Bu yüzden bir sonraki kareye erteliyoruz.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _startReveal();
+      });
     } else {
       _lastKnownVersionKey = versionKey;
     }
@@ -74,6 +81,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     if (widget.isHost && !_collectScheduled && !_revealing) {
       _collectScheduled = true;
       final timer = Timer(const Duration(seconds: 1), () {
+        if (!mounted) return;
         _repo.attemptCollectAndRedeal(widget.roomCode);
         _collectScheduled = false;
       });
@@ -82,6 +90,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   }
 
   void _startReveal() {
+    if (!mounted) return;
     for (final t in _pendingTimers) {
       t.cancel();
     }
