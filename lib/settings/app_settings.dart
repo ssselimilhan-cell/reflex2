@@ -11,12 +11,12 @@ class AppSettings extends ChangeNotifier {
   AppSettings._();
   static final AppSettings instance = AppSettings._();
 
-  double cardScale = 1.0; // 0.7 - 2.0
+  double cardScale = 1.5; // 0.7 - 2.2 (varsayılan %150)
   double fontScale = 1.0; // 0.8 - 1.6
   Color themeColor = const Color(0xFF0B6E4F);
   Color cardBackColor = const Color(0xFF1E4D8C);
   double animationSpeed = 1.0; // 0.5 hızlı, 1.0 normal, 1.6 yavaş
-  bool highContrast = false;
+  bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
 
   static const List<Color> presetColors = [
@@ -42,10 +42,10 @@ class AppSettings extends ChangeNotifier {
     if (_loaded) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      cardScale = prefs.getDouble('cardScale') ?? 1.0;
+      cardScale = prefs.getDouble('cardScale') ?? 1.5;
       fontScale = prefs.getDouble('fontScale') ?? 1.0;
       animationSpeed = prefs.getDouble('animationSpeed') ?? 1.0;
-      highContrast = prefs.getBool('highContrast') ?? false;
+      highContrast = prefs.getBool('highContrast') ?? true;
       final colorValue = prefs.getInt('themeColor');
       if (colorValue != null) themeColor = Color(colorValue);
       final backValue = prefs.getInt('cardBackColor');

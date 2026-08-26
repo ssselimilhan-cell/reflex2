@@ -4,9 +4,11 @@ import '../game/game_engine.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
+import '../widgets/game_result_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
+import 'settings_screen.dart';
 
 /// Aynı cihazda 2 kişilik mod.
 ///
@@ -133,6 +135,12 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           appBar: AppBar(
             title: Text(t('menu_local')),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: t('menu_settings'),
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen())),
+              ),
               IconButton(icon: const Icon(Icons.refresh), onPressed: _restart),
             ],
           ),
@@ -178,24 +186,12 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
                   ],
                 ),
                 if (finished)
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        engine.status == GameStatus.player1Wins
-                            ? t('p1_won')
-                            : t('p2_won'),
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                  GameResultOverlay(
+                    isWin: true, // yerel modda ikisi de "kazanan" perspektifiyle görür; başlık ayırt eder
+                    title: engine.status == GameStatus.player1Wins
+                        ? t('p1_won')
+                        : t('p2_won'),
+                    onPlayAgain: _restart,
                   )
                 else if (_showNoMatch)
                   Center(

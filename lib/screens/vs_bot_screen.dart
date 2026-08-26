@@ -5,9 +5,11 @@ import '../game/bot_ai.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
+import '../widgets/game_result_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
+import 'settings_screen.dart';
 
 class VsBotScreen extends StatefulWidget {
   const VsBotScreen({super.key});
@@ -156,6 +158,12 @@ class _VsBotScreenState extends State<VsBotScreen> {
             title: Text(t('menu_bot')),
             actions: [
               IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: t('menu_settings'),
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen())),
+              ),
+              IconButton(
                 icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
                 onPressed: finished ? null : _togglePause,
                 tooltip: _paused ? t('resume') : t('pause'),
@@ -267,24 +275,10 @@ class _VsBotScreenState extends State<VsBotScreen> {
                       ],
                     ),
                     const Spacer(),
-                    if (finished)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Text(
-                          engine.status == GameStatus.player1Wins
-                              ? t('you_won')
-                              : t('bot_won'),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      )
-                    else
-                      const SizedBox(height: 24),
+                    if (!finished) const SizedBox(height: 24),
                   ],
                 ),
-                if (_showNoMatch)
+                if (_showNoMatch && !finished)
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -325,6 +319,17 @@ class _VsBotScreenState extends State<VsBotScreen> {
                         ],
                       ),
                     ),
+                  ),
+                if (finished)
+                  GameResultOverlay(
+                    isWin: engine.status == GameStatus.player1Wins,
+                    title: engine.status == GameStatus.player1Wins
+                        ? t('you_won')
+                        : t('bot_won'),
+                    onPlayAgain: () {
+                      bot.stop();
+                      _startNewGame();
+                    },
                   ),
               ],
             ),

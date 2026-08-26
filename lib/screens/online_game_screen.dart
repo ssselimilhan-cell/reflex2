@@ -6,9 +6,12 @@ import '../online/firestore_game_repository.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
+import '../widgets/game_result_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
+import '../settings/user_profile.dart';
 import '../settings/strings.dart';
+import 'settings_screen.dart';
 
 class OnlineGameScreen extends StatefulWidget {
   final String roomCode;
@@ -51,8 +54,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   }
 
   void _maybeStartReveal(Map<String, dynamic> data) {
-    // NOT: 'columns' alanı artık her kolon için virgülle ayrılmış TEK bir
-    // metin dizisi (List<String>) — iç içe dizi (List<List>) değil.
+    // NOT: 'columns' alanı her kolon için virgülle ayrılmış TEK bir metin
+    // dizisidir (List<String>) — iç içe dizi (List<List>) DEĞİLDİR.
     final columns = (data['columns'] as List).cast<String>();
     final allSingleCard =
         columns.every((c) => c.isNotEmpty && !c.contains(','));
@@ -61,9 +64,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     if (allSingleCard && versionKey != _lastKnownVersionKey) {
       _lastKnownVersionKey = versionKey;
       // ÖNEMLİ: Bu fonksiyon StreamBuilder'ın build() aşamasında
-      // çağrılıyor. setState()'i (dolayısıyla _startReveal()'ı) build
-      // sırasında DOĞRUDAN çağırmak "setState called during build"
-      // hatasına yol açar. Bu yüzden bir sonraki kareye erteliyoruz.
+      // çağrılıyor; setState()'i (_startReveal() içinde) build sırasında
+      // DOĞRUDAN çağırmak "setState called during build" hatası verir.
+      // Bu yüzden bir sonraki kareye erteliyoruz.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _startReveal();
@@ -139,7 +142,17 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         final cardH = 142.0 * scale;
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
-          appBar: AppBar(title: Text('${t('room')}: ${widget.roomCode}')),
+          appBar: AppBar(
+            title: Text('${t('room')}: ${widget.roomCode}'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: t('menu_settings'),
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen())),
+              ),
+            ],
+          ),
           body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: _repo.watchRoom(widget.roomCode),
             builder: (context, snapshot) {
@@ -170,6 +183,103 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 );
               }
 
+              if (roomStatus == 'ready') {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.greenAccent, size: 48),
+                        const SizedBox(height: 12),
+                        Text(t('opponent_connected'),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        Text(t('press_start_hint'),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 14)),
+                        const SizedBox(height: 28),
+                        ElevatedButton.icon(
+                          onPressed: () =>
+                              _repo.requestStart(widget.roomCode, mySide),
+                          icon: const Icon(Icons.play_arrow),
+                          label: Text(t('start_game'),
+                              style: const TextStyle(fontSize: 16)),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 28, vertical: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              if (roomStatus == 'start_requested') {
+                final requestedByMe =
+                    data['startRequestedBy'] == mySide.name;
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: requestedByMe
+                          ? [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(t('waiting_for_accept'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 18)),
+                              const SizedBox(height: 20),
+                              TextButton(
+                                onPressed: () =>
+                                    _repo.cancelStart(widget.roomCode),
+                                child: Text(t('cancel_request'),
+                                    style: const TextStyle(
+                                        color: Colors.white54)),
+                              ),
+                            ]
+                          : [
+                              const Icon(Icons.sports_esports,
+                                  color: Colors.amber, size: 48),
+                              const SizedBox(height: 12),
+                              Text(t('opponent_wants_start'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: () =>
+                                        _repo.cancelStart(widget.roomCode),
+                                    style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.white70),
+                                    child: Text(t('decline')),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        _repo.acceptStart(widget.roomCode),
+                                    child: Text(t('accept')),
+                                  ),
+                                ],
+                              ),
+                            ],
+                    ),
+                  ),
+                );
+              }
+
               _localView.loadFromMap(data);
               _maybeStartReveal(data);
               final finished = _localView.status != GameStatus.playing;
@@ -177,8 +287,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 _scoreCounted = true;
                 final iWon = (_localView.status == GameStatus.player1Wins) ==
                     (mySide == PlayerSide.player1);
-                WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => ScoreBoard.instance.addOnline(iWon));
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ScoreBoard.instance.addOnline(iWon);
+                  UserProfile.instance.recordOnlineResult(iWon);
+                });
+              } else if (!finished) {
+                _scoreCounted = false;
               }
               final isDeadlocked = _localView.isDeadlocked;
               if (!finished) _maybeScheduleCollect(isDeadlocked);
@@ -200,6 +314,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   ? const [4, 5, 6, 7]
                   : const [0, 1, 2, 3];
 
+              final iWonFinal = (_localView.status == GameStatus.player1Wins) ==
+                  (mySide == PlayerSide.player1);
+
               return SafeArea(
                 child: Stack(
                   children: [
@@ -215,72 +332,72 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             onReset: ScoreBoard.instance.resetOnline,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            DeckStackWidget(
-                                count: oppStockCount,
-                                label: t('opponent'),
-                                scale: scale),
-                            const SizedBox(width: 16),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: oppCols
-                                      .map((i) => _buildCard(i, active, cardW,
-                                          cardH, enabled: !finished))
-                                      .toList(),
-                                ),
+                        // Rakip ve kendi 4'lü sıraları ortada, birbirine
+                        // YAKIN duracak şekilde tek bir kompakt blok
+                        // halinde ortalanıyor (önceki tasarımdaki iki
+                        // Spacer kaldırıldı).
+                        Expanded(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      DeckStackWidget(
+                                          count: oppStockCount,
+                                          label: t('opponent'),
+                                          scale: scale),
+                                      const SizedBox(width: 14),
+                                      Flexible(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: oppCols
+                                                .map((i) => _buildCard(
+                                                    i, active, cardW, cardH,
+                                                    enabled: !finished))
+                                                .toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      DeckStackWidget(
+                                          count: myStockCount,
+                                          label: t('you'),
+                                          scale: scale),
+                                      const SizedBox(width: 14),
+                                      Flexible(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: myCols
+                                                .map((i) => _buildCard(
+                                                    i, active, cardW, cardH,
+                                                    enabled: !finished))
+                                                .toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        if (finished)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Text(
-                              (_localView.status ==
-                                          GameStatus.player1Wins) ==
-                                      (mySide == PlayerSide.player1)
-                                  ? t('win')
-                                  : t('lose'),
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold),
                             ),
                           ),
-                        const Spacer(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            DeckStackWidget(
-                                count: myStockCount,
-                                label: t('you'),
-                                scale: scale),
-                            const SizedBox(width: 16),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: myCols
-                                      .map((i) => _buildCard(i, active, cardW,
-                                          cardH, enabled: !finished))
-                                      .toList(),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
                       ],
                     ),
-                    if (isDeadlocked && !_revealing)
+                    if (isDeadlocked && !_revealing && !finished)
                       Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -297,6 +414,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
+                      ),
+                    if (finished)
+                      GameResultOverlay(
+                        isWin: iWonFinal,
+                        title: iWonFinal ? t('win') : t('lose'),
+                        onPlayAgain: () => _repo.restartGame(widget.roomCode),
                       ),
                   ],
                 ),

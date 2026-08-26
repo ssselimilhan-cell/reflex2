@@ -45,11 +45,58 @@ class OnlineRoomRepository {
       if (data['roomStatus'] != 'waiting') return false;
       if (data['guestDeviceId'] != null) return false;
 
+      // NOT: Katılan oyuncu direkt oyunu başlatmaz — "ready" durumuna
+      // geçer, oyun ancak taraflardan biri başlatıp diğeri kabul edince
+      // ("start_requested" -> "active") başlar.
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
-        'roomStatus': 'active',
+        'roomStatus': 'ready',
       });
       return true;
+    });
+  }
+
+  /// Bir taraf oyunu başlatmak ister. Sadece "ready" durumunda geçerlidir.
+  Future<bool> requestStart(String code, PlayerSide side) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'ready') return false;
+
+      tx.update(ref, {
+        'roomStatus': 'start_requested',
+        'startRequestedBy': side.name,
+      });
+      return true;
+    });
+  }
+
+  /// Karşı taraf başlatma isteğini kabul eder — oyun gerçekten başlar.
+  Future<bool> acceptStart(String code) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'start_requested') return false;
+
+      tx.update(ref, {'roomStatus': 'active'});
+      return true;
+    });
+  }
+
+  /// Başlatma isteği reddedilir ya da istekte bulunan iptal eder —
+  /// "ready" durumuna geri döner.
+  Future<void> cancelStart(String code) async {
+    final ref = _rooms.doc(code);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'start_requested') return;
+      tx.update(ref, {'roomStatus': 'ready', 'startRequestedBy': null});
     });
   }
 
@@ -95,6 +142,25 @@ class OnlineRoomRepository {
       final engine = GameEngine()..loadFromMap(data);
       if (!engine.isDeadlocked) return;
       engine.collectAndRedeal();
+      tx.update(ref, engine.toMap());
+    });
+  }
+
+  /// Oyun bittikten sonra "Tekrar Oyna" için: yeni bir deste karıp
+  /// dağıtır, oda "active" durumda kalır (oyuncular odadan ayrılmadan
+  /// devam eder). Sadece oyun gerçekten bitmişken çalışır; iki oyuncu da
+  /// aynı anda basarsa transaction sayesinde çift sıfırlama olmaz.
+  Future<void> restartGame(String code) async {
+    final ref = _rooms.doc(code);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'active') return;
+
+      final engine = GameEngine()..loadFromMap(data);
+      if (engine.status == GameStatus.playing) return; // henüz bitmemiş
+      engine.startNewGame();
       tx.update(ref, engine.toMap());
     });
   }

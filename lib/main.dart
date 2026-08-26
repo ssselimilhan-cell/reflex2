@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'settings/app_settings.dart';
+import 'settings/user_profile.dart';
 
 /// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
 /// haldeyse) uygulamanın çökmesini engellemek için bu bayrak kullanılır.
@@ -19,6 +20,9 @@ void main() async {
   } catch (e) {
     firebaseAvailable = false;
   }
+  // Profil yüklemesi Firebase'den bağımsız çalışır (yerel veriler her
+  // zaman okunur; Firestore senkronizasyonu sadece profil varsa denenir).
+  await UserProfile.instance.load();
   runApp(const StresApp());
 }
 

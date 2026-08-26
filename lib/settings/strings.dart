@@ -28,6 +28,7 @@ const Map<String, Map<String, String>> _strings = {
   'speed_normal': {'tr': 'Normal', 'en': 'Normal'},
   'speed_slow': {'tr': 'Yavaş', 'en': 'Slow'},
   'no_match': {'tr': 'Benzer Kalmadı', 'en': 'No Matches Left'},
+  'play_again': {'tr': 'Tekrar Oyna', 'en': 'Play Again'},
   'you_won': {'tr': 'Kazandın!', 'en': 'You Won!'},
   'bot_won': {'tr': 'Bot Kazandı!', 'en': 'Computer Won!'},
   'p1_won': {'tr': 'Oyuncu 1 Kazandı!', 'en': 'Player 1 Won!'},
@@ -61,6 +62,39 @@ const Map<String, Map<String, String>> _strings = {
     'en': 'Room not found or closed.'
   },
   'opponent': {'tr': 'Rakip', 'en': 'Opponent'},
+  'start_game': {'tr': 'Oyunu Başlat', 'en': 'Start Game'},
+  'opponent_connected': {'tr': 'Rakip bağlandı!', 'en': 'Opponent connected!'},
+  'press_start_hint': {
+    'tr': 'Hazır olduğunda başlat.',
+    'en': 'Press start when you\'re ready.'
+  },
+  'waiting_for_accept': {
+    'tr': 'Rakibin kabul etmesi bekleniyor…',
+    'en': 'Waiting for opponent to accept…'
+  },
+  'opponent_wants_start': {
+    'tr': 'Rakip oyunu başlatmak istiyor!',
+    'en': 'Opponent wants to start the game!'
+  },
+  'accept': {'tr': 'Kabul Et', 'en': 'Accept'},
+  'decline': {'tr': 'Reddet', 'en': 'Decline'},
+  'cancel_request': {'tr': 'İptal Et', 'en': 'Cancel'},
+  'profile': {'tr': 'Profil', 'en': 'Profile'},
+  'create_profile': {'tr': 'Profil Oluştur', 'en': 'Create Profile'},
+  'guest_playing': {'tr': 'Misafir olarak oynuyorsun', 'en': 'Playing as guest'},
+  'display_name': {'tr': 'Görünen Ad', 'en': 'Display Name'},
+  'save': {'tr': 'Kaydet', 'en': 'Save'},
+  'online_win_rate': {'tr': 'Online Kazanma Oranı', 'en': 'Online Win Rate'},
+  'games_played': {'tr': 'Oynanan', 'en': 'Played'},
+  'wins': {'tr': 'Galibiyet', 'en': 'Wins'},
+  'losses': {'tr': 'Mağlubiyet', 'en': 'Losses'},
+  'delete_profile': {
+    'tr': 'Profili Sil (Misafir Ol)',
+    'en': 'Delete Profile (Go Guest)'
+  },
+  'enter_name_hint': {'tr': 'Adını yaz', 'en': 'Enter your name'},
+  'no_games_yet': {'tr': 'Henüz oyun oynanmadı', 'en': 'No games played yet'},
+  'play_as_guest': {'tr': 'Misafir Olarak Devam Et', 'en': 'Continue as Guest'},
 };
 
 String t(String key) {

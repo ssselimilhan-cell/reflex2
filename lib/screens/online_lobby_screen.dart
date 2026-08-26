@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
-import '../online/device_id.dart';
+import '../online/persistent_device_id.dart';
 import '../settings/app_settings.dart';
+import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'online_game_screen.dart';
 
@@ -14,10 +15,14 @@ class OnlineLobbyScreen extends StatefulWidget {
 
 class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   final _repo = OnlineRoomRepository();
-  final _deviceId = generateSessionDeviceId();
   final _codeController = TextEditingController();
   bool _loading = false;
   String? _error;
+
+  /// Profil ile aynı, cihazda KALICI kimlik — oturum bazlı değil,
+  /// böylece profil senkronizasyonuyla tutarlı kalır.
+  Future<String> _deviceId() async =>
+      UserProfile.instance.deviceId ?? await getPersistentDeviceId();
 
   Future<void> _createRoom() async {
     setState(() {
@@ -25,14 +30,15 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       _error = null;
     });
     try {
-      final code = await _repo.createRoom(_deviceId);
+      final deviceId = await _deviceId();
+      final code = await _repo.createRoom(deviceId);
       if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => OnlineGameScreen(
             roomCode: code,
-            deviceId: _deviceId,
+            deviceId: deviceId,
             isHost: true,
           ),
         ),
@@ -52,9 +58,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       _error = null;
     });
     try {
-      final ok = await _repo.joinRoom(code, _deviceId);
+      final deviceId = await _deviceId();
+      final ok = await _repo.joinRoom(code, deviceId);
       if (!ok) {
-        setState(() => _error = 'Oda bulunamadı veya dolu.');
+        setState(() => _error = t('room_not_found'));
         return;
       }
       if (!mounted) return;
@@ -63,7 +70,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         MaterialPageRoute(
           builder: (_) => OnlineGameScreen(
             roomCode: code,
-            deviceId: _deviceId,
+            deviceId: deviceId,
             isHost: false,
           ),
         ),
