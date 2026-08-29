@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
+import '../widgets/profile_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -104,12 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () => _showAvatarPicker(context),
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: profile.avatarColor,
-                    child: Icon(kAvatarIcons[profile.avatarIconIndex],
-                        color: Colors.white, size: 30),
-                  ),
+                  const ProfileAvatar(radius: 28),
                   Positioned(
                     bottom: -2,
                     right: -2,
@@ -173,6 +172,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _pickFromGallery(BuildContext sheetContext) async {
+    try {
+      final picker = ImagePicker();
+      final xfile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 82,
+      );
+      if (xfile == null) return; // kullanıcı vazgeçti
+      final dir = await getApplicationDocumentsDirectory();
+      final savedPath =
+          '${dir.path}/profile_photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(xfile.path).copy(savedPath);
+      await UserProfile.instance.setPhoto(savedPath);
+      if (sheetContext.mounted) Navigator.pop(sheetContext);
+    } catch (e) {
+      if (sheetContext.mounted) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          SnackBar(content: Text('Fotoğraf seçilemedi: $e')),
+        );
+      }
+    }
+  }
+
   void _showAvatarPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -197,6 +221,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _pickFromGallery(sheetContext),
+                      icon: const Icon(Icons.photo_library),
+                      label: Text(t('choose_from_gallery')),
+                    ),
+                  ),
+                  if (profile.photoPath != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: TextButton(
+                        onPressed: () => profile.clearPhoto(),
+                        child: Text(t('remove_photo'),
+                            style: const TextStyle(color: Colors.white54)),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
                   Wrap(
                     spacing: 14,
                     runSpacing: 14,

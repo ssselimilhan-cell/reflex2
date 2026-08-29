@@ -8,6 +8,7 @@ import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
+import '../widgets/profile_avatar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -105,14 +106,11 @@ class HomeScreen extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                                profile.hasProfile
-                                    ? kAvatarIcons[profile.avatarIconIndex]
-                                    : Icons.person,
-                                color: profile.hasProfile
-                                    ? profile.avatarColor
-                                    : Colors.white,
-                                size: 18),
+                            if (profile.hasProfile)
+                              const ProfileAvatar(radius: 9)
+                            else
+                              const Icon(Icons.person,
+                                  color: Colors.white, size: 18),
                             const SizedBox(width: 6),
                             Text(
                               profile.hasProfile
