@@ -37,6 +37,12 @@ class UserProfile extends ChangeNotifier {
   String? deviceId;
   int avatarIconIndex = 0;
   Color avatarColor = const Color(0xFF0B6E4F);
+  /// Galeriden seçilen gerçek fotoğrafın cihazdaki kalıcı dosya yolu.
+  /// Doluysa ikon+renk yerine bu gösterilir. NOT: Bu fotoğraf sadece BU
+  /// cihazda saklanır — Firestore'a (dolayısıyla lobiye/rakibe)
+  /// senkronize edilmez, bunun için ayrı bir bulut depolama (Firebase
+  /// Storage) kurulumu gerekirdi.
+  String? photoPath;
 
   bool get hasProfile => displayName != null && displayName!.trim().isNotEmpty;
 
@@ -61,6 +67,7 @@ class UserProfile extends ChangeNotifier {
       avatarIconIndex = prefs.getInt('avatarIconIndex') ?? 0;
       final avatarColorValue = prefs.getInt('avatarColor');
       if (avatarColorValue != null) avatarColor = Color(avatarColorValue);
+      photoPath = prefs.getString('photoPath');
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -80,6 +87,11 @@ class UserProfile extends ChangeNotifier {
       await prefs.setInt('onlineLosses', onlineLosses);
       await prefs.setInt('avatarIconIndex', avatarIconIndex);
       await prefs.setInt('avatarColor', avatarColor.value);
+      if (photoPath != null) {
+        await prefs.setString('photoPath', photoPath!);
+      } else {
+        await prefs.remove('photoPath');
+      }
     } catch (_) {}
   }
 
@@ -114,14 +126,28 @@ class UserProfile extends ChangeNotifier {
   Future<void> setAvatar(int iconIndex, Color color) async {
     avatarIconIndex = iconIndex;
     avatarColor = color;
+    photoPath = null; // ikon seçilince önceki foto iptal olur
     notifyListeners();
     await _persistLocal();
     await _syncToFirestore();
   }
 
+  Future<void> setPhoto(String path) async {
+    photoPath = path;
+    notifyListeners();
+    await _persistLocal();
+  }
+
+  Future<void> clearPhoto() async {
+    photoPath = null;
+    notifyListeners();
+    await _persistLocal();
+  }
+
   Future<void> deleteProfile() async {
     final oldId = deviceId;
     displayName = null;
+    photoPath = null;
     notifyListeners();
     await _persistLocal();
     if (oldId != null) {

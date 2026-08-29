@@ -290,6 +290,18 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Войти по коду',
     'zh': '通过房间号加入'
   },
+  'choose_from_gallery': {
+    'tr': 'Galeriden Seç',
+    'en': 'Choose from Gallery',
+    'ru': 'Выбрать из галереи',
+    'zh': '从相册选择'
+  },
+  'remove_photo': {
+    'tr': 'Fotoğrafı Kaldır',
+    'en': 'Remove Photo',
+    'ru': 'Удалить фото',
+    'zh': '移除照片'
+  },
 };
 
 String t(String key) {
