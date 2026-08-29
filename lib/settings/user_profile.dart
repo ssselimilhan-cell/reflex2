@@ -3,6 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../online/persistent_device_id.dart';
 
+/// Avatar olarak seçilebilecek sabit ikon listesi (gerçek fotoğraf yükleme
+/// yerine — bunun için Firebase Storage kurulumu gerekirdi, kapsamı
+/// basit tutmak için ikon+renk kombinasyonu kullanılıyor).
+const List<IconData> kAvatarIcons = [
+  Icons.person,
+  Icons.face,
+  Icons.emoji_emotions,
+  Icons.pets,
+  Icons.sports_esports,
+  Icons.sports_soccer,
+  Icons.music_note,
+  Icons.rocket_launch,
+  Icons.star,
+  Icons.favorite,
+  Icons.bolt,
+  Icons.anchor,
+];
+
 /// Profil tamamen isteğe bağlıdır — oluşturulmasa da tüm modlar
 /// (online dahil) misafir olarak sorunsuz oynanabilir. Profil sadece
 /// bir görünen ad ekler ve online kazanma oranını Firestore'da (diğer
@@ -17,6 +35,8 @@ class UserProfile extends ChangeNotifier {
   int onlineWins = 0;
   int onlineLosses = 0;
   String? deviceId;
+  int avatarIconIndex = 0;
+  Color avatarColor = const Color(0xFF0B6E4F);
 
   bool get hasProfile => displayName != null && displayName!.trim().isNotEmpty;
 
@@ -38,6 +58,9 @@ class UserProfile extends ChangeNotifier {
       displayName = prefs.getString('displayName');
       onlineWins = prefs.getInt('onlineWins') ?? 0;
       onlineLosses = prefs.getInt('onlineLosses') ?? 0;
+      avatarIconIndex = prefs.getInt('avatarIconIndex') ?? 0;
+      final avatarColorValue = prefs.getInt('avatarColor');
+      if (avatarColorValue != null) avatarColor = Color(avatarColorValue);
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -55,6 +78,8 @@ class UserProfile extends ChangeNotifier {
       }
       await prefs.setInt('onlineWins', onlineWins);
       await prefs.setInt('onlineLosses', onlineLosses);
+      await prefs.setInt('avatarIconIndex', avatarIconIndex);
+      await prefs.setInt('avatarColor', avatarColor.value);
     } catch (_) {}
   }
 
@@ -66,6 +91,8 @@ class UserProfile extends ChangeNotifier {
           'displayName': displayName,
           'onlineWins': onlineWins,
           'onlineLosses': onlineLosses,
+          'avatarIconIndex': avatarIconIndex,
+          'avatarColor': avatarColor.value,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -79,6 +106,14 @@ class UserProfile extends ChangeNotifier {
 
   Future<void> createProfile(String name) async {
     displayName = name.trim();
+    notifyListeners();
+    await _persistLocal();
+    await _syncToFirestore();
+  }
+
+  Future<void> setAvatar(int iconIndex, Color color) async {
+    avatarIconIndex = iconIndex;
+    avatarColor = color;
     notifyListeners();
     await _persistLocal();
     await _syncToFirestore();

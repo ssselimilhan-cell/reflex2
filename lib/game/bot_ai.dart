@@ -28,6 +28,11 @@ class BotAi {
 
   void _tick() {
     if (engine.status != GameStatus.playing) return;
+    if (engine.locked) {
+      // Açılış animasyonu (8 kart açılırken) sürüyor — bot da beklemeli.
+      _scheduleNextCheck();
+      return;
+    }
 
     final missChance = (1.0 - difficulty) * 0.4;
     if (_random.nextDouble() > missChance) {

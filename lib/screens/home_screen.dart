@@ -105,8 +105,14 @@ class HomeScreen extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.person,
-                                color: Colors.white, size: 18),
+                            Icon(
+                                profile.hasProfile
+                                    ? kAvatarIcons[profile.avatarIconIndex]
+                                    : Icons.person,
+                                color: profile.hasProfile
+                                    ? profile.avatarColor
+                                    : Colors.white,
+                                size: 18),
                             const SizedBox(width: 6),
                             Text(
                               profile.hasProfile

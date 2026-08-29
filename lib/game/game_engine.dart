@@ -57,6 +57,7 @@ class GameEngine {
     }
     _unlocked.clear();
     status = GameStatus.playing;
+    locked = true; // açılış animasyonu bitene kadar hamle yok
 
     final deck = buildStandardDeck()..shuffle(_random);
     final p1 = deck.sublist(0, 26);
@@ -92,6 +93,11 @@ class GameEngine {
     }
   }
 
+  /// Açılış animasyonu (8 kartın 0.5 saniye aralıklarla açılması) devam
+  /// ederken true yapılır. Bu true iken HİÇBİR taraf (bot dahil) hamle
+  /// yapamaz — bkz. attemptPlay ve BotAi._tick.
+  bool locked = false;
+
   /// Aktif (tıklanabilir) kolonların indeksleri.
   Set<int> get activeColumns => Set.unmodifiable(_unlocked);
 
@@ -101,6 +107,7 @@ class GameEngine {
   /// destesinden bir kart çeker, o kolonun üzerine açık koyar.
   /// Başarılıysa true döner.
   bool attemptPlay(PlayerSide side, int columnIndex) {
+    if (locked) return false;
     if (status != GameStatus.playing) return false;
     if (!isColumnActive(columnIndex)) return false;
 
@@ -135,6 +142,7 @@ class GameEngine {
   /// yeniden 4'er kart açar. UI, "Benzer Kalmadı" mesajını gösterip 1
   /// saniye bekledikten SONRA bu metodu çağırmalıdır.
   void collectAndRedeal() {
+    locked = true; // yeni açılış animasyonu bitene kadar hamle yok
     for (var i = 0; i < columnCount; i++) {
       final target = _ownedByPlayer1(i) ? player1Stock : player2Stock;
       target.insertAll(0, columns[i]);

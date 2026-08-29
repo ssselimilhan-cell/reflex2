@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AppLanguage { tr, en }
+enum AppLanguage { tr, en, ru, zh }
+
+/// Kartların ortasındaki baskın sembolün teması.
+enum CardTheme { classic, fruit, figure }
 
 /// Tüm uygulamada paylaşılan, kalıcı (SharedPreferences ile diske
 /// kaydedilen) ayarlar. Herhangi bir ekran değiştirdiğinde, buna
@@ -18,6 +21,7 @@ class AppSettings extends ChangeNotifier {
   double animationSpeed = 1.0; // 0.5 hızlı, 1.0 normal, 1.6 yavaş
   bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
+  CardTheme cardTheme = CardTheme.classic; // varsayılan iskambil
 
   static const List<Color> presetColors = [
     Color(0xFF0B6E4F), // yeşil (varsayılan)
@@ -51,7 +55,27 @@ class AppSettings extends ChangeNotifier {
       final backValue = prefs.getInt('cardBackColor');
       if (backValue != null) cardBackColor = Color(backValue);
       final lang = prefs.getString('language');
-      if (lang == 'en') language = AppLanguage.en;
+      switch (lang) {
+        case 'en':
+          language = AppLanguage.en;
+          break;
+        case 'ru':
+          language = AppLanguage.ru;
+          break;
+        case 'zh':
+          language = AppLanguage.zh;
+          break;
+        case 'tr':
+          language = AppLanguage.tr;
+          break;
+        // null ya da bilinmeyen değer: varsayılan (tr) kalır.
+      }
+      final themeIndex = prefs.getInt('cardTheme');
+      if (themeIndex != null &&
+          themeIndex >= 0 &&
+          themeIndex < CardTheme.values.length) {
+        cardTheme = CardTheme.values[themeIndex];
+      }
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -68,9 +92,20 @@ class AppSettings extends ChangeNotifier {
       await prefs.setBool('highContrast', highContrast);
       await prefs.setInt('themeColor', themeColor.value);
       await prefs.setInt('cardBackColor', cardBackColor.value);
-      await prefs.setString(
-          'language', language == AppLanguage.en ? 'en' : 'tr');
+      await prefs.setString('language', switch (language) {
+        AppLanguage.en => 'en',
+        AppLanguage.ru => 'ru',
+        AppLanguage.zh => 'zh',
+        AppLanguage.tr => 'tr',
+      });
+      await prefs.setInt('cardTheme', cardTheme.index);
     } catch (_) {}
+  }
+
+  void setCardTheme(CardTheme t) {
+    cardTheme = t;
+    notifyListeners();
+    _persist();
   }
 
   void setCardScale(double v) {
