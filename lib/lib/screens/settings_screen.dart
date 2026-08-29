@@ -98,6 +98,29 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
+              _SectionLabel(t('settings_card_theme')),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _SpeedChip(
+                    label: t('theme_classic'),
+                    selected: settings.cardTheme == CardFaceTheme.classic,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.classic),
+                  ),
+                  _SpeedChip(
+                    label: t('theme_fruit'),
+                    selected: settings.cardTheme == CardFaceTheme.fruit,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.fruit),
+                  ),
+                  _SpeedChip(
+                    label: t('theme_figure'),
+                    selected: settings.cardTheme == CardFaceTheme.figure,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.figure),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -110,18 +133,29 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _SectionLabel(t('settings_language')),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
                 children: [
                   ChoiceChip(
                     label: const Text('Türkçe'),
                     selected: settings.language == AppLanguage.tr,
                     onSelected: (_) => settings.setLanguage(AppLanguage.tr),
                   ),
-                  const SizedBox(width: 12),
                   ChoiceChip(
                     label: const Text('English'),
                     selected: settings.language == AppLanguage.en,
                     onSelected: (_) => settings.setLanguage(AppLanguage.en),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Русский'),
+                    selected: settings.language == AppLanguage.ru,
+                    onSelected: (_) => settings.setLanguage(AppLanguage.ru),
+                  ),
+                  ChoiceChip(
+                    label: const Text('中文'),
+                    selected: settings.language == AppLanguage.zh,
+                    onSelected: (_) => settings.setLanguage(AppLanguage.zh),
                   ),
                 ],
               ),

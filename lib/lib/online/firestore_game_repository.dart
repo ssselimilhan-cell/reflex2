@@ -14,8 +14,16 @@ class OnlineRoomRepository {
   }
 
   /// Yeni oda oluşturur, oyunu deler ama "waiting" durumda tutar;
-  /// ikinci oyuncu katılınca "active" olur.
-  Future<String> createRoom(String hostDeviceId) async {
+  /// ikinci oyuncu katılınca "ready" olur. Ev sahibinin profil bilgisi
+  /// (varsa) odaya damgalanır — lobide diğer oyuncular bunu görüp ona
+  /// göre karşısına oturabilsin diye.
+  Future<String> createRoom(
+    String hostDeviceId, {
+    String? hostDisplayName,
+    double? hostWinRate,
+    int? hostAvatarIconIndex,
+    int? hostAvatarColorValue,
+  }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
 
@@ -28,12 +36,28 @@ class OnlineRoomRepository {
     await _rooms.doc(code).set({
       'hostDeviceId': hostDeviceId,
       'guestDeviceId': null,
-      'roomStatus': 'waiting', // waiting | active | finished
+      'roomStatus': 'waiting', // waiting | ready | start_requested | active | finished
+      'hostDisplayName': hostDisplayName,
+      'hostWinRate': hostWinRate,
+      'hostAvatarIconIndex': hostAvatarIconIndex,
+      'hostAvatarColorValue': hostAvatarColorValue,
       'createdAt': FieldValue.serverTimestamp(),
       ...engine.toMap(),
     });
 
     return code;
+  }
+
+  /// Lobide gösterilecek, henüz ikinci oyuncu beklemeyen açık masalar.
+  /// Sıralama (kazanma oranına göre) İSTEMCİ tarafında yapılır — bu
+  /// sayede misafirlerin (oran=null) sona düşmesi kolayca kontrol
+  /// edilebiliyor ve fazladan bir composite index gerekmiyor.
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchOpenTables() {
+    return _rooms
+        .where('roomStatus', isEqualTo: 'waiting')
+        .orderBy('createdAt', descending: true)
+        .limit(30)
+        .snapshots();
   }
 
   Future<bool> joinRoom(String code, String guestDeviceId) async {
@@ -167,5 +191,40 @@ class OnlineRoomRepository {
 
   Future<void> leaveRoom(String code) async {
     await _rooms.doc(code).update({'roomStatus': 'finished'});
+  }
+
+  // ---- Sohbet ----
+
+  CollectionReference<Map<String, dynamic>> _messagesRef(String code) =>
+      _rooms.doc(code).collection('messages');
+
+  Future<void> sendMessage(String code, PlayerSide side, String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    await _messagesRef(code).add({
+      'sender': side.name,
+      'text': trimmed,
+      'sentAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchMessages(String code) {
+    return _messagesRef(code).orderBy('sentAt').snapshots();
+  }
+
+  /// Oyundan çıkılınca sohbet geçmişini siler.
+  Future<void> clearMessages(String code) async {
+    try {
+      final snap = await _messagesRef(code).get();
+      if (snap.docs.isEmpty) return;
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (_) {
+      // Ağ hatası vb. olursa sessizce geç — mesajlar bir sonraki oda
+      // oluşturulduğunda zaten yeni bir alt koleksiyonda başlar.
+    }
   }
 }

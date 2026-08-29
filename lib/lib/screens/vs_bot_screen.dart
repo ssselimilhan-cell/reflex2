@@ -87,6 +87,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
           }
           if (i == pairs.length - 1) {
             _revealing = false;
+            engine.locked = false;
             if (engine.isDeadlocked) {
               WidgetsBinding.instance
                   .addPostFrameCallback((_) => _handleDeadlock());

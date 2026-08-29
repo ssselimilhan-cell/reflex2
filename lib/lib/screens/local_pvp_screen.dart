@@ -74,6 +74,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           }
           if (i == pairs.length - 1) {
             _revealing = false;
+            engine.locked = false;
             if (engine.isDeadlocked) {
               WidgetsBinding.instance
                   .addPostFrameCallback((_) => _handleDeadlock());

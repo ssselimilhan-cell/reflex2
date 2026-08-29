@@ -100,10 +100,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Row(
           children: [
-            const CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.white24,
-              child: Icon(Icons.person, color: Colors.white, size: 32),
+            GestureDetector(
+              onTap: () => _showAvatarPicker(context),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: profile.avatarColor,
+                    child: Icon(kAvatarIcons[profile.avatarIconIndex],
+                        color: Colors.white, size: 30),
+                  ),
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.edit,
+                          size: 12, color: profile.avatarColor),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -137,14 +158,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         const Spacer(),
-        OutlinedButton(
-          onPressed: () async {
-            await UserProfile.instance.deleteProfile();
-          },
-          style: OutlinedButton.styleFrom(foregroundColor: Colors.white70),
-          child: Text(t('delete_profile')),
+        Padding(
+          // Buton tam ekran kenarına yapışmasın diye biraz yukarı alındı.
+          padding: const EdgeInsets.only(bottom: 32),
+          child: OutlinedButton(
+            onPressed: () async {
+              await UserProfile.instance.deleteProfile();
+            },
+            style: OutlinedButton.styleFrom(foregroundColor: Colors.white70),
+            child: Text(t('delete_profile')),
+          ),
         ),
       ],
+    );
+  }
+
+  void _showAvatarPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1B1B1B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return AnimatedBuilder(
+          animation: UserProfile.instance,
+          builder: (context, _) {
+            final profile = UserProfile.instance;
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t('choose_avatar'),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    children: List.generate(kAvatarIcons.length, (i) {
+                      final selected = profile.avatarIconIndex == i;
+                      return GestureDetector(
+                        onTap: () =>
+                            profile.setAvatar(i, profile.avatarColor),
+                        child: CircleAvatar(
+                          radius: 26,
+                          backgroundColor: selected
+                              ? profile.avatarColor
+                              : profile.avatarColor.withOpacity(0.4),
+                          child: Icon(kAvatarIcons[i],
+                              color: Colors.white,
+                              size: selected ? 26 : 22),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(t('settings_color'),
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    children: AppSettings.presetColors.map((c) {
+                      final selected = c.value == profile.avatarColor.value;
+                      return GestureDetector(
+                        onTap: () =>
+                            profile.setAvatar(profile.avatarIconIndex, c),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color:
+                                  selected ? Colors.white : Colors.white24,
+                              width: selected ? 3 : 1,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

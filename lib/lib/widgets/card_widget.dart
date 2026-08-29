@@ -87,13 +87,13 @@ class CardWidget extends StatelessWidget {
   }
 
   /// Gerçek iskambil kağıtlarına benzeyen tasarım: sol-üst ve (180°
-  /// döndürülmüş) sağ-alt köşelerde küçük değer+sembol, ortada büyük,
-  /// baskın bir sembol.
+  /// döndürülmüş) sağ-alt köşelerde değer+sembol, ortada seçili temaya
+  /// göre bir sembol (klasik iskambil sembolü, meyve ya da figür emojisi).
   Widget _buildFace(PlayingCard c) {
     final color = c.isRed ? Colors.red.shade700 : Colors.black87;
-    final cornerRankSize = height * 0.19;
-    final cornerSuitSize = height * 0.14;
-    final centerSuitSize = height * 0.50;
+    final cornerRankSize = height * 0.24;
+    final cornerSuitSize = height * 0.17;
+    final centerSize = height * 0.30;
 
     Widget corner() {
       return Column(
@@ -131,23 +131,50 @@ class CardWidget extends StatelessWidget {
             right: 5,
             child: Transform.rotate(angle: math.pi, child: corner()),
           ),
-          Center(
-            child: Text(
-              c.suitSymbol,
-              style: TextStyle(
-                color: color,
-                fontSize: centerSuitSize,
-                shadows: [
-                  Shadow(
-                      color: color.withOpacity(0.25),
-                      blurRadius: 2,
-                      offset: const Offset(0.5, 0.5)),
-                ],
-              ),
-            ),
-          ),
+          Center(child: _buildCenterSymbol(c, color, centerSize)),
         ],
       ),
     );
+  }
+
+  Widget _buildCenterSymbol(PlayingCard c, Color color, double size) {
+    switch (AppSettings.instance.cardTheme) {
+      case CardFaceTheme.classic:
+        return Text(
+          c.suitSymbol,
+          style: TextStyle(
+            color: color,
+            fontSize: size,
+            shadows: [
+              Shadow(
+                  color: color.withOpacity(0.25),
+                  blurRadius: 2,
+                  offset: const Offset(0.5, 0.5)),
+            ],
+          ),
+        );
+      case CardFaceTheme.fruit:
+        return Text(_fruitForSuit(c.suit), style: TextStyle(fontSize: size));
+      case CardFaceTheme.figure:
+        return Text(_figureForSuit(c.suit), style: TextStyle(fontSize: size));
+    }
+  }
+
+  String _fruitForSuit(Suit s) {
+    switch (s) {
+      case Suit.spades:
+        return '🍇';
+      case Suit.hearts:
+        return '🍓';
+      case Suit.diamonds:
+        return '🍊';
+      case Suit.clubs:
+        return '🍒';
+    }
+  }
+
+  String _figureForSuit(Suit s) {
+    final isRed = s == Suit.hearts || s == Suit.diamonds;
+    return isRed ? '👧' : '👦';
   }
 }

@@ -7,6 +7,7 @@ import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
+import '../widgets/chat_panel.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -102,6 +103,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     setState(() {
       revealed = List.filled(GameEngine.columnCount, false);
       _revealing = true;
+      _localView.locked = true;
     });
     const pairs = [
       [0, 4],
@@ -116,7 +118,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
           for (final idx in pairs[i]) {
             revealed[idx] = true;
           }
-          if (i == pairs.length - 1) _revealing = false;
+          if (i == pairs.length - 1) {
+            _revealing = false;
+            _localView.locked = false;
+          }
         });
       });
       _pendingTimers.add(timer);
@@ -129,6 +134,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
       t.cancel();
     }
     _repo.leaveRoom(widget.roomCode);
+    _repo.clearMessages(widget.roomCode);
     super.dispose();
   }
 
@@ -394,7 +400,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        ChatPanel(
+                          roomCode: widget.roomCode,
+                          mySide: mySide,
+                          repo: _repo,
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                     if (isDeadlocked && !_revealing && !finished)
