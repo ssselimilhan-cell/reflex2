@@ -139,7 +139,7 @@ class CardWidget extends StatelessWidget {
 
   Widget _buildCenterSymbol(PlayingCard c, Color color, double size) {
     switch (AppSettings.instance.cardTheme) {
-      case CardTheme.classic:
+      case CardFaceTheme.classic:
         return Text(
           c.suitSymbol,
           style: TextStyle(
@@ -153,9 +153,9 @@ class CardWidget extends StatelessWidget {
             ],
           ),
         );
-      case CardTheme.fruit:
+      case CardFaceTheme.fruit:
         return Text(_fruitForSuit(c.suit), style: TextStyle(fontSize: size));
-      case CardTheme.figure:
+      case CardFaceTheme.figure:
         return Text(_figureForSuit(c.suit), style: TextStyle(fontSize: size));
     }
   }

@@ -106,18 +106,18 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   _SpeedChip(
                     label: t('theme_classic'),
-                    selected: settings.cardTheme == CardTheme.classic,
-                    onTap: () => settings.setCardTheme(CardTheme.classic),
+                    selected: settings.cardTheme == CardFaceTheme.classic,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.classic),
                   ),
                   _SpeedChip(
                     label: t('theme_fruit'),
-                    selected: settings.cardTheme == CardTheme.fruit,
-                    onTap: () => settings.setCardTheme(CardTheme.fruit),
+                    selected: settings.cardTheme == CardFaceTheme.fruit,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.fruit),
                   ),
                   _SpeedChip(
                     label: t('theme_figure'),
-                    selected: settings.cardTheme == CardTheme.figure,
-                    onTap: () => settings.setCardTheme(CardTheme.figure),
+                    selected: settings.cardTheme == CardFaceTheme.figure,
+                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.figure),
                   ),
                 ],
               ),

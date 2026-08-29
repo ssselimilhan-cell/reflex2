@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AppLanguage { tr, en, ru, zh }
 
 /// Kartların ortasındaki baskın sembolün teması.
-enum CardTheme { classic, fruit, figure }
+enum CardFaceTheme { classic, fruit, figure }
 
 /// Tüm uygulamada paylaşılan, kalıcı (SharedPreferences ile diske
 /// kaydedilen) ayarlar. Herhangi bir ekran değiştirdiğinde, buna
@@ -21,7 +21,7 @@ class AppSettings extends ChangeNotifier {
   double animationSpeed = 1.0; // 0.5 hızlı, 1.0 normal, 1.6 yavaş
   bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
-  CardTheme cardTheme = CardTheme.classic; // varsayılan iskambil
+  CardFaceTheme cardTheme = CardFaceTheme.classic; // varsayılan iskambil
 
   static const List<Color> presetColors = [
     Color(0xFF0B6E4F), // yeşil (varsayılan)
@@ -73,8 +73,8 @@ class AppSettings extends ChangeNotifier {
       final themeIndex = prefs.getInt('cardTheme');
       if (themeIndex != null &&
           themeIndex >= 0 &&
-          themeIndex < CardTheme.values.length) {
-        cardTheme = CardTheme.values[themeIndex];
+          themeIndex < CardFaceTheme.values.length) {
+        cardTheme = CardFaceTheme.values[themeIndex];
       }
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
@@ -102,7 +102,7 @@ class AppSettings extends ChangeNotifier {
     } catch (_) {}
   }
 
-  void setCardTheme(CardTheme t) {
+  void setCardFaceTheme(CardFaceTheme t) {
     cardTheme = t;
     notifyListeners();
     _persist();
