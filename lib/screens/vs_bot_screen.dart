@@ -19,28 +19,38 @@ class VsBotScreen extends StatefulWidget {
 }
 
 class _VsBotScreenState extends State<VsBotScreen> {
-  late GameEngine engine;
-  late BotAi bot;
+  GameEngine engine = GameEngine();
+  BotAi? bot;
   double difficulty = 0.5;
   List<bool> revealed = List.filled(GameEngine.columnCount, true);
   bool _revealing = false;
   bool _showNoMatch = false;
   bool _paused = false;
   bool _scoreCounted = false;
+  bool _gameStarted = false;
+  bool _resultDismissed = false;
   final List<Timer> _pendingTimers = [];
 
   @override
   void initState() {
     super.initState();
-    _startNewGame();
+    // NOT: Artık ekran açılır açılmaz otomatik başlamıyor — "Oyunu
+    // Başlat" düğmesine basılana kadar bekliyor.
   }
 
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
+
+  void _beginGame() {
+    setState(() => _gameStarted = true);
+    _startNewGame();
+  }
 
   void _startNewGame() {
     engine = GameEngine()..startNewGame();
     _scoreCounted = false;
     _paused = false;
+    _resultDismissed = false;
+    bot?.stop();
     bot = BotAi(engine, PlayerSide.player2, _onBotMove, difficulty: difficulty)
       ..start();
     _startReveal();
@@ -111,7 +121,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
 
   @override
   void dispose() {
-    bot.stop();
+    bot?.stop();
     for (final t in _pendingTimers) {
       t.cancel();
     }
@@ -132,9 +142,9 @@ class _VsBotScreenState extends State<VsBotScreen> {
   void _togglePause() {
     setState(() => _paused = !_paused);
     if (_paused) {
-      bot.stop();
+      bot?.stop();
     } else if (engine.status == GameStatus.playing) {
-      bot.start();
+      bot?.start();
     }
   }
 
@@ -164,121 +174,135 @@ class _VsBotScreenState extends State<VsBotScreen> {
                 onPressed: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const SettingsScreen())),
               ),
-              IconButton(
-                icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
-                onPressed: finished ? null : _togglePause,
-                tooltip: _paused ? t('resume') : t('pause'),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () {
-                  bot.stop();
-                  _startNewGame();
-                },
-              ),
+              if (_gameStarted) ...[
+                IconButton(
+                  icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
+                  onPressed: finished ? null : _togglePause,
+                  tooltip: _paused ? t('resume') : t('pause'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _startNewGame,
+                ),
+              ],
             ],
           ),
           body: SafeArea(
             child: Stack(
               children: [
-                Column(
-                  children: [
-                    ListenableBuilder(
-                      listenable: ScoreBoard.instance,
-                      builder: (context, _) => ScoreBarWidget(
-                        leftLabel: t('you'),
-                        leftScore: ScoreBoard.instance.youVsBot,
-                        rightLabel: t('bot'),
-                        rightScore: ScoreBoard.instance.botVsYou,
-                        onReset: ScoreBoard.instance.resetBot,
+                if (!_gameStarted)
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _beginGame,
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(t('start_game'),
+                          style: const TextStyle(fontSize: 18)),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 18),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Text('${t('difficulty')}:',
-                              style: const TextStyle(color: Colors.white)),
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: difficultyColor,
-                                thumbColor: difficultyColor,
-                                overlayColor: difficultyColor.withOpacity(0.2),
-                              ),
-                              child: Slider(
-                                value: difficulty,
-                                onChanged: (v) {
-                                  setState(() {
-                                    difficulty = v;
-                                    bot.difficulty = v;
-                                  });
-                                },
+                  )
+                else
+                  Column(
+                    children: [
+                      ListenableBuilder(
+                        listenable: ScoreBoard.instance,
+                        builder: (context, _) => ScoreBarWidget(
+                          leftLabel: t('you'),
+                          leftScore: ScoreBoard.instance.youVsBot,
+                          rightLabel: t('bot'),
+                          rightScore: ScoreBoard.instance.botVsYou,
+                          onReset: ScoreBoard.instance.resetBot,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Text('${t('difficulty')}:',
+                                style: const TextStyle(color: Colors.white)),
+                            Expanded(
+                              child: SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  activeTrackColor: difficultyColor,
+                                  thumbColor: difficultyColor,
+                                  overlayColor:
+                                      difficultyColor.withOpacity(0.2),
+                                ),
+                                child: Slider(
+                                  value: difficulty,
+                                  onChanged: (v) {
+                                    setState(() {
+                                      difficulty = v;
+                                      bot?.difficulty = v;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 44,
-                            child: Text(
-                              '${(difficulty * 100).round()}%',
-                              style: TextStyle(
-                                  color: difficultyColor,
-                                  fontWeight: FontWeight.bold),
+                            SizedBox(
+                              width: 44,
+                              child: Text(
+                                '${(difficulty * 100).round()}%',
+                                style: TextStyle(
+                                    color: difficultyColor,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          DeckStackWidget(
+                              count: engine.player2Stock.length,
+                              label: t('bot'),
+                              scale: scale),
+                          const SizedBox(width: 16),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [4, 5, 6, 7]
+                                    .map((i) =>
+                                        _buildCard(i, active, cardW, cardH))
+                                    .toList(),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        DeckStackWidget(
-                            count: engine.player2Stock.length,
-                            label: t('bot'),
-                            scale: scale),
-                        const SizedBox(width: 16),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [4, 5, 6, 7]
-                                  .map((i) =>
-                                      _buildCard(i, active, cardW, cardH))
-                                  .toList(),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          DeckStackWidget(
+                              count: engine.player1Stock.length,
+                              label: t('you'),
+                              scale: scale),
+                          const SizedBox(width: 16),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [0, 1, 2, 3]
+                                    .map((i) =>
+                                        _buildCard(i, active, cardW, cardH))
+                                    .toList(),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        DeckStackWidget(
-                            count: engine.player1Stock.length,
-                            label: t('you'),
-                            scale: scale),
-                        const SizedBox(width: 16),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [0, 1, 2, 3]
-                                  .map((i) =>
-                                      _buildCard(i, active, cardW, cardH))
-                                  .toList(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    if (!finished) const SizedBox(height: 24),
-                  ],
-                ),
+                        ],
+                      ),
+                      const Spacer(),
+                      if (!finished) const SizedBox(height: 24),
+                    ],
+                  ),
                 if (_showNoMatch && !finished)
                   Center(
                     child: Container(
@@ -321,16 +345,15 @@ class _VsBotScreenState extends State<VsBotScreen> {
                       ),
                     ),
                   ),
-                if (finished)
+                if (finished && !_resultDismissed)
                   GameResultOverlay(
                     isWin: engine.status == GameStatus.player1Wins,
                     title: engine.status == GameStatus.player1Wins
                         ? t('you_won')
                         : t('bot_won'),
-                    onPlayAgain: () {
-                      bot.stop();
-                      _startNewGame();
-                    },
+                    onPlayAgain: _startNewGame,
+                    onDismiss: () =>
+                        setState(() => _resultDismissed = true),
                   ),
               ],
             ),

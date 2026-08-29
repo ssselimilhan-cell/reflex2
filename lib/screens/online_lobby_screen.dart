@@ -126,6 +126,64 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   child: Text(_error!,
                       style: const TextStyle(color: Colors.redAccent)),
                 ),
+              // Kod ile katılma — arkadaşla özel oyun için, katlanır.
+              // (Bilerek "Yeni Masa Aç" butonunun hemen altında, listeden
+              // önce duruyor — kaydırmadan hemen görünsün diye.)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Theme(
+                  data: Theme.of(context)
+                      .copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(t('manual_join_title'),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 14)),
+                    iconColor: Colors.white70,
+                    collapsedIconColor: Colors.white70,
+                    onExpansionChanged: (v) =>
+                        setState(() => _manualJoinExpanded = v),
+                    initiallyExpanded: _manualJoinExpanded,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _codeController,
+                              textAlign: TextAlign.center,
+                              textCapitalization: TextCapitalization.characters,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  letterSpacing: 6),
+                              maxLength: 4,
+                              decoration: InputDecoration(
+                                hintText: t('room_code_hint'),
+                                hintStyle:
+                                    const TextStyle(color: Colors.white38),
+                                counterText: '',
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.white54),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () =>
+                                      _joinRoomByCode(_codeController.text),
+                              child: Text(t('join_room')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(color: Colors.white24, height: 1),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
                 child: Row(
@@ -227,53 +285,6 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       },
                     );
                   },
-                ),
-              ),
-              // Kod ile katılma — arkadaşla özel oyun için, katlanır.
-              Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  title: Text(t('manual_join_title'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                  iconColor: Colors.white70,
-                  collapsedIconColor: Colors.white70,
-                  onExpansionChanged: (v) =>
-                      setState(() => _manualJoinExpanded = v),
-                  initiallyExpanded: _manualJoinExpanded,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _codeController,
-                            textAlign: TextAlign.center,
-                            textCapitalization: TextCapitalization.characters,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                letterSpacing: 6),
-                            maxLength: 4,
-                            decoration: InputDecoration(
-                              hintText: t('room_code_hint'),
-                              hintStyle: const TextStyle(color: Colors.white38),
-                              counterText: '',
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.white54),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _loading
-                                ? null
-                                : () => _joinRoomByCode(_codeController.text),
-                            child: Text(t('join_room')),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],

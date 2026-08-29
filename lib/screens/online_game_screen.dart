@@ -36,6 +36,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   List<bool> revealed = List.filled(GameEngine.columnCount, true);
   bool _revealing = false;
   bool _scoreCounted = false;
+  bool _resultDismissed = false;
   final List<Timer> _pendingTimers = [];
   int _lastKnownVersionKey = -1;
   bool _collectScheduled = false;
@@ -299,6 +300,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 });
               } else if (!finished) {
                 _scoreCounted = false;
+                _resultDismissed = false;
               }
               final isDeadlocked = _localView.isDeadlocked;
               if (!finished) _maybeScheduleCollect(isDeadlocked);
@@ -426,11 +428,26 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                           ),
                         ),
                       ),
-                    if (finished)
+                    if (finished && !_resultDismissed)
                       GameResultOverlay(
                         isWin: iWonFinal,
                         title: iWonFinal ? t('win') : t('lose'),
                         onPlayAgain: () => _repo.restartGame(widget.roomCode),
+                        onDismiss: () =>
+                            setState(() => _resultDismissed = true),
+                      ),
+                    // Kutu kapatıldıktan sonra da tekrar oynama imkanı
+                    // kaybolmasın diye küçük bir yüzen düğme bırakılıyor.
+                    if (finished && _resultDismissed)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: FloatingActionButton.extended(
+                          onPressed: () =>
+                              _repo.restartGame(widget.roomCode),
+                          icon: const Icon(Icons.replay),
+                          label: Text(t('play_again')),
+                        ),
                       ),
                   ],
                 ),

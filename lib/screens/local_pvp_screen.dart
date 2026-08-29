@@ -30,13 +30,16 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
   bool _revealing = false;
   bool _showNoMatch = false;
   bool _scoreCounted = false;
+  bool _gameStarted = false;
+  bool _resultDismissed = false;
   final List<Timer> _pendingTimers = [];
 
   @override
   void initState() {
     super.initState();
-    engine = GameEngine()..startNewGame();
-    _startReveal();
+    engine = GameEngine();
+    // NOT: Artık ekran açılır açılmaz otomatik başlamıyor — oyuncular
+    // "Oyunu Başlat" düğmesine basana kadar bekliyor.
   }
 
   @override
@@ -48,6 +51,16 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
   }
 
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
+
+  void _beginGame() {
+    setState(() {
+      engine.startNewGame();
+      _gameStarted = true;
+      _scoreCounted = false;
+      _resultDismissed = false;
+    });
+    _startReveal();
+  }
 
   void _startReveal() {
     for (final t in _pendingTimers) {
@@ -118,6 +131,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     setState(() {
       engine.startNewGame();
       _scoreCounted = false;
+      _resultDismissed = false;
     });
     _startReveal();
   }
@@ -148,51 +162,66 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           body: SafeArea(
             child: Stack(
               children: [
-                Column(
-                  children: [
-                    ListenableBuilder(
-                      listenable: ScoreBoard.instance,
-                      builder: (context, _) => ScoreBarWidget(
-                        leftLabel: t('player1'),
-                        leftScore: ScoreBoard.instance.localP1,
-                        rightLabel: t('player2'),
-                        rightScore: ScoreBoard.instance.localP2,
-                        onReset: ScoreBoard.instance.resetLocal,
+                if (!_gameStarted)
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _beginGame,
+                      icon: const Icon(Icons.play_arrow),
+                      label: Text(t('start_game'),
+                          style: const TextStyle(fontSize: 18)),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 18),
                       ),
                     ),
-                    Expanded(
-                      child: RotatedBox(
-                        quarterTurns: 2,
+                  )
+                else
+                  Column(
+                    children: [
+                      ListenableBuilder(
+                        listenable: ScoreBoard.instance,
+                        builder: (context, _) => ScoreBarWidget(
+                          leftLabel: t('player1'),
+                          leftScore: ScoreBoard.instance.localP1,
+                          rightLabel: t('player2'),
+                          rightScore: ScoreBoard.instance.localP2,
+                          onReset: ScoreBoard.instance.resetLocal,
+                        ),
+                      ),
+                      Expanded(
+                        child: RotatedBox(
+                          quarterTurns: 2,
+                          child: _FullBoardHalf(
+                            engine: engine,
+                            revealed: revealed,
+                            active: active,
+                            onTap: (i) => _tap(PlayerSide.player2, i),
+                            stockCount: engine.player2Stock.length,
+                            label: t('player2'),
+                          ),
+                        ),
+                      ),
+                      const Divider(color: Colors.white24, height: 1),
+                      Expanded(
                         child: _FullBoardHalf(
                           engine: engine,
                           revealed: revealed,
                           active: active,
-                          onTap: (i) => _tap(PlayerSide.player2, i),
-                          stockCount: engine.player2Stock.length,
-                          label: t('player2'),
+                          onTap: (i) => _tap(PlayerSide.player1, i),
+                          stockCount: engine.player1Stock.length,
+                          label: t('player1'),
                         ),
                       ),
-                    ),
-                    const Divider(color: Colors.white24, height: 1),
-                    Expanded(
-                      child: _FullBoardHalf(
-                        engine: engine,
-                        revealed: revealed,
-                        active: active,
-                        onTap: (i) => _tap(PlayerSide.player1, i),
-                        stockCount: engine.player1Stock.length,
-                        label: t('player1'),
-                      ),
-                    ),
-                  ],
-                ),
-                if (finished)
+                    ],
+                  ),
+                if (finished && !_resultDismissed)
                   GameResultOverlay(
                     isWin: true, // yerel modda ikisi de "kazanan" perspektifiyle görür; başlık ayırt eder
                     title: engine.status == GameStatus.player1Wins
                         ? t('p1_won')
                         : t('p2_won'),
                     onPlayAgain: _restart,
+                    onDismiss: () => setState(() => _resultDismissed = true),
                   )
                 else if (_showNoMatch)
                   Center(
