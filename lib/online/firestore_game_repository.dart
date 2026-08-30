@@ -23,6 +23,7 @@ class OnlineRoomRepository {
     double? hostWinRate,
     int? hostAvatarIconIndex,
     int? hostAvatarColorValue,
+    String? hostPhotoBase64,
   }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
@@ -41,6 +42,7 @@ class OnlineRoomRepository {
       'hostWinRate': hostWinRate,
       'hostAvatarIconIndex': hostAvatarIconIndex,
       'hostAvatarColorValue': hostAvatarColorValue,
+      'hostPhotoBase64': hostPhotoBase64,
       'createdAt': FieldValue.serverTimestamp(),
       ...engine.toMap(),
     });
@@ -60,7 +62,15 @@ class OnlineRoomRepository {
         .snapshots();
   }
 
-  Future<bool> joinRoom(String code, String guestDeviceId) async {
+  Future<bool> joinRoom(
+    String code,
+    String guestDeviceId, {
+    String? guestDisplayName,
+    double? guestWinRate,
+    int? guestAvatarIconIndex,
+    int? guestAvatarColorValue,
+    String? guestPhotoBase64,
+  }) async {
     final ref = _rooms.doc(code);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final snap = await tx.get(ref);
@@ -75,6 +85,11 @@ class OnlineRoomRepository {
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
         'roomStatus': 'ready',
+        'guestDisplayName': guestDisplayName,
+        'guestWinRate': guestWinRate,
+        'guestAvatarIconIndex': guestAvatarIconIndex,
+        'guestAvatarColorValue': guestAvatarColorValue,
+        'guestPhotoBase64': guestPhotoBase64,
       });
       return true;
     });
