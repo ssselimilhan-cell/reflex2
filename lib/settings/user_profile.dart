@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../online/persistent_device_id.dart';
 
-/// Avatar olarak seçilebilecek sabit ikon listesi (gerçek fotoğraf yükleme
-/// yerine — bunun için Firebase Storage kurulumu gerekirdi, kapsamı
-/// basit tutmak için ikon+renk kombinasyonu kullanılıyor).
+/// Avatar olarak seçilebilecek sabit ikon listesi — profil fotoğrafı
+/// yoksa (ya da rakibin fotoğrafı yüklenemezse) bu ikon+renk kombinasyonu
+/// yedek olarak gösterilir.
 const List<IconData> kAvatarIcons = [
   Icons.person,
   Icons.face,
@@ -37,12 +37,15 @@ class UserProfile extends ChangeNotifier {
   String? deviceId;
   int avatarIconIndex = 0;
   Color avatarColor = const Color(0xFF0B6E4F);
-  /// Galeriden seçilen gerçek fotoğrafın cihazdaki kalıcı dosya yolu.
-  /// Doluysa ikon+renk yerine bu gösterilir. NOT: Bu fotoğraf sadece BU
-  /// cihazda saklanır — Firestore'a (dolayısıyla lobiye/rakibe)
-  /// senkronize edilmez, bunun için ayrı bir bulut depolama (Firebase
-  /// Storage) kurulumu gerekirdi.
+
+  /// Galeriden seçilen gerçek fotoğrafın cihazdaki kalıcı dosya yolu —
+  /// bu cihazda hızlı/yüksek kaliteli gösterim için kullanılır.
   String? photoPath;
+
+  /// Aynı fotoğrafın küçük, sıkıştırılmış base64 hâli — Firestore'a
+  /// (profil dokümanına) senkronize edilir, böylece profili olan diğer
+  /// oyuncular da (lobide, online oyun ekranında) bu fotoğrafı görebilir.
+  String? photoBase64;
 
   bool get hasProfile => displayName != null && displayName!.trim().isNotEmpty;
 
@@ -68,6 +71,7 @@ class UserProfile extends ChangeNotifier {
       final avatarColorValue = prefs.getInt('avatarColor');
       if (avatarColorValue != null) avatarColor = Color(avatarColorValue);
       photoPath = prefs.getString('photoPath');
+      photoBase64 = prefs.getString('photoBase64');
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -92,6 +96,11 @@ class UserProfile extends ChangeNotifier {
       } else {
         await prefs.remove('photoPath');
       }
+      if (photoBase64 != null) {
+        await prefs.setString('photoBase64', photoBase64!);
+      } else {
+        await prefs.remove('photoBase64');
+      }
     } catch (_) {}
   }
 
@@ -105,6 +114,7 @@ class UserProfile extends ChangeNotifier {
           'onlineLosses': onlineLosses,
           'avatarIconIndex': avatarIconIndex,
           'avatarColor': avatarColor.value,
+          'photoBase64': photoBase64,
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -127,27 +137,35 @@ class UserProfile extends ChangeNotifier {
     avatarIconIndex = iconIndex;
     avatarColor = color;
     photoPath = null; // ikon seçilince önceki foto iptal olur
+    photoBase64 = null;
     notifyListeners();
     await _persistLocal();
     await _syncToFirestore();
   }
 
-  Future<void> setPhoto(String path) async {
+  /// [path] cihazdaki kalıcı dosya yolu, [base64Data] ise Firestore'a
+  /// gönderilecek küçük/sıkıştırılmış hâli.
+  Future<void> setPhoto(String path, String base64Data) async {
     photoPath = path;
+    photoBase64 = base64Data;
     notifyListeners();
     await _persistLocal();
+    await _syncToFirestore();
   }
 
   Future<void> clearPhoto() async {
     photoPath = null;
+    photoBase64 = null;
     notifyListeners();
     await _persistLocal();
+    await _syncToFirestore();
   }
 
   Future<void> deleteProfile() async {
     final oldId = deviceId;
     displayName = null;
     photoPath = null;
+    photoBase64 = null;
     notifyListeners();
     await _persistLocal();
     if (oldId != null) {
