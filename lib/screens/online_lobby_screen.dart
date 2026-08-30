@@ -5,6 +5,7 @@ import '../online/persistent_device_id.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
+import '../widgets/profile_avatar.dart';
 import 'online_game_screen.dart';
 
 enum _PlayerSort { alphabetical, gamesPlayed, winRate }
@@ -43,6 +44,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         hostWinRate: profile.hasProfile ? profile.onlineWinRate : null,
         hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
         hostAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+        hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
       );
       if (!mounted) return;
       Navigator.push(
@@ -71,7 +73,16 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     });
     try {
       final deviceId = await _deviceId();
-      final ok = await _repo.joinRoom(code, deviceId);
+      final profile = UserProfile.instance;
+      final ok = await _repo.joinRoom(
+        code,
+        deviceId,
+        guestDisplayName: profile.hasProfile ? profile.displayName : null,
+        guestWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+        guestAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
+        guestAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+        guestPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+      );
       if (!ok) {
         setState(() => _error = t('room_not_found'));
         return;
@@ -111,28 +122,15 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _loading ? null : _createRoom,
-                      icon: const Icon(Icons.add),
-                      label: Text(t('new_room')),
-                      style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14)),
-                    ),
-                  ),
-                ),
                 if (_error != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Text(_error!,
                         style: const TextStyle(color: Colors.redAccent)),
                   ),
                 // Kod ile katılma — arkadaşla özel oyun için, katlanır.
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Theme(
                     data: Theme.of(context)
                         .copyWith(dividerColor: Colors.transparent),
@@ -246,24 +244,25 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
           return rateB.compareTo(rateA);
         });
 
-        if (docs.isEmpty) {
-          return Center(
-            child: Text(t('no_open_tables'),
-                style: const TextStyle(color: Colors.white54)),
-          );
-        }
-
+        // İlk satır HER ZAMAN "Boş Masa" — gerçek bir Firestore kaydı
+        // değil, dokununca anında yeni bir oda oluşturup oraya oturtan
+        // sabit bir davet. Böylece "birine oturulunca ikinci bir boş
+        // masa açılsın" isteği doğal olarak karşılanıyor: bu satır asla
+        // tükenmiyor, her dokunuşta kendi (yeni) masasını oluşturuyor.
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
-          itemCount: docs.length,
-          itemBuilder: (context, i) {
-            final data = docs[i].data();
-            final code = docs[i].id;
+          itemCount: docs.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) return _buildEmptyTableCard();
+
+            final data = docs[index - 1].data();
+            final code = docs[index - 1].id;
             final hostName =
                 data['hostDisplayName'] as String? ?? t('guest_label');
             final winRate = (data['hostWinRate'] as num?)?.toDouble();
             final avatarIconIndex = data['hostAvatarIconIndex'] as int?;
             final avatarColorValue = data['hostAvatarColorValue'] as int?;
+            final photoBase64 = data['hostPhotoBase64'] as String?;
 
             return Card(
               color: Colors.black26,
@@ -271,17 +270,13 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               shape:
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: avatarColorValue != null
+                leading: ProfileAvatar.remote(
+                  radius: 20,
+                  photoBase64: photoBase64,
+                  iconIndex: avatarIconIndex,
+                  color: avatarColorValue != null
                       ? Color(avatarColorValue)
                       : Colors.white24,
-                  child: Icon(
-                    avatarIconIndex != null &&
-                            avatarIconIndex < kAvatarIcons.length
-                        ? kAvatarIcons[avatarIconIndex]
-                        : Icons.person,
-                    color: Colors.white,
-                  ),
                 ),
                 title: Text(hostName,
                     style: const TextStyle(color: Colors.white)),
@@ -300,6 +295,60 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
           },
         );
       },
+    );
+  }
+
+  /// Her zaman listenin ilk satırı — gerçek bir masa değil, dokununca
+  /// yeni bir oda oluşturup kullanıcıyı oraya "oturtan" sabit bir davet.
+  /// Tükenmez: her dokunuş kendi yeni odasını açar, bu yüzden "boş masa"
+  /// hep mevcut olur.
+  Widget _buildEmptyTableCard() {
+    return Card(
+      color: Colors.white10,
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withOpacity(0.3), width: 1.4),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _loading ? null : _createRoom,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white24,
+                child: const Icon(Icons.event_seat, color: Colors.white70),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t('empty_table'),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15)),
+                    Text(t('sit_and_wait'),
+                        style: const TextStyle(
+                            color: Colors.white60, fontSize: 12)),
+                  ],
+                ),
+              ),
+              if (_loading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(Icons.chevron_right, color: Colors.white54),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -396,22 +445,42 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         ((data['onlineLosses'] as num?) ?? 0).toInt();
                     final played = wins + losses;
                     final rate = played == 0 ? null : wins / played * 100;
+                    final photoBase64 = data['photoBase64'] as String?;
+                    final iconIndex = data['avatarIconIndex'] as int?;
+                    final colorValue = data['avatarColor'] as int?;
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold)),
-                          Text(
-                            '$played · ${rate == null ? "—" : "${rate.round()}%"}',
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 10),
+                          ProfileAvatar.remote(
+                            radius: 12,
+                            photoBase64: photoBase64,
+                            iconIndex: iconIndex,
+                            color: colorValue != null
+                                ? Color(colorValue)
+                                : Colors.white24,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                  '$played · ${rate == null ? "—" : "${rate.round()}%"}',
+                                  style: const TextStyle(
+                                      color: Colors.white54, fontSize: 10),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
