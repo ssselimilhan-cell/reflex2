@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -179,18 +180,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _pickFromGallery(BuildContext sheetContext) async {
     try {
       final picker = ImagePicker();
+      // NOT: Küçük boyut/kalite bilinçli seçildi — bu fotoğraf sadece
+      // küçük dairesel avatar olarak gösterileceği için, hem cihazda hem
+      // Firestore'a senkronize edilen sürümde aynı (küçük) dosya
+      // kullanılıyor. Böylece rakip de bu fotoğrafı görebiliyor.
       final xfile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 82,
+        maxWidth: 300,
+        maxHeight: 300,
+        imageQuality: 70,
       );
       if (xfile == null) return; // kullanıcı vazgeçti
+      final bytes = await xfile.readAsBytes();
       final dir = await getApplicationDocumentsDirectory();
       final savedPath =
           '${dir.path}/profile_photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await File(xfile.path).copy(savedPath);
-      await UserProfile.instance.setPhoto(savedPath);
+      await File(savedPath).writeAsBytes(bytes);
+      final base64Data = base64Encode(bytes);
+      await UserProfile.instance.setPhoto(savedPath, base64Data);
       if (sheetContext.mounted) Navigator.pop(sheetContext);
     } catch (e) {
       if (sheetContext.mounted) {
