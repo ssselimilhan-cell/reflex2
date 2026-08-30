@@ -160,19 +160,20 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               ),
             ],
           ),
-          body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: _repo.watchRoom(widget.roomCode),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || !snapshot.data!.exists) {
-                return Center(
-                  child: Text(t('not_found_closed'),
-                      style: const TextStyle(color: Colors.white)),
-                );
-              }
-              final data = snapshot.data!.data()!;
-              final roomStatus = data['roomStatus'] as String;
+          body: SafeArea(
+            child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: _repo.watchRoom(widget.roomCode),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return Center(
+                    child: Text(t('not_found_closed'),
+                        style: const TextStyle(color: Colors.white)),
+                  );
+                }
+                final data = snapshot.data!.data()!;
+                final roomStatus = data['roomStatus'] as String;
 
-              if (roomStatus == 'waiting') {
+                if (roomStatus == 'waiting') {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -325,13 +326,15 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               final iWonFinal = (_localView.status == GameStatus.player1Wins) ==
                   (mySide == PlayerSide.player1);
 
-              return SafeArea(
-                child: Stack(
-                  children: [
-                    Column(
-                      children: [
-                        ListenableBuilder(
-                          listenable: ScoreBoard.instance,
+              // NOT: Dış SafeArea (body: SafeArea(...)) zaten tüm alt
+              // ekranları kapsıyor, bu yüzden burada ikinci bir SafeArea'ya
+              // gerek yok.
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      ListenableBuilder(
+                        listenable: ScoreBoard.instance,
                           builder: (context, _) => ScoreBarWidget(
                             leftLabel: t('you'),
                             leftScore: ScoreBoard.instance.onlineYou,
@@ -402,6 +405,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             ),
                           ),
                         ),
+                        if (finished) _buildRematchArea(data),
                         ChatPanel(
                           roomCode: widget.roomCode,
                           mySide: mySide,
@@ -432,27 +436,17 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                       GameResultOverlay(
                         isWin: iWonFinal,
                         title: iWonFinal ? t('win') : t('lose'),
-                        onPlayAgain: () => _repo.restartGame(widget.roomCode),
+                        onPlayAgain: () {
+                          _repo.requestRematch(widget.roomCode, mySide);
+                          setState(() => _resultDismissed = true);
+                        },
                         onDismiss: () =>
                             setState(() => _resultDismissed = true),
                       ),
-                    // Kutu kapatıldıktan sonra da tekrar oynama imkanı
-                    // kaybolmasın diye küçük bir yüzen düğme bırakılıyor.
-                    if (finished && _resultDismissed)
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: FloatingActionButton.extended(
-                          onPressed: () =>
-                              _repo.restartGame(widget.roomCode),
-                          icon: const Icon(Icons.replay),
-                          label: Text(t('play_again')),
-                        ),
-                      ),
                   ],
-                ),
               );
             },
+          ),
           ),
         );
       },
@@ -473,6 +467,86 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         onTap: (isActive && isRevealed && enabled) ? () => _tap(i) : null,
         width: w,
         height: h,
+      ),
+    );
+  }
+
+  /// Kartların altında, ortalı duran "Tekrar Oyna" alanı. Oyun bitince
+  /// hep görünür (kutu kapatılsa bile kaybolmaz); tıklanınca DİREKT
+  /// başlamaz — karşı tarafın kabul etmesi gerekir.
+  Widget _buildRematchArea(Map<String, dynamic> data) {
+    final requestedBy = data['rematchRequestedBy'] as String?;
+
+    if (requestedBy == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: ElevatedButton.icon(
+            onPressed: () => _repo.requestRematch(widget.roomCode, mySide),
+            icon: const Icon(Icons.replay),
+            label: Text(t('play_again')),
+          ),
+        ),
+      );
+    }
+
+    final requestedByMe = requestedBy == mySide.name;
+
+    if (requestedByMe) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(height: 6),
+              Text(t('waiting_for_accept'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              TextButton(
+                onPressed: () => _repo.declineRematch(widget.roomCode),
+                child: Text(t('cancel_request'),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(t('rematch_requested'),
+                style: const TextStyle(
+                    color: Colors.amber,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton(
+                  onPressed: () => _repo.declineRematch(widget.roomCode),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.white70),
+                  child: Text(t('decline')),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () => _repo.acceptRematch(widget.roomCode),
+                  child: Text(t('accept')),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
