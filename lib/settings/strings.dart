@@ -302,6 +302,31 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Удалить фото',
     'zh': '移除照片'
   },
+  'players_title': {'tr': 'Oyuncular', 'en': 'Players', 'ru': 'Игроки', 'zh': '玩家'},
+  'sort_alpha': {
+    'tr': 'Alfabetik',
+    'en': 'Alphabetical',
+    'ru': 'По алфавиту',
+    'zh': '按字母'
+  },
+  'sort_games': {
+    'tr': 'Oyun Sayısı',
+    'en': 'Games Played',
+    'ru': 'Кол-во игр',
+    'zh': '游戏场次'
+  },
+  'sort_winrate': {
+    'tr': 'Kazanma Oranı',
+    'en': 'Win Rate',
+    'ru': 'Процент побед',
+    'zh': '胜率'
+  },
+  'rematch_requested': {
+    'tr': 'Rakip tekrar oynamak istiyor!',
+    'en': 'Opponent wants a rematch!',
+    'ru': 'Соперник хочет реванш!',
+    'zh': '对手想要再来一局！'
+  },
 };
 
 String t(String key) {
