@@ -41,11 +41,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
           appBar: AppBar(title: Text(t('profile'))),
-          body: Padding(
-            padding: const EdgeInsets.all(24),
-            child: profile.hasProfile
-                ? _buildProfileView(profile)
-                : _buildCreateView(),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: profile.hasProfile
+                  ? _buildProfileView(profile)
+                  : _buildCreateView(),
+            ),
           ),
         );
       },
@@ -156,10 +158,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _StatBox(label: t('losses'), value: profile.onlineLosses),
           ],
         ),
-        const Spacer(),
+        const SizedBox(height: 40),
         Padding(
           // Buton tam ekran kenarına yapışmasın diye biraz yukarı alındı.
-          padding: const EdgeInsets.only(bottom: 32),
+          // (Spacer() yerine sabit boşluk — kaydırılabilir ekranla uyumlu
+          // olsun diye; Spacer sınırsız yükseklikte hataya yol açardı.)
+          padding: const EdgeInsets.only(bottom: 8),
           child: OutlinedButton(
             onPressed: () async {
               await UserProfile.instance.deleteProfile();

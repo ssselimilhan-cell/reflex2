@@ -14,15 +14,16 @@ class SettingsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: settings.themeColor,
           appBar: AppBar(title: Text(t('settings_title'))),
-          body: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              _SectionLabel(t('settings_card_size')),
-              Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: settings.cardScale,
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
+              children: [
+                _SectionLabel(t('settings_card_size')),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: settings.cardScale,
                       min: 0.7,
                       max: 2.0,
                       divisions: 13,
@@ -160,6 +161,7 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ],
+          ),
           ),
         );
       },
