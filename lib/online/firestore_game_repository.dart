@@ -170,22 +170,55 @@ class OnlineRoomRepository {
     });
   }
 
-  /// Oyun bittikten sonra "Tekrar Oyna" için: yeni bir deste karıp
-  /// dağıtır, oda "active" durumda kalır (oyuncular odadan ayrılmadan
-  /// devam eder). Sadece oyun gerçekten bitmişken çalışır; iki oyuncu da
-  /// aynı anda basarsa transaction sayesinde çift sıfırlama olmaz.
-  Future<void> restartGame(String code) async {
+  /// Oyun bittikten sonra bir taraf tekrar oynamak ister — bu doğrudan
+  /// başlamaz, karşı tarafın kabul etmesi gerekir (bkz. acceptRematch).
+  /// Sadece oyun gerçekten bitmişken ve zaten bekleyen bir istek yokken
+  /// çalışır.
+  Future<bool> requestRematch(String code, PlayerSide side) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['roomStatus'] != 'active') return false;
+      if (data['rematchRequestedBy'] != null) return false;
+
+      final engine = GameEngine()..loadFromMap(data);
+      if (engine.status == GameStatus.playing) return false; // henüz bitmemiş
+
+      tx.update(ref, {'rematchRequestedBy': side.name});
+      return true;
+    });
+  }
+
+  /// Karşı taraf tekrar oynama isteğini kabul eder — yeni deste karılıp
+  /// dağıtılır, oda "active" durumda kalır (odadan çıkılmadan devam eder).
+  Future<bool> acceptRematch(String code) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['rematchRequestedBy'] == null) return false;
+
+      final engine = GameEngine()..loadFromMap(data);
+      engine.startNewGame();
+      final map = engine.toMap();
+      map['rematchRequestedBy'] = null;
+      tx.update(ref, map);
+      return true;
+    });
+  }
+
+  /// İstek reddedilir ya da isteği yapan kendisi iptal eder.
+  Future<void> declineRematch(String code) async {
     final ref = _rooms.doc(code);
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (!snap.exists) return;
       final data = snap.data()!;
-      if (data['roomStatus'] != 'active') return;
-
-      final engine = GameEngine()..loadFromMap(data);
-      if (engine.status == GameStatus.playing) return; // henüz bitmemiş
-      engine.startNewGame();
-      tx.update(ref, engine.toMap());
+      if (data['rematchRequestedBy'] == null) return;
+      tx.update(ref, {'rematchRequestedBy': null});
     });
   }
 
