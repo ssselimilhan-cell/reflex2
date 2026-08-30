@@ -327,6 +327,18 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Соперник хочет реванш!',
     'zh': '对手想要再来一局！'
   },
+  'empty_table': {
+    'tr': 'Boş Masa',
+    'en': 'Empty Table',
+    'ru': 'Свободный стол',
+    'zh': '空桌位'
+  },
+  'sit_and_wait': {
+    'tr': 'Otur ve Rakip Bekle',
+    'en': 'Sit & Wait for Opponent',
+    'ru': 'Сесть и ждать соперника',
+    'zh': '入座等待对手'
+  },
 };
 
 String t(String key) {
