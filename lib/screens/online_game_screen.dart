@@ -8,6 +8,7 @@ import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
 import '../widgets/chat_panel.dart';
+import '../widgets/profile_avatar.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -323,6 +324,18 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   ? const [4, 5, 6, 7]
                   : const [0, 1, 2, 3];
 
+              // Rakibin profil bilgisi — ben host'sam rakip guest'tir,
+              // ben guest'sem rakip host'tur.
+              final oppPhotoBase64 = (mySide == PlayerSide.player1
+                  ? data['guestPhotoBase64']
+                  : data['hostPhotoBase64']) as String?;
+              final oppAvatarIconIndex = (mySide == PlayerSide.player1
+                  ? data['guestAvatarIconIndex']
+                  : data['hostAvatarIconIndex']) as int?;
+              final oppAvatarColorValue = (mySide == PlayerSide.player1
+                  ? data['guestAvatarColorValue']
+                  : data['hostAvatarColorValue']) as int?;
+
               final iWonFinal = (_localView.status == GameStatus.player1Wins) ==
                   (mySide == PlayerSide.player1);
 
@@ -356,6 +369,15 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      ProfileAvatar.remote(
+                                        radius: 14,
+                                        photoBase64: oppPhotoBase64,
+                                        iconIndex: oppAvatarIconIndex,
+                                        color: oppAvatarColorValue != null
+                                            ? Color(oppAvatarColorValue)
+                                            : Colors.white24,
+                                      ),
+                                      const SizedBox(width: 6),
                                       DeckStackWidget(
                                           count: oppStockCount,
                                           label: t('opponent'),
