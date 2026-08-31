@@ -275,4 +275,53 @@ class OnlineRoomRepository {
       // oluşturulduğunda zaten yeni bir alt koleksiyonda başlar.
     }
   }
+
+  // ---- Doğrudan oyuncu davetleri (lobideki oyuncu listesinden) ----
+
+  CollectionReference<Map<String, dynamic>> get _invites =>
+      FirebaseFirestore.instance.collection('invites');
+
+  /// [toDeviceId]'ye, [roomCode] odasına gelmesi için bir davet gönderir.
+  /// Gönderenin profil bilgisi davetin içine gömülür ki alıcı, kimin
+  /// davet ettiğini (ismi, avatarı, kazanma oranı) görebilsin.
+  Future<void> sendInvite({
+    required String toDeviceId,
+    required String fromDeviceId,
+    required String roomCode,
+    String? fromDisplayName,
+    int? fromAvatarIconIndex,
+    int? fromAvatarColorValue,
+    String? fromPhotoBase64,
+    double? fromWinRate,
+  }) async {
+    await _invites.add({
+      'toDeviceId': toDeviceId,
+      'fromDeviceId': fromDeviceId,
+      'roomCode': roomCode,
+      'fromDisplayName': fromDisplayName,
+      'fromAvatarIconIndex': fromAvatarIconIndex,
+      'fromAvatarColorValue': fromAvatarColorValue,
+      'fromPhotoBase64': fromPhotoBase64,
+      'fromWinRate': fromWinRate,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Bu cihaza gelen, henüz kapatılmamış davetleri dinler.
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchIncomingInvites(
+      String myDeviceId) {
+    return _invites
+        .where('toDeviceId', isEqualTo: myDeviceId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
+  }
+
+  /// Davet kabul edilsin ya da reddedilsin/kapatılsın, listeden kalkması
+  /// için siliniyor.
+  Future<void> closeInvite(String inviteId) async {
+    try {
+      await _invites.doc(inviteId).delete();
+    } catch (_) {}
+  }
 }
