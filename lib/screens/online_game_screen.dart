@@ -369,19 +369,24 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      ProfileAvatar.remote(
-                                        radius: 14,
-                                        photoBase64: oppPhotoBase64,
-                                        iconIndex: oppAvatarIconIndex,
-                                        color: oppAvatarColorValue != null
-                                            ? Color(oppAvatarColorValue)
-                                            : Colors.white24,
+                                      Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ProfileAvatar.remote(
+                                            radius: 12,
+                                            photoBase64: oppPhotoBase64,
+                                            iconIndex: oppAvatarIconIndex,
+                                            color: oppAvatarColorValue != null
+                                                ? Color(oppAvatarColorValue)
+                                                : Colors.white24,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          DeckStackWidget(
+                                              count: oppStockCount,
+                                              label: t('opponent'),
+                                              scale: scale),
+                                        ],
                                       ),
-                                      const SizedBox(width: 6),
-                                      DeckStackWidget(
-                                          count: oppStockCount,
-                                          label: t('opponent'),
-                                          scale: scale),
                                       const SizedBox(width: 14),
                                       Flexible(
                                         child: FittedBox(
@@ -402,10 +407,17 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      DeckStackWidget(
-                                          count: myStockCount,
-                                          label: t('you'),
-                                          scale: scale),
+                                      Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const ProfileAvatar(radius: 12),
+                                          const SizedBox(height: 4),
+                                          DeckStackWidget(
+                                              count: myStockCount,
+                                              label: t('you'),
+                                              scale: scale),
+                                        ],
+                                      ),
                                       const SizedBox(width: 14),
                                       Flexible(
                                         child: FittedBox(
