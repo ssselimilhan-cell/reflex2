@@ -4,6 +4,7 @@ import 'vs_bot_screen.dart';
 import 'online_lobby_screen.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
+import 'rules_screen.dart';
 import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
@@ -127,6 +128,33 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Material(
+              color: Colors.black26,
+              child: InkWell(
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const RulesScreen())),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.menu_book,
+                          color: Colors.white70, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        t('rules_title'),
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         );

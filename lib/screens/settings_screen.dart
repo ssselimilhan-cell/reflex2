@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
+import '../models/playing_card.dart';
+import '../widgets/card_widget.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -102,27 +104,17 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _SectionLabel(t('settings_card_theme')),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _SpeedChip(
-                    label: t('theme_classic'),
-                    selected: settings.cardTheme == CardFaceTheme.classic,
-                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.classic),
-                  ),
-                  _SpeedChip(
-                    label: t('theme_fruit'),
-                    selected: settings.cardTheme == CardFaceTheme.fruit,
-                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.fruit),
-                  ),
-                  _SpeedChip(
-                    label: t('theme_figure'),
-                    selected: settings.cardTheme == CardFaceTheme.figure,
-                    onTap: () => settings.setCardFaceTheme(CardFaceTheme.figure),
-                  ),
-                ],
-              ),
+              const _ThemePickerTile(),
               const SizedBox(height: 20),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: Colors.amber,
+                title: Text(t('assisted_mode'),
+                    style: const TextStyle(color: Colors.white)),
+                value: settings.assistedMode,
+                onChanged: settings.setAssistedMode,
+              ),
+              const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: Colors.amber,
@@ -233,6 +225,163 @@ class _SpeedChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) => onTap(),
+    );
+  }
+}
+
+/// Kart temasını seçmek için: tek satır (o an seçili/kaydedilmiş temanın
+/// küçük bir örneğiyle), dokununca aşağı doğru AÇILAN bir liste. Listede
+/// bir temaya dokunmak sadece "adaylığa" alır (üstteki önizleme anında
+/// güncellenir) — gerçekten uygulanması için "Kaydet" basılması gerekir.
+class _ThemePickerTile extends StatefulWidget {
+  const _ThemePickerTile();
+
+  @override
+  State<_ThemePickerTile> createState() => _ThemePickerTileState();
+}
+
+class _ThemePickerTileState extends State<_ThemePickerTile> {
+  bool _expanded = false;
+  late CardFaceTheme _pending;
+
+  static const _demoCard = PlayingCard(Suit.hearts, 7);
+
+  @override
+  void initState() {
+    super.initState();
+    _pending = AppSettings.instance.cardTheme;
+  }
+
+  String _labelFor(CardFaceTheme theme) {
+    switch (theme) {
+      case CardFaceTheme.classic:
+        return t('theme_classic');
+      case CardFaceTheme.fruit:
+        return t('theme_fruit');
+      case CardFaceTheme.figure:
+        return t('theme_figure');
+      case CardFaceTheme.ottoman:
+        return t('theme_ottoman');
+      case CardFaceTheme.egypt:
+        return t('theme_egypt');
+      case CardFaceTheme.rome:
+        return t('theme_rome');
+      case CardFaceTheme.animals:
+        return t('theme_animals');
+      case CardFaceTheme.chineseZodiac:
+        return t('theme_chinese_zodiac');
+      case CardFaceTheme.matryoshka:
+        return t('theme_matryoshka');
+      case CardFaceTheme.soviet:
+        return t('theme_soviet');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPendingChange = _pending != AppSettings.instance.cardTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    height: 56,
+                    child: CardWidget(
+                        card: _demoCard,
+                        themeOverride: _pending,
+                        width: 40,
+                        height: 56),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _labelFor(_pending),
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Icon(_expanded ? Icons.expand_less : Icons.expand_more,
+                      color: Colors.white70),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded) ...[
+            const Divider(color: Colors.white24, height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                children: CardFaceTheme.values.map((theme) {
+                  final selected = theme == _pending;
+                  return InkWell(
+                    onTap: () => setState(() => _pending = theme),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? Colors.white12 : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: selected
+                            ? Border.all(color: Colors.amber, width: 1.4)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 30,
+                            height: 42,
+                            child: CardWidget(
+                                card: _demoCard,
+                                themeOverride: theme,
+                                width: 30,
+                                height: 42),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(_labelFor(theme),
+                                style:
+                                    const TextStyle(color: Colors.white)),
+                          ),
+                          if (selected)
+                            const Icon(Icons.check,
+                                color: Colors.amber, size: 18),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14, top: 4),
+              child: ElevatedButton.icon(
+                onPressed: hasPendingChange
+                    ? () {
+                        AppSettings.instance.setCardFaceTheme(_pending);
+                        setState(() => _expanded = false);
+                      }
+                    : null,
+                icon: const Icon(Icons.check),
+                label: Text(t('save')),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

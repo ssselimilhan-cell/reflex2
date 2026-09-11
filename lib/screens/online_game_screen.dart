@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../online/firestore_game_repository.dart';
 import '../widgets/card_widget.dart';
-import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
 import '../widgets/chat_panel.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/player_header.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -161,8 +161,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               ),
             ],
           ),
-          body: SafeArea(
-            child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          body: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SafeArea(
+              child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: _repo.watchRoom(widget.roomCode),
               builder: (context, snapshot) {
                 if (!snapshot.hasData || !snapshot.data!.exists) {
@@ -335,6 +338,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               final oppAvatarColorValue = (mySide == PlayerSide.player1
                   ? data['guestAvatarColorValue']
                   : data['hostAvatarColorValue']) as int?;
+              final oppDisplayName = (mySide == PlayerSide.player1
+                  ? data['guestDisplayName']
+                  : data['hostDisplayName']) as String?;
+              final myName = UserProfile.instance.hasProfile
+                  ? UserProfile.instance.displayName!
+                  : t('you');
 
               final iWonFinal = (_localView.status == GameStatus.player1Wins) ==
                   (mySide == PlayerSide.player1);
@@ -356,83 +365,65 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             onReset: ScoreBoard.instance.resetOnline,
                           ),
                         ),
-                        // Rakip ve kendi 4'lü sıraları ortada, birbirine
-                        // YAKIN duracak şekilde tek bir kompakt blok
-                        // halinde ortalanıyor (önceki tasarımdaki iki
-                        // Spacer kaldırıldı).
+                        // Rakip ve kendi 4'lü sıraları ortada; aralarında
+                        // "yarım kart" kadar boşluk bırakılıyor (cardH/2).
                         Expanded(
                           child: Center(
                             child: SingleChildScrollView(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ProfileAvatar.remote(
-                                            radius: 12,
-                                            photoBase64: oppPhotoBase64,
-                                            iconIndex: oppAvatarIconIndex,
-                                            color: oppAvatarColorValue != null
-                                                ? Color(oppAvatarColorValue)
-                                                : Colors.white24,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          DeckStackWidget(
-                                              count: oppStockCount,
-                                              label: t('opponent'),
-                                              scale: scale),
-                                        ],
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Flexible(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: oppCols
-                                                .map((i) => _buildCard(
-                                                    i, active, cardW, cardH,
-                                                    enabled: !finished))
-                                                .toList(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  PlayerHeader(
+                                    avatar: ProfileAvatar.remote(
+                                      radius: 18,
+                                      photoBase64: oppPhotoBase64,
+                                      iconIndex: oppAvatarIconIndex,
+                                      color: oppAvatarColorValue != null
+                                          ? Color(oppAvatarColorValue)
+                                          : Colors.white24,
+                                    ),
+                                    name: oppDisplayName ?? t('opponent'),
+                                    stockCount: oppStockCount,
                                   ),
-                                  const SizedBox(height: 14),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Column(
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 4),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
                                         mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const ProfileAvatar(radius: 12),
-                                          const SizedBox(height: 4),
-                                          DeckStackWidget(
-                                              count: myStockCount,
-                                              label: t('you'),
-                                              scale: scale),
-                                        ],
+                                        children: oppCols
+                                            .map((i) => _buildCard(
+                                                i, active, cardW, cardH,
+                                                enabled: !finished,
+                                                fromAbove: true))
+                                            .toList(),
                                       ),
-                                      const SizedBox(width: 14),
-                                      Flexible(
-                                        child: FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: myCols
-                                                .map((i) => _buildCard(
-                                                    i, active, cardW, cardH,
-                                                    enabled: !finished))
-                                                .toList(),
-                                          ),
-                                        ),
+                                    ),
+                                  ),
+                                  SizedBox(height: cardH / 2),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 4),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: myCols
+                                            .map((i) => _buildCard(
+                                                i, active, cardW, cardH,
+                                                enabled: !finished,
+                                                fromAbove: false))
+                                            .toList(),
                                       ),
-                                    ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  PlayerHeader(
+                                    avatar: const ProfileAvatar(radius: 18),
+                                    name: myName,
+                                    stockCount: myStockCount,
                                   ),
                                 ],
                               ),
@@ -482,25 +473,28 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             },
           ),
           ),
+          ),
         );
       },
     );
   }
 
   Widget _buildCard(int i, Set<int> active, double w, double h,
-      {bool enabled = true}) {
+      {bool enabled = true, bool fromAbove = true}) {
     final top = _localView.topOf(i);
     final isRevealed = revealed[i];
     final isActive = active.contains(i);
+    final showHighlight = isActive && AppSettings.instance.assistedMode;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: CardWidget(
         card: top,
         faceDown: !isRevealed || top == null,
-        highlighted: isActive && isRevealed,
+        highlighted: showHighlight && isRevealed,
         onTap: (isActive && isRevealed && enabled) ? () => _tap(i) : null,
         width: w,
         height: h,
+        fromAbove: fromAbove,
       ),
     );
   }

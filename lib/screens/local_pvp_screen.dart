@@ -212,6 +212,16 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
                           label: t('player1'),
                         ),
                       ),
+                      if (finished && _resultDismissed)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: TextButton.icon(
+                            onPressed: _restart,
+                            icon: const Icon(Icons.replay, color: Colors.white70),
+                            label: Text(t('play_again'),
+                                style: const TextStyle(color: Colors.white70)),
+                          ),
+                        ),
                     ],
                   ),
                 if (finished && !_resultDismissed)
@@ -273,12 +283,13 @@ class _FullBoardHalf extends StatelessWidget {
     final top = engine.topOf(i);
     final isRevealed = revealed[i];
     final isActive = active.contains(i);
+    final showHighlight = isActive && AppSettings.instance.assistedMode;
     return Padding(
       padding: const EdgeInsets.all(3),
       child: CardWidget(
         card: top,
         faceDown: !isRevealed || top == null,
-        highlighted: isActive && isRevealed,
+        highlighted: showHighlight && isRevealed,
         onTap: (isActive && isRevealed) ? () => onTap(i) : null,
         width: w,
         height: h,

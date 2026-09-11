@@ -74,6 +74,60 @@ const Map<String, Map<String, String>> _strings = {
   'theme_classic': {'tr': 'İskambil', 'en': 'Classic', 'ru': 'Классика', 'zh': '经典'},
   'theme_fruit': {'tr': 'Meyve', 'en': 'Fruit', 'ru': 'Фрукты', 'zh': '水果'},
   'theme_figure': {'tr': 'Figür', 'en': 'Figure', 'ru': 'Персонажи', 'zh': '人物'},
+  'theme_ottoman': {
+    'tr': 'Osmanlı Yeniçeri',
+    'en': 'Ottoman Janissary',
+    'ru': 'Османский янычар',
+    'zh': '奥斯曼禁卫军'
+  },
+  'theme_egypt': {
+    'tr': 'Mısır Firavun',
+    'en': 'Egyptian Pharaoh',
+    'ru': 'Египетский фараон',
+    'zh': '埃及法老'
+  },
+  'theme_rome': {
+    'tr': 'Roma İmparatorluğu',
+    'en': 'Roman Empire',
+    'ru': 'Римская империя',
+    'zh': '罗马帝国'
+  },
+  'theme_animals': {
+    'tr': 'Hayvan Figürleri',
+    'en': 'Animal Figures',
+    'ru': 'Фигуры животных',
+    'zh': '动物造型'
+  },
+  'theme_chinese_zodiac': {
+    'tr': 'Çin Burçları',
+    'en': 'Chinese Zodiac',
+    'ru': 'Китайский зодиак',
+    'zh': '中国生肖'
+  },
+  'theme_matryoshka': {
+    'tr': 'Rus Matruşka',
+    'en': 'Russian Matryoshka',
+    'ru': 'Русская матрёшка',
+    'zh': '俄罗斯套娃'
+  },
+  'theme_soviet': {
+    'tr': 'Sovyet / Kremlin',
+    'en': 'Soviet / Kremlin',
+    'ru': 'Советский / Кремль',
+    'zh': '苏联/克里姆林宫'
+  },
+  'choose_theme': {
+    'tr': 'Tema Seç',
+    'en': 'Choose Theme',
+    'ru': 'Выбрать тему',
+    'zh': '选择主题'
+  },
+  'assisted_mode': {
+    'tr': 'Yardımlı Mod (Eşleşmeleri Vurgula)',
+    'en': 'Assisted Mode (Highlight Matches)',
+    'ru': 'Режим подсказок (подсветка совпадений)',
+    'zh': '辅助模式（高亮匹配项）'
+  },
   'speed_fast': {'tr': 'Hızlı', 'en': 'Fast', 'ru': 'Быстро', 'zh': '快'},
   'speed_normal': {'tr': 'Normal', 'en': 'Normal', 'ru': 'Обычно', 'zh': '正常'},
   'speed_slow': {'tr': 'Yavaş', 'en': 'Slow', 'ru': 'Медленно', 'zh': '慢'},
@@ -338,6 +392,66 @@ const Map<String, Map<String, String>> _strings = {
     'en': 'Sit & Wait for Opponent',
     'ru': 'Сесть и ждать соперника',
     'zh': '入座等待对手'
+  },
+  'send_invite': {
+    'tr': 'Davet Gönder',
+    'en': 'Send Invite',
+    'ru': 'Отправить приглашение',
+    'zh': '发送邀请'
+  },
+  'invite_received': {
+    'tr': 'Sana oyun daveti geldi!',
+    'en': 'You received a game invite!',
+    'ru': 'Тебе пришло приглашение на игру!',
+    'zh': '你收到了游戏邀请！'
+  },
+  'close_invite': {'tr': 'Kapat', 'en': 'Close', 'ru': 'Закрыть', 'zh': '关闭'},
+  'empty_seat': {'tr': 'Boş', 'en': 'Empty', 'ru': 'Пусто', 'zh': '空'},
+  'rules_title': {
+    'tr': 'Oyun Kuralları',
+    'en': 'Game Rules',
+    'ru': 'Правила игры',
+    'zh': '游戏规则'
+  },
+  'rules_text': {
+    'tr': 'Stres, hız ve refleks gerektiren bir kart oyunudur. Her '
+        'oyuncuya 26 kağıt dağıtılır: 22\'si kapalı destede kalır, 4\'ü '
+        'oyun alanına açılır — toplam 8 sütun oluşur.\n\nÜst kartı aynı '
+        'değere sahip en az 2 sütun varsa, bu sütunlar aktif olur ve '
+        'dokunulabilir hâle gelir. Bir sütuna dokunduğunda, kapalı '
+        'destenden rastgele bir kart çekilip o sütunun üzerine açık '
+        'olarak kapatılır.\n\nEşleşme kalmayınca sütunlar toplanıp '
+        'yeniden dağıtılır. Kapalı destesini ilk tamamen bitiren oyuncu '
+        'kazanır!',
+    'en': 'Stres is a fast-paced reflex card game. Each player is dealt '
+        '26 cards: 22 stay in a closed stock pile, 4 are dealt face-up '
+        'onto the table — forming 8 columns total.\n\nWhenever at least '
+        '2 columns share the same top card value, those columns become '
+        'active and tappable. Tapping an active column draws a random '
+        'card from your stock and covers it.\n\nWhen no matches remain, '
+        'the columns are collected and redealt. The first player to '
+        'empty their stock pile wins!',
+    'ru': '«Стрес» — карточная игра на скорость и реакцию. Каждому '
+        'игроку раздаётся 26 карт: 22 остаются в закрытой колоде, 4 '
+        'выкладываются лицом вверх на стол — получается 8 столбцов.\n\n'
+        'Как только у двух и более столбцов совпадают значения верхних '
+        'карт, эти столбцы становятся активными и доступны для нажатия. '
+        'При нажатии на активный столбец из вашей колоды вытягивается '
+        'случайная карта и кладётся сверху.\n\nКогда совпадений не '
+        'остаётся, столбцы собираются и раздаются заново. Побеждает '
+        'тот, кто первым избавится от всей своей колоды!',
+    'zh': '《压力》是一款考验反应速度的纸牌游戏。每位玩家发到26张牌：'
+        '22张作为暗牌堆，4张翻开放在桌上——总共组成8列。\n\n'
+        '当至少有两列的最上面一张牌数值相同时，这些列就会被激活，'
+        '可以点击。点击激活的列时，会从你的暗牌堆随机抽一张牌盖在上面。'
+        '\n\n当没有任何匹配时，所有列会被收起重新发牌。'
+        '最先清空暗牌堆的玩家获胜！',
+  },
+  'watch_demo': {
+    'tr': 'Kısa Demo',
+    'en': 'Quick Demo',
+    'ru': 'Короткая демонстрация',
+    'zh': '简短演示'
   },
 };
 

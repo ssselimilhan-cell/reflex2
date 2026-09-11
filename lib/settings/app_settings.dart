@@ -4,7 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AppLanguage { tr, en, ru, zh }
 
 /// Kartların ortasındaki baskın sembolün teması.
-enum CardFaceTheme { classic, fruit, figure }
+enum CardFaceTheme {
+  classic,
+  fruit,
+  figure,
+  ottoman,
+  egypt,
+  rome,
+  animals,
+  chineseZodiac,
+  matryoshka,
+  soviet,
+}
 
 /// Tüm uygulamada paylaşılan, kalıcı (SharedPreferences ile diske
 /// kaydedilen) ayarlar. Herhangi bir ekran değiştirdiğinde, buna
@@ -22,6 +33,11 @@ class AppSettings extends ChangeNotifier {
   bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
   CardFaceTheme cardTheme = CardFaceTheme.classic; // varsayılan iskambil
+  /// "Yardımlı mod" — açıkken aktif (eşleşen) kolonlar parlak çerçeyle
+  /// vurgulanır; kapalıyken hamle mantığı aynı kalır ama vurgu
+  /// gösterilmez (oyuncu eşleşmeyi kendi bulmalıdır). İki taraf için de
+  /// aynı şekilde uygulanır.
+  bool assistedMode = true;
 
   static const List<Color> presetColors = [
     Color(0xFF0B6E4F), // yeşil (varsayılan)
@@ -76,6 +92,7 @@ class AppSettings extends ChangeNotifier {
           themeIndex < CardFaceTheme.values.length) {
         cardTheme = CardFaceTheme.values[themeIndex];
       }
+      assistedMode = prefs.getBool('assistedMode') ?? true;
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -99,7 +116,14 @@ class AppSettings extends ChangeNotifier {
         AppLanguage.tr => 'tr',
       });
       await prefs.setInt('cardTheme', cardTheme.index);
+      await prefs.setBool('assistedMode', assistedMode);
     } catch (_) {}
+  }
+
+  void setAssistedMode(bool v) {
+    assistedMode = v;
+    notifyListeners();
+    _persist();
   }
 
   void setCardFaceTheme(CardFaceTheme t) {
