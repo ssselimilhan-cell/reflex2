@@ -210,7 +210,7 @@ class _LeaderboardRow extends StatelessWidget {
             radius: 18,
             photoBase64: photoBase64,
             iconIndex: iconIndex,
-            color: colorValue != null ? Color(colorValue) : Colors.white24,
+            color: colorValue != null ? Color(colorValue!) : Colors.white24,
           ),
           const SizedBox(width: 10),
           Expanded(
