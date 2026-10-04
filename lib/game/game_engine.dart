@@ -27,9 +27,19 @@ enum GameStatus { playing, player1Wins, player2Wins }
 ///   yeniden karılır), ardından kapalı destesinden yeniden 4'er kart
 ///   açarak kolonlar yenilenir.
 /// - Kapalı destesini ilk tamamen bitiren oyuncu kazanır.
+///
+/// ART ARDA HAMLE AVANTAJI:
+/// Bir oyuncu, RAKİBİ ARADA HİÇ HAMLE YAPMADAN art arda 3 hamle yaparsa
+/// 1 kart, 5 hamle yaparsa 2 kart, 8 hamle yaparsa 3 kart avantaj
+/// kazanır — bu kartlar kendi kapalı destesinden düşürülür (hiç
+/// oynamadan "bitmiş" sayılır), kazanmaya bir adım yaklaştırır. Rakip
+/// herhangi bir hamle yaptığı an sayaç sıfırlanır.
 class GameEngine {
   static const int columnCount = 8;
   static const int columnsPerPlayer = 4;
+
+  /// Eşik -> avantaj kartı sayısı.
+  static const Map<int, int> streakBonusThresholds = {3: 1, 5: 2, 8: 3};
 
   final List<PlayingCard> player1Stock = [];
   final List<PlayingCard> player2Stock = [];
@@ -38,6 +48,23 @@ class GameEngine {
 
   /// "Yapışkan" aktif kolon kümesi — bkz. sınıf yorumu.
   final Set<int> _unlocked = {};
+
+  int _p1Streak = 0;
+  int _p2Streak = 0;
+  final Set<int> _p1TriggeredThresholds = {};
+  final Set<int> _p2TriggeredThresholds = {};
+
+  /// Sadece BU CİHAZDA, hemen callback ile bildirim almak için (yerel ve
+  /// bota karşı modlarda kullanılır). Online modda bunun yerine
+  /// [streakEventId] ile senkronize edilen alanlar kullanılıyor.
+  void Function(PlayerSide side, int bonusCards)? onStreakBonus;
+
+  /// Her yeni avantaj tetiklendiğinde artan sayaç — online modda
+  /// istemcilerin "bu olayı daha önce gördüm mü" diye kontrol edebilmesi
+  /// için Firestore'a da yazılıyor.
+  int streakEventId = 0;
+  int? lastStreakBonusAmount;
+  String? lastStreakBonusSide; // 'player1' | 'player2'
 
   GameStatus status = GameStatus.playing;
   final Random _random;
@@ -58,6 +85,13 @@ class GameEngine {
     _unlocked.clear();
     status = GameStatus.playing;
     locked = true; // açılış animasyonu bitene kadar hamle yok
+    _p1Streak = 0;
+    _p2Streak = 0;
+    _p1TriggeredThresholds.clear();
+    _p2TriggeredThresholds.clear();
+    streakEventId = 0;
+    lastStreakBonusAmount = null;
+    lastStreakBonusSide = null;
 
     final deck = buildStandardDeck()..shuffle(_random);
     final p1 = deck.sublist(0, 26);
@@ -121,6 +155,9 @@ class GameEngine {
     final card = stock.removeLast();
     columns[columnIndex].add(card);
 
+    _registerMove(side);
+    if (status != GameStatus.playing) return true; // avantajla kazanmış olabilir
+
     if (stock.isEmpty) {
       status = side == PlayerSide.player1
           ? GameStatus.player1Wins
@@ -133,6 +170,45 @@ class GameEngine {
     // Arayüz (UI) önce "Benzer Kalmadı" uyarısını göstermeli, 1 saniye
     // beklemeli, sonra collectAndRedeal() çağırmalıdır.
     return true;
+  }
+
+  /// Art arda hamle sayaçlarını günceller; eşik aşıldıysa avantajı
+  /// uygular. [side] hamle yapan taraf; karşı tarafın sayacı sıfırlanır.
+  void _registerMove(PlayerSide side) {
+    if (side == PlayerSide.player1) {
+      _p1Streak++;
+      _p2Streak = 0;
+      _p2TriggeredThresholds.clear();
+      _checkStreakBonus(PlayerSide.player1, _p1Streak, _p1TriggeredThresholds);
+    } else {
+      _p2Streak++;
+      _p1Streak = 0;
+      _p1TriggeredThresholds.clear();
+      _checkStreakBonus(PlayerSide.player2, _p2Streak, _p2TriggeredThresholds);
+    }
+  }
+
+  void _checkStreakBonus(PlayerSide side, int streak, Set<int> triggered) {
+    final bonus = streakBonusThresholds[streak];
+    if (bonus == null || triggered.contains(streak)) return;
+    triggered.add(streak);
+
+    final stock = stockOf(side);
+    final removeCount = bonus > stock.length ? stock.length : bonus;
+    for (var i = 0; i < removeCount; i++) {
+      stock.removeLast();
+    }
+
+    streakEventId++;
+    lastStreakBonusAmount = bonus;
+    lastStreakBonusSide = side == PlayerSide.player1 ? 'player1' : 'player2';
+    onStreakBonus?.call(side, bonus);
+
+    if (stock.isEmpty && status == GameStatus.playing) {
+      status = side == PlayerSide.player1
+          ? GameStatus.player1Wins
+          : GameStatus.player2Wins;
+    }
   }
 
   /// Oyun devam ederken aktif kolon kalmadıysa true döner (kilitlenme).
@@ -177,6 +253,9 @@ class GameEngine {
           .toList(),
       'unlocked': _unlocked.toList(),
       'status': status.name,
+      'streakEventId': streakEventId,
+      'lastStreakBonusAmount': lastStreakBonusAmount,
+      'lastStreakBonusSide': lastStreakBonusSide,
     };
   }
 
@@ -208,5 +287,8 @@ class GameEngine {
           .map((e) => e as int));
 
     status = GameStatus.values.firstWhere((s) => s.name == map['status']);
+    streakEventId = (map['streakEventId'] as num?)?.toInt() ?? 0;
+    lastStreakBonusAmount = (map['lastStreakBonusAmount'] as num?)?.toInt();
+    lastStreakBonusSide = map['lastStreakBonusSide'] as String?;
   }
 }

@@ -5,6 +5,7 @@ import 'online_lobby_screen.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
 import 'rules_screen.dart';
+import 'leaderboard_screen.dart';
 import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
@@ -74,6 +75,23 @@ class HomeScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                   builder: (_) => const OnlineLobbyScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _MenuButton(
+                        label: t('menu_leaderboard'),
+                        icon: Icons.leaderboard,
+                        onTap: () {
+                          if (!firebaseAvailable) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(t('firebase_needed'))),
+                            );
+                            return;
+                          }
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LeaderboardScreen()));
                         },
                       ),
                       const SizedBox(height: 16),

@@ -324,4 +324,44 @@ class OnlineRoomRepository {
       await _invites.doc(inviteId).delete();
     } catch (_) {}
   }
+
+  // ---- Liderlik tablosu ----
+
+  CollectionReference<Map<String, dynamic>> get _gameResults =>
+      FirebaseFirestore.instance.collection('game_results');
+
+  /// Bir online oyun bittiğinde HER İKİ taraf da kendi sonucunu (kazandı
+  /// mı) buraya kaydeder. Liderlik tablosu bu kayıtları zaman aralığına
+  /// göre filtreleyip istemci tarafında sayarak oluşturuluyor (ayrı bir
+  /// sunucu/Cloud Function olmadığı için).
+  Future<void> recordGameResult({
+    required String deviceId,
+    required bool won,
+    String? displayName,
+    int? avatarIconIndex,
+    int? avatarColorValue,
+    String? photoBase64,
+  }) async {
+    try {
+      await _gameResults.add({
+        'deviceId': deviceId,
+        'won': won,
+        'displayName': displayName,
+        'avatarIconIndex': avatarIconIndex,
+        'avatarColorValue': avatarColorValue,
+        'photoBase64': photoBase64,
+        'playedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
+
+  /// [since] tarihinden itibaren kazanılmış tüm oyunları dinler —
+  /// kazanan bazında gruplanıp sayılması ekranda (istemci tarafında)
+  /// yapılıyor.
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchWinsSince(DateTime since) {
+    return _gameResults
+        .where('won', isEqualTo: true)
+        .where('playedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
+        .snapshots();
+  }
 }

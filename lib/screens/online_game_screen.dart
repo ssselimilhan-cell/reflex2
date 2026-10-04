@@ -6,6 +6,7 @@ import '../online/firestore_game_repository.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
+import '../widgets/streak_celebration_overlay.dart';
 import '../widgets/chat_panel.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/player_header.dart';
@@ -41,9 +42,28 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   final List<Timer> _pendingTimers = [];
   int _lastKnownVersionKey = -1;
   bool _collectScheduled = false;
+  int _lastSeenStreakEventId = -1;
+  int? _celebrationBonus;
 
   PlayerSide get mySide =>
       widget.isHost ? PlayerSide.player1 : PlayerSide.player2;
+
+  /// Sunucu (Firestore transaction) tarafında uygulanan art arda hamle
+  /// avantajını, senkronize edilen streakEventId değişimini izleyerek
+  /// tespit eder — çünkü asıl mantık bu istemcinin _localView'ında değil,
+  /// repository'nin transaction içinde kurduğu geçici bir motorda çalışıyor.
+  void _maybeShowStreakCelebration(Map<String, dynamic> data) {
+    final eventId = (data['streakEventId'] as num?)?.toInt() ?? 0;
+    final wasInitialLoad = _lastSeenStreakEventId == -1;
+    if (eventId == _lastSeenStreakEventId) return;
+    _lastSeenStreakEventId = eventId;
+    if (wasInitialLoad || eventId <= 0) return;
+    final amount = (data['lastStreakBonusAmount'] as num?)?.toInt();
+    if (amount == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _celebrationBonus = amount);
+    });
+  }
 
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
 
@@ -294,6 +314,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
               _localView.loadFromMap(data);
               _maybeStartReveal(data);
+              _maybeShowStreakCelebration(data);
               final finished = _localView.status != GameStatus.playing;
               if (finished && !_scoreCounted) {
                 _scoreCounted = true;
@@ -302,6 +323,20 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScoreBoard.instance.addOnline(iWon);
                   UserProfile.instance.recordOnlineResult(iWon);
+                  final profile = UserProfile.instance;
+                  _repo.recordGameResult(
+                    deviceId: profile.deviceId ?? widget.deviceId,
+                    won: iWon,
+                    displayName:
+                        profile.hasProfile ? profile.displayName : null,
+                    avatarIconIndex:
+                        profile.hasProfile ? profile.avatarIconIndex : null,
+                    avatarColorValue: profile.hasProfile
+                        ? profile.avatarColor.value
+                        : null,
+                    photoBase64:
+                        profile.hasProfile ? profile.photoBase64 : null,
+                  );
                 });
               } else if (!finished) {
                 _scoreCounted = false;
@@ -364,6 +399,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             rightScore: ScoreBoard.instance.onlineOpp,
                             onReset: ScoreBoard.instance.resetOnline,
                           ),
+                        ),
+                        StockCountsBar(
+                          leftLabel: t('you'),
+                          leftCount: myStockCount,
+                          rightLabel: t('opponent'),
+                          rightCount: oppStockCount,
                         ),
                         // Rakip ve kendi 4'lü sıraları ortada; aralarında
                         // "yarım kart" kadar boşluk bırakılıyor (cardH/2).
@@ -456,6 +497,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
+                      ),
+                    if (_celebrationBonus != null)
+                      StreakCelebrationOverlay(
+                        bonus: _celebrationBonus!,
+                        onDone: () => setState(() => _celebrationBonus = null),
                       ),
                     if (finished && !_resultDismissed)
                       GameResultOverlay(

@@ -7,6 +7,7 @@ import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
 import '../widgets/player_header.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -32,6 +33,9 @@ class _VsBotScreenState extends State<VsBotScreen> {
   bool _gameStarted = false;
   bool _resultDismissed = false;
   final List<Timer> _pendingTimers = [];
+  /// Sadece OYUNCUNUN kazandığı avantaj kutlanıyor (botunki
+  /// bildirilmiyor, rahatsız edici olmasın diye).
+  int? _celebrationBonus;
 
   @override
   void initState() {
@@ -50,9 +54,15 @@ class _VsBotScreenState extends State<VsBotScreen> {
 
   void _startNewGame() {
     engine = GameEngine()..startNewGame();
+    engine.onStreakBonus = (side, bonus) {
+      if (side == PlayerSide.player1 && mounted) {
+        setState(() => _celebrationBonus = bonus);
+      }
+    };
     _scoreCounted = false;
     _paused = false;
     _resultDismissed = false;
+    _celebrationBonus = null;
     bot?.stop();
     bot = BotAi(engine, PlayerSide.player2, _onBotMove, difficulty: difficulty)
       ..start();
@@ -253,6 +263,12 @@ class _VsBotScreenState extends State<VsBotScreen> {
                           onReset: ScoreBoard.instance.resetBot,
                         ),
                       ),
+                      StockCountsBar(
+                        leftLabel: t('you'),
+                        leftCount: engine.player1Stock.length,
+                        rightLabel: t('bot'),
+                        rightCount: engine.player2Stock.length,
+                      ),
                       // Zorluk çubuğu artık başlangıç ekranında —
                       // buradaki eski yerine duraklat çubuğu geldi.
                       Padding(
@@ -373,6 +389,11 @@ class _VsBotScreenState extends State<VsBotScreen> {
                         ],
                       ),
                     ),
+                  ),
+                if (_celebrationBonus != null)
+                  StreakCelebrationOverlay(
+                    bonus: _celebrationBonus!,
+                    onDone: () => setState(() => _celebrationBonus = null),
                   ),
                 if (finished && !_resultDismissed)
                   GameResultOverlay(

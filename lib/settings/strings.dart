@@ -453,6 +453,38 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Короткая демонстрация',
     'zh': '简短演示'
   },
+  'streak_bonus_label': {
+    'tr': 'Kart!',
+    'en': 'Card(s)!',
+    'ru': 'карт(ы)!',
+    'zh': '张牌！'
+  },
+  'leaderboard_title': {
+    'tr': 'Liderlik Tablosu',
+    'en': 'Leaderboard',
+    'ru': 'Таблица лидеров',
+    'zh': '排行榜'
+  },
+  'menu_leaderboard': {
+    'tr': 'Liderlik Tablosu',
+    'en': 'Leaderboard',
+    'ru': 'Таблица лидеров',
+    'zh': '排行榜'
+  },
+  'period_daily': {'tr': 'Günlük', 'en': 'Daily', 'ru': 'День', 'zh': '每日'},
+  'period_weekly': {
+    'tr': 'Haftalık',
+    'en': 'Weekly',
+    'ru': 'Неделя',
+    'zh': '每周'
+  },
+  'period_monthly': {
+    'tr': 'Aylık',
+    'en': 'Monthly',
+    'ru': 'Месяц',
+    'zh': '每月'
+  },
+  'period_yearly': {'tr': 'Yıllık', 'en': 'Yearly', 'ru': 'Год', 'zh': '每年'},
 };
 
 String t(String key) {

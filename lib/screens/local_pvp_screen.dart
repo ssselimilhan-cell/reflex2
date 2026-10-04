@@ -5,6 +5,7 @@ import '../widgets/card_widget.dart';
 import '../widgets/deck_stack_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
+import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
@@ -33,11 +34,15 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
   bool _gameStarted = false;
   bool _resultDismissed = false;
   final List<Timer> _pendingTimers = [];
+  int? _celebrationBonus;
 
   @override
   void initState() {
     super.initState();
     engine = GameEngine();
+    engine.onStreakBonus = (side, bonus) {
+      if (mounted) setState(() => _celebrationBonus = bonus);
+    };
     // NOT: Artık ekran açılır açılmaz otomatik başlamıyor — oyuncular
     // "Oyunu Başlat" düğmesine basana kadar bekliyor.
   }
@@ -58,6 +63,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       _gameStarted = true;
       _scoreCounted = false;
       _resultDismissed = false;
+      _celebrationBonus = null;
     });
     _startReveal();
   }
@@ -132,6 +138,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       engine.startNewGame();
       _scoreCounted = false;
       _resultDismissed = false;
+      _celebrationBonus = null;
     });
     _startReveal();
   }
@@ -223,6 +230,11 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
                           ),
                         ),
                     ],
+                  ),
+                if (_celebrationBonus != null)
+                  StreakCelebrationOverlay(
+                    bonus: _celebrationBonus!,
+                    onDone: () => setState(() => _celebrationBonus = null),
                   ),
                 if (finished && !_resultDismissed)
                   GameResultOverlay(

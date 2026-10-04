@@ -39,31 +39,35 @@ class CardWidget extends StatefulWidget {
 class _CardWidgetState extends State<CardWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _arrivalController;
-  late Animation<Offset> _slide;
+  late Animation<double> _shake;
 
   @override
   void initState() {
     super.initState();
     _arrivalController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 260),
+      duration: const Duration(milliseconds: 200),
     );
-    _setupSlide();
+    _setupShake();
   }
 
-  void _setupSlide() {
-    final dy = widget.fromAbove == true
-        ? -0.45
-        : (widget.fromAbove == false ? 0.45 : 0.0);
-    _slide = Tween<Offset>(begin: Offset(0, dy), end: Offset.zero).animate(
-      CurvedAnimation(parent: _arrivalController, curve: Curves.easeOutBack),
-    );
+  /// Kart kapatıldığında oynanan ÇOK HAFİF, YERİNDE bir titreşim —
+  /// kart hiçbir yöne kaymaz/itilmez, sadece "hızlıca kondu" hissi
+  /// versin diye küçük bir sallanma yapar.
+  void _setupShake() {
+    _shake = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.045), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.045, end: -0.03), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -0.03, end: 0.012), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.012, end: 0.0), weight: 1),
+    ]).animate(
+        CurvedAnimation(parent: _arrivalController, curve: Curves.easeOut));
   }
 
   @override
   void didUpdateWidget(covariant CardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _setupSlide();
+    _setupShake();
     // Sadece "zaten açık olan bir kart, BAŞKA bir açık kartla
     // değiştirildiğinde" (yani gerçek bir hamle/kapatma anında) tetiklenir
     // — ilk açılış (reveal) animasyonuyla karışmaması için.
@@ -129,12 +133,11 @@ class _CardWidgetState extends State<CardWidget>
 
     if (widget.fromAbove == null) return cardBody;
 
-    return SlideTransition(
-      position: _slide,
-      child: FadeTransition(
-        opacity: Tween<double>(begin: 0.4, end: 1.0).animate(_arrivalController),
-        child: cardBody,
-      ),
+    return AnimatedBuilder(
+      animation: _shake,
+      builder: (context, child) =>
+          Transform.rotate(angle: _shake.value, child: child),
+      child: cardBody,
     );
   }
 

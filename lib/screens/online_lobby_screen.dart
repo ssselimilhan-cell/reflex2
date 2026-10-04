@@ -133,17 +133,20 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1B1B1B),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
+        // SafeArea + kaydırma: düğmenin ekran altına taşmasını önler.
+        return SafeArea(
+          child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ProfileAvatar.remote(
-                radius: 34,
+                radius: 30,
                 photoBase64: photoBase64,
                 iconIndex: iconIndex,
                 color: colorValue != null ? Color(colorValue) : Colors.white24,
@@ -183,6 +186,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   ),
                 ),
             ],
+          ),
           ),
         );
       },
