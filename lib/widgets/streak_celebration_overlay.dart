@@ -62,10 +62,10 @@ class _StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-          final t = _controller.value;
-          final popIn = (t / 0.25).clamp(0.0, 1.0);
+          final progress = _controller.value;
+          final popIn = (progress / 0.25).clamp(0.0, 1.0);
           final scale = Curves.elasticOut.transform(popIn);
-          final fadeOut = t > 0.72 ? (1 - (t - 0.72) / 0.28) : 1.0;
+          final fadeOut = progress > 0.72 ? (1 - (progress - 0.72) / 0.28) : 1.0;
 
           return Opacity(
             opacity: fadeOut.clamp(0.0, 1.0),
@@ -76,11 +76,11 @@ class _StreakCelebrationOverlayState extends State<StreakCelebrationOverlay>
                   for (var i = 0; i < particleCount; i++)
                     Transform.translate(
                       offset: Offset(
-                        spread * t * math.cos(i * 2 * math.pi / particleCount),
-                        spread * t * math.sin(i * 2 * math.pi / particleCount),
+                        spread * progress * math.cos(i * 2 * math.pi / particleCount),
+                        spread * progress * math.sin(i * 2 * math.pi / particleCount),
                       ),
                       child: Opacity(
-                        opacity: (1 - t).clamp(0.0, 1.0),
+                        opacity: (1 - progress).clamp(0.0, 1.0),
                         child: Text(_emoji,
                             style: TextStyle(fontSize: 16.0 + widget.bonus * 3)),
                       ),
