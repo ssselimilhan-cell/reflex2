@@ -60,8 +60,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               controller: _tabController,
               isScrollable: false,
               labelColor: Colors.amber,
-              unselectedLabelColor: Colors.white70,
+              unselectedLabelColor: Colors.white,
               indicatorColor: Colors.amber,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 14),
+              unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600, fontSize: 14),
+              dividerColor: Colors.transparent,
               tabs: [
                 Tab(text: t('period_daily')),
                 Tab(text: t('period_weekly')),
@@ -210,7 +216,7 @@ class _LeaderboardRow extends StatelessWidget {
             radius: 18,
             photoBase64: photoBase64,
             iconIndex: iconIndex,
-            color: colorValue != null ? Color(colorValue!) : Colors.white24,
+            color: colorValue != null ? Color(colorValue) : Colors.white24,
           ),
           const SizedBox(width: 10),
           Expanded(

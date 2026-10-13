@@ -40,6 +40,15 @@ class StresApp extends StatelessWidget {
           theme: ThemeData(
             colorSchemeSeed: AppSettings.instance.themeColor,
             useMaterial3: true,
+            // Üst çubuk her temada koyu zemin + beyaz yazı: açık zeminde
+            // açık renkli yazı (ör. liderlik sekmeleri) okunmaz hale
+            // geliyordu.
+            appBarTheme: AppBarTheme(
+              backgroundColor:
+                  Color.lerp(AppSettings.instance.themeColor, Colors.black, 0.45),
+              foregroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+            ),
           ),
           builder: (context, child) {
             final mq = MediaQuery.of(context);

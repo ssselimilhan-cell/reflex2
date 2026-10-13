@@ -11,6 +11,7 @@ import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/scream_background.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,6 +27,7 @@ class HomeScreen extends StatelessWidget {
           body: SafeArea(
             child: Stack(
               children: [
+                const Positioned.fill(child: ScreamBackground()),
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
