@@ -1,0 +1,32 @@
+name: APK Derle
+
+# Her GitHub'a yüklemede (push) otomatik çalışır; ayrıca Actions sekmesinden
+# "Run workflow" ile elle de başlatılabilir.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter build apk --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stres-kart-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
