@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /rooms/{roomCode} {
+      allow read: if true;
+      allow create: if request.resource.data.roomStatus == 'waiting'
+                    && request.resource.data.hostDeviceId is string;
+      allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if request.resource.data.text is string
+                      && request.resource.data.text.size() < 300;
+        allow update: if false;
+        allow delete: if true;
+      }
+    }
+
+    match /profiles/{deviceId} {
+      allow read: if true;
+      allow write: if request.resource.data.displayName is string
+                   && request.resource.data.displayName.size() < 40;
+      allow delete: if true;
+    }
+
+    match /invites/{inviteId} {
+      allow read: if true;
+      allow create: if request.resource.data.toDeviceId is string
+                    && request.resource.data.fromDeviceId is string;
+      allow update: if false;
+      allow delete: if true;
+    }
+
+    match /game_results/{resultId} {
+      allow read: if true;
+      allow create: if request.resource.data.deviceId is string;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Şikayetler: herkes gönderebilir, uygulamadan kimse okuyamaz
+    // (sadece sen, Firebase Console'dan görürsün).
+    match /reports/{reportId} {
+      allow create: if request.resource.data.reporterDeviceId is string
+                    && request.resource.data.reason is string
+                    && request.resource.data.reason.size() < 100;
+      allow read, update, delete: if false;
+    }
+  }
+}

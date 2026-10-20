@@ -15,11 +15,24 @@ dependencies:
   shared_preferences: ^2.3.2
   image_picker: ^1.1.2
   path_provider: ^2.1.4
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/
+
+# Uygulama ikonu: terminalde `dart run flutter_launcher_icons` çalıştırınca
+# android/ klasöründeki ikonları otomatik üretir.
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#7B1E3A"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"

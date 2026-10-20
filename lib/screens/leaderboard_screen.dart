@@ -187,6 +187,7 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cv = colorValue; // public alan terfi etmez, yerel kopya şart
     final isTop3 = rank <= 3;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -216,7 +217,7 @@ class _LeaderboardRow extends StatelessWidget {
             radius: 18,
             photoBase64: photoBase64,
             iconIndex: iconIndex,
-            color: colorValue != null ? Color(colorValue) : Colors.white24,
+            color: cv != null ? Color(cv) : Colors.white24,
           ),
           const SizedBox(width: 10),
           Expanded(
