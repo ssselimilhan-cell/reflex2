@@ -11,6 +11,7 @@ import '../widgets/chat_panel.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/player_header.dart';
 import '../settings/app_settings.dart';
+import '../settings/sound_manager.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
@@ -43,10 +44,68 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   int _lastKnownVersionKey = -1;
   bool _collectScheduled = false;
   int _lastSeenStreakEventId = -1;
+  int _lastTotalColumnCards = -1;
+  bool _nomatchSoundPlayed = false;
+  String? _opponentDeviceId;
   int? _celebrationBonus;
 
   PlayerSide get mySide =>
       widget.isHost ? PlayerSide.player1 : PlayerSide.player2;
+
+  /// Yeni durumda kolonlardaki toplam kart sayısı arttıysa bir hamle
+  /// yapılmış demektir — ses çal. "Benzer kalmadı" durumuna ilk girildiğinde
+  /// uyarı sesi çalar.
+  void _maybePlayMoveSound(Map<String, dynamic> data) {
+    final cols = (data['columns'] as List).cast<String>();
+    final total = cols.fold<int>(
+        0, (sum, c) => sum + (c.isEmpty ? 0 : c.split(',').length));
+    if (_lastTotalColumnCards != -1 && total > _lastTotalColumnCards) {
+      SoundManager.instance.play(Sfx.play);
+    }
+    _lastTotalColumnCards = total;
+
+    if (_localView.isDeadlocked && !_revealing) {
+      if (!_nomatchSoundPlayed) {
+        _nomatchSoundPlayed = true;
+        SoundManager.instance.play(Sfx.nomatch);
+      }
+    } else if (!_localView.isDeadlocked) {
+      _nomatchSoundPlayed = false;
+    }
+  }
+
+  /// Rakibi bildirmek için neden seçtiren küçük bir pencere açar.
+  void _showReportDialog() {
+    final reasons = <String>[
+      t('report_reason_chat'),
+      t('report_reason_profile'),
+      t('report_reason_abuse'),
+      t('report_reason_other'),
+    ];
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(t('report_user')),
+        children: reasons
+            .map((r) => SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _repo.reportUser(
+                      roomCode: widget.roomCode,
+                      reporterDeviceId:
+                          UserProfile.instance.deviceId ?? widget.deviceId,
+                      reportedDeviceId: _opponentDeviceId,
+                      reason: r,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(t('report_sent'))));
+                  },
+                  child: Text(r),
+                ))
+            .toList(),
+      ),
+    );
+  }
 
   /// Sunucu (Firestore transaction) tarafında uygulanan art arda hamle
   /// avantajını, senkronize edilen streakEventId değişimini izleyerek
@@ -60,6 +119,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     if (wasInitialLoad || eventId <= 0) return;
     final amount = (data['lastStreakBonusAmount'] as num?)?.toInt();
     if (amount == null) return;
+    SoundManager.instance.play(Sfx.streak);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _celebrationBonus = amount);
     });
@@ -140,6 +200,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
           for (final idx in pairs[i]) {
             revealed[idx] = true;
           }
+          SoundManager.instance.play(Sfx.deal);
           if (i == pairs.length - 1) {
             _revealing = false;
             _localView.locked = false;
@@ -174,6 +235,21 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             title: Text('${t('room')}: ${widget.roomCode}'),
             actions: [
               IconButton(
+                icon: const Icon(Icons.flag_outlined),
+                tooltip: t('report_user'),
+                onPressed: _showReportDialog,
+
+              ),
+              IconButton(
+                icon: Icon(AppSettings.instance.soundEnabled
+                    ? Icons.volume_up
+                    : Icons.volume_off),
+                tooltip: t('settings_sound'),
+                onPressed: () => AppSettings.instance
+                    .setSoundEnabled(!AppSettings.instance.soundEnabled),
+
+              ),
+              IconButton(
                 icon: const Icon(Icons.settings),
                 tooltip: t('menu_settings'),
                 onPressed: () => Navigator.push(context,
@@ -196,6 +272,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 }
                 final data = snapshot.data!.data()!;
                 final roomStatus = data['roomStatus'] as String;
+              _opponentDeviceId = (mySide == PlayerSide.player1
+                  ? data['guestDeviceId']
+                  : data['hostDeviceId']) as String?;
 
                 if (roomStatus == 'waiting') {
                 return Center(
@@ -315,6 +394,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               _localView.loadFromMap(data);
               _maybeStartReveal(data);
               _maybeShowStreakCelebration(data);
+              _maybePlayMoveSound(data);
               final finished = _localView.status != GameStatus.playing;
               if (finished && !_scoreCounted) {
                 _scoreCounted = true;
@@ -322,6 +402,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     (mySide == PlayerSide.player1);
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScoreBoard.instance.addOnline(iWon);
+                  SoundManager.instance.play(iWon ? Sfx.win : Sfx.lose);
                   UserProfile.instance.recordOnlineResult(iWon);
                   final profile = UserProfile.instance;
                   _repo.recordGameResult(

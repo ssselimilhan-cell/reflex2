@@ -38,6 +38,8 @@ class AppSettings extends ChangeNotifier {
   /// gösterilmez (oyuncu eşleşmeyi kendi bulmalıdır). İki taraf için de
   /// aynı şekilde uygulanır.
   bool assistedMode = true;
+  /// Ses efektleri açık/kapalı.
+  bool soundEnabled = true;
 
   static const List<Color> presetColors = [
     Color(0xFF0B6E4F), // yeşil (varsayılan)
@@ -93,6 +95,7 @@ class AppSettings extends ChangeNotifier {
         cardTheme = CardFaceTheme.values[themeIndex];
       }
       assistedMode = prefs.getBool('assistedMode') ?? true;
+      soundEnabled = prefs.getBool('soundEnabled') ?? true;
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -117,7 +120,14 @@ class AppSettings extends ChangeNotifier {
       });
       await prefs.setInt('cardTheme', cardTheme.index);
       await prefs.setBool('assistedMode', assistedMode);
+      await prefs.setBool('soundEnabled', soundEnabled);
     } catch (_) {}
+  }
+
+  void setSoundEnabled(bool v) {
+    soundEnabled = v;
+    notifyListeners();
+    _persist();
   }
 
   void setAssistedMode(bool v) {

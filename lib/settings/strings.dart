@@ -453,6 +453,43 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Короткая демонстрация',
     'zh': '简短演示'
   },
+  'settings_sound': {
+    'tr': 'Ses Efektleri',
+    'en': 'Sound Effects',
+    'ru': 'Звуковые эффекты',
+    'zh': '音效'
+  },
+  'report_user': {
+    'tr': 'Rakibi Bildir',
+    'en': 'Report Opponent',
+    'ru': 'Пожаловаться на соперника',
+    'zh': '举报对手'
+  },
+  'report_reason_chat': {
+    'tr': 'Uygunsuz mesaj',
+    'en': 'Inappropriate message',
+    'ru': 'Неприемлемое сообщение',
+    'zh': '不当消息'
+  },
+  'report_reason_profile': {
+    'tr': 'Uygunsuz isim veya fotoğraf',
+    'en': 'Inappropriate name or photo',
+    'ru': 'Неприемлемое имя или фото',
+    'zh': '不当昵称或头像'
+  },
+  'report_reason_abuse': {
+    'tr': 'Taciz veya hakaret',
+    'en': 'Harassment or abuse',
+    'ru': 'Оскорбления или домогательства',
+    'zh': '骚扰或辱骂'
+  },
+  'report_reason_other': {'tr': 'Diğer', 'en': 'Other', 'ru': 'Другое', 'zh': '其他'},
+  'report_sent': {
+    'tr': 'Bildirimin alındı, teşekkürler.',
+    'en': 'Report received, thank you.',
+    'ru': 'Жалоба получена, спасибо.',
+    'zh': '已收到举报，谢谢。'
+  },
   'streak_bonus_label': {
     'tr': 'Kart!',
     'en': 'Card(s)!',

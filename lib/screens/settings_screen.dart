@@ -118,6 +118,15 @@ class SettingsScreen extends StatelessWidget {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 activeColor: Colors.amber,
+                title: Text(t('settings_sound'),
+                    style: const TextStyle(color: Colors.white)),
+                value: settings.soundEnabled,
+                onChanged: settings.setSoundEnabled,
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: Colors.amber,
                 title: Text(t('settings_high_contrast'),
                     style: const TextStyle(color: Colors.white)),
                 value: settings.highContrast,

@@ -9,6 +9,7 @@ import '../widgets/player_header.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
+import '../settings/sound_manager.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
@@ -56,6 +57,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
     engine = GameEngine()..startNewGame();
     engine.onStreakBonus = (side, bonus) {
       if (side == PlayerSide.player1 && mounted) {
+        SoundManager.instance.play(Sfx.streak);
         setState(() => _celebrationBonus = bonus);
       }
     };
@@ -72,6 +74,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
   void _onBotMove() {
     if (!mounted) return;
     setState(() {});
+    SoundManager.instance.play(Sfx.play);
     _checkFinishForScore();
     if (engine.isDeadlocked && !_showNoMatch && !_revealing) {
       _handleDeadlock();
@@ -82,6 +85,8 @@ class _VsBotScreenState extends State<VsBotScreen> {
     if (engine.status != GameStatus.playing && !_scoreCounted) {
       _scoreCounted = true;
       ScoreBoard.instance.addBot(engine.status == GameStatus.player1Wins);
+      SoundManager.instance.play(
+          engine.status == GameStatus.player1Wins ? Sfx.win : Sfx.lose);
     }
   }
 
@@ -108,6 +113,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
           for (final idx in pairs[i]) {
             revealed[idx] = true;
           }
+          SoundManager.instance.play(Sfx.deal);
           if (i == pairs.length - 1) {
             _revealing = false;
             engine.locked = false;
@@ -123,6 +129,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
   }
 
   void _handleDeadlock() {
+    SoundManager.instance.play(Sfx.nomatch);
     setState(() => _showNoMatch = true);
     final timer = Timer(const Duration(seconds: 1), () {
       if (!mounted) return;
@@ -143,9 +150,11 @@ class _VsBotScreenState extends State<VsBotScreen> {
 
   void _tap(int columnIndex) {
     if (_revealing || _showNoMatch || _paused) return;
+    var played = false;
     setState(() {
-      engine.attemptPlay(PlayerSide.player1, columnIndex);
+      played = engine.attemptPlay(PlayerSide.player1, columnIndex);
     });
+    if (played) SoundManager.instance.play(Sfx.play);
     _checkFinishForScore();
     if (engine.isDeadlocked) {
       _handleDeadlock();
@@ -181,6 +190,15 @@ class _VsBotScreenState extends State<VsBotScreen> {
           appBar: AppBar(
             title: Text(t('menu_bot')),
             actions: [
+              IconButton(
+                icon: Icon(AppSettings.instance.soundEnabled
+                    ? Icons.volume_up
+                    : Icons.volume_off),
+                tooltip: t('settings_sound'),
+                onPressed: () => AppSettings.instance
+                    .setSoundEnabled(!AppSettings.instance.soundEnabled),
+
+              ),
               IconButton(
                 icon: const Icon(Icons.settings),
                 tooltip: t('menu_settings'),

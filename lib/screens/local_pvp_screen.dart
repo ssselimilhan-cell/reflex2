@@ -7,6 +7,7 @@ import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
 import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
+import '../settings/sound_manager.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
 import 'settings_screen.dart';
@@ -41,6 +42,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
     super.initState();
     engine = GameEngine();
     engine.onStreakBonus = (side, bonus) {
+      SoundManager.instance.play(Sfx.streak);
       if (mounted) setState(() => _celebrationBonus = bonus);
     };
     // NOT: Artık ekran açılır açılmaz otomatik başlamıyor — oyuncular
@@ -91,6 +93,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           for (final idx in pairs[i]) {
             revealed[idx] = true;
           }
+          SoundManager.instance.play(Sfx.deal);
           if (i == pairs.length - 1) {
             _revealing = false;
             engine.locked = false;
@@ -107,12 +110,15 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
 
   void _tap(PlayerSide side, int columnIndex) {
     if (_revealing || _showNoMatch) return;
+    var played = false;
     setState(() {
-      engine.attemptPlay(side, columnIndex);
+      played = engine.attemptPlay(side, columnIndex);
     });
+    if (played) SoundManager.instance.play(Sfx.play);
     if (engine.status != GameStatus.playing && !_scoreCounted) {
       _scoreCounted = true;
       ScoreBoard.instance.addLocal(engine.status == GameStatus.player1Wins);
+      SoundManager.instance.play(Sfx.win);
     }
     if (engine.isDeadlocked) {
       _handleDeadlock();
@@ -121,6 +127,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
 
   void _handleDeadlock() {
     if (_showNoMatch) return;
+    SoundManager.instance.play(Sfx.nomatch);
     setState(() => _showNoMatch = true);
     final timer = Timer(const Duration(seconds: 1), () {
       if (!mounted) return;
@@ -157,6 +164,15 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           appBar: AppBar(
             title: Text(t('menu_local')),
             actions: [
+              IconButton(
+                icon: Icon(AppSettings.instance.soundEnabled
+                    ? Icons.volume_up
+                    : Icons.volume_off),
+                tooltip: t('settings_sound'),
+                onPressed: () => AppSettings.instance
+                    .setSoundEnabled(!AppSettings.instance.soundEnabled),
+
+              ),
               IconButton(
                 icon: const Icon(Icons.settings),
                 tooltip: t('menu_settings'),

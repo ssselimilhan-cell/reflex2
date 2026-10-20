@@ -364,4 +364,25 @@ class OnlineRoomRepository {
         .where('playedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
         .snapshots();
   }
+
+  // ---- Şikayet (Google Play kullanıcı içeriği politikası için) ----
+
+  /// Rakibi uygunsuz davranış/içerik nedeniyle bildirir. Kayıtlar yalnızca
+  /// geliştirici tarafından Firebase Console'dan okunabilir.
+  Future<void> reportUser({
+    required String roomCode,
+    required String reporterDeviceId,
+    required String? reportedDeviceId,
+    required String reason,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('reports').add({
+        'roomCode': roomCode,
+        'reporterDeviceId': reporterDeviceId,
+        'reportedDeviceId': reportedDeviceId,
+        'reason': reason,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
 }
