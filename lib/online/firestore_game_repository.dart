@@ -359,8 +359,10 @@ class OnlineRoomRepository {
   /// kazanan bazında gruplanıp sayılması ekranda (istemci tarafında)
   /// yapılıyor.
   Stream<QuerySnapshot<Map<String, dynamic>>> watchWinsSince(DateTime since) {
+    // NOT: "won" filtresi sorguda DEĞİL, ekranda (istemci tarafında)
+    // uygulanıyor — iki alanlı sorgu Firestore'dan özel (bileşik) dizin
+    // isterdi. Tek alanlı aralık sorgusu otomatik dizinle çalışır.
     return _gameResults
-        .where('won', isEqualTo: true)
         .where('playedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(since))
         .snapshots();
   }

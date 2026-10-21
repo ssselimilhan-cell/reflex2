@@ -2,6 +2,15 @@
 
 Tüm komutlar **Codespace terminalinde, proje klasöründe** çalıştırılır. Gerçek derlemeyi sen yapıyorsun; kodu yalnızca yapı olarak kontrol edebildim.
 
+## YOL A (önerilen, Codespace GEREKMEZ): her şeyi GitHub Actions yapar
+1. `release.config` dosyasındaki `APP_NAME` ve `APP_ID` değerlerini kontrol et (APP_ID Play'e ilk yüklemeden sonra değişmez).
+2. GitHub: Settings → Secrets and variables → Actions → **New repository secret**. Ad: `KEYSTORE_PASSPHRASE`, değer: en az 12 karakterlik, SADECE harf ve rakamdan oluşan bir parola. **Bu parolayı güvenli bir yere yaz**, kaybedersen anahtar açılamaz.
+3. Actions sekmesi → **1) Yükleme Anahtarı Oluştur (bir kez)** → Run workflow. Anahtar sunucuda üretilir, parolanla şifrelenip `tools/upload-keystore.enc` olarak depoya kaydedilir. Hata "permission denied" derse: Settings → Actions → General → Workflow permissions → **Read and write permissions** seç, tekrar çalıştır.
+4. Actions sekmesi → **2) Mağaza Sürümü Derle (AAB + APK)** → Run workflow. Bitince en alttaki Artifacts'tan `stres-kart-magaza-paketi` indir: içinde `app-release.aab` (Play'e yüklenecek) ve `app-release.apk` (telefonda deneme).
+5. Çalışmanın "Summary" sayfasında paket adı ve `targetSdkVersion` görünür. 36 veya üstü olmalı.
+
+Aşağıdaki 1-6. bölümler Codespace ile yapılan ESKİ yoldur; Yol A'yı kullanıyorsan atla, 7. bölümden devam et.
+
 ## 0. Önce karar ver
 - **Uygulama adı:** `STRES - Refleks Kart Oyunu` (istersen değiştir, en fazla 30 karakter).
 - **Paket adı:** `com.seninadin.stres` gibi, **küçük harf**, nokta ayrımlı. `com.example` ile başlayamaz. **Yayından sonra değiştirilemez**, iyi düşün.
@@ -22,7 +31,7 @@ Bu komut: uygulama adını ve paket adını değiştirir, **internet iznini ekle
 
 ## 3. Firebase tarafı
 1. **Kurallar:** Firebase Console → Firestore → Rules. `store/firestore.rules` dosyasının **tamamını** yapıştır → Publish. (Liderlik tablosu ve şikayet koleksiyonları için gerekli.)
-2. **Dizin:** liderlik tablosu ilk açılışta "index gerekli" derse mesajdaki linke tıkla → Create. Elle: koleksiyon `game_results`, alanlar `won` (Artan) + `playedAt` (Artan).
+2. **Dizin:** artık GEREKMİYOR (liderlik tablosu sorgusu özel dizin istemeyecek şekilde değiştirildi).
 3. **Yeni paket adı için Firebase kaydı (önerilir):** `flutterfire configure` komutunu yeniden çalıştır, `stres-card` projesini seç, Android için yeni paket adını gir (sormazsa `flutterfire configure --android-package-name=com.seninadin.stres`). Bu `lib/firebase_options.dart` dosyasını günceller. Atlarsan oyun çoğunlukla yine çalışır ama Firebase'deki kayıtlı uygulama adı eski kalır.
 
 ## 4. Yükleme anahtarı (imza) oluştur
@@ -66,7 +75,7 @@ Dosya: `build/app/outputs/bundle/release/app-release.aab`. Bir sonraki sürümde
 6. İlk inceleme birkaç gün sürebilir.
 
 ## 9. Bilmen gereken eksikler ve riskler (dürüstçe)
-- **Kullanıcı engelleme yok.** Şikayet var (online ekranda bayrak ikonu), ama Google, kullanıcıların birbirine yazdığı uygulamalarda engelleme de bekleyebilir. İncelemede takılırsa söyle, sohbeti gizleme/engelleme ekleriz.
+- **Kullanıcı engelleme ve koşullar:** Google bunları ZORUNLU tutuyor (UGC politikası). Uygulamada artık var: ilk online/profil girişinde Kullanım Koşulları onayı, oyun içinde Bildir + Engelle, Ayarlar'da engellenenler listesi.
 - **Ekran görüntülerini ben üretemem**, gerçek telefondan alınmalı.
 - **Liderlik tablosu maliyeti:** her açılışta ilgili dönemdeki tüm kazanma kayıtlarını okur. Oyuncu sayısı büyüyünce Firestore ücretsiz kotası (günlük 50 bin okuma) aşılabilir. Büyürsen günlük özet kayıtlarına geçmek gerekir.
 - **Silme:** Profili Sil, profil kaydını siler; `game_results` kayıtları istemciden silinemez, politika bunu e-posta talebiyle karşılar.

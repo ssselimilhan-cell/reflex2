@@ -7,6 +7,7 @@ import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
+import '../settings/moderation.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -28,6 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
+    if (!await ensureTermsAccepted(context)) return;
+    if (!mounted) return;
     setState(() => _saving = true);
     await UserProfile.instance.createProfile(name);
     if (mounted) setState(() => _saving = false);

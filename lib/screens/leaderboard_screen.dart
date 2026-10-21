@@ -94,11 +94,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         if (snapshot.hasError) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style:
-                      const TextStyle(color: Colors.redAccent, fontSize: 11)),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(t('leaderboard_error'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 15, height: 1.4)),
+                  const SizedBox(height: 10),
+                  Text('${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      maxLines: 6,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Colors.white54, fontSize: 10)),
+                ],
+              ),
             ),
           );
         }
@@ -110,6 +122,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         final Map<String, Map<String, dynamic>> agg = {};
         for (final doc in snapshot.data!.docs) {
           final data = doc.data();
+          if (data['won'] != true) continue; // sadece kazanılan oyunlar
           final id = data['deviceId'] as String?;
           if (id == null) continue;
           final entry = agg.putIfAbsent(

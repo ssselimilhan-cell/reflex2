@@ -6,6 +6,7 @@ import 'settings_screen.dart';
 import 'profile_screen.dart';
 import 'rules_screen.dart';
 import 'leaderboard_screen.dart';
+import '../settings/moderation.dart';
 import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
@@ -66,13 +67,15 @@ class HomeScreen extends StatelessWidget {
                       _MenuButton(
                         label: t('menu_online'),
                         icon: Icons.wifi,
-                        onTap: () {
+                        onTap: () async {
                           if (!firebaseAvailable) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(t('firebase_needed'))),
                             );
                             return;
                           }
+                          if (!await ensureTermsAccepted(context)) return;
+                          if (!context.mounted) return;
                           Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -83,13 +86,15 @@ class HomeScreen extends StatelessWidget {
                       _MenuButton(
                         label: t('menu_leaderboard'),
                         icon: Icons.leaderboard,
-                        onTap: () {
+                        onTap: () async {
                           if (!firebaseAvailable) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(t('firebase_needed'))),
                             );
                             return;
                           }
+                          if (!await ensureTermsAccepted(context)) return;
+                          if (!context.mounted) return;
                           Navigator.push(
                               context,
                               MaterialPageRoute(

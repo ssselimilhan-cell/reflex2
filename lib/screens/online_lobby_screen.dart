@@ -6,6 +6,7 @@ import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
+import '../settings/moderation.dart';
 import 'online_game_screen.dart';
 
 enum _PlayerSort { alphabetical, gamesPlayed, winRate }
@@ -169,7 +170,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              if (!isMe)
+              if (!isMe) ...[
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -185,6 +186,21 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14)),
                   ),
                 ),
+                const SizedBox(height: 6),
+                TextButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(sheetContext);
+                    await Moderation.instance.block(targetDeviceId, name);
+                    if (!mounted) return;
+                    setState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(t('user_blocked'))));
+                  },
+                  icon: const Icon(Icons.block, color: Colors.white54, size: 18),
+                  label: Text(t('block_short'),
+                      style: const TextStyle(color: Colors.white54)),
+                ),
+              ],
             ],
           ),
           ),
@@ -198,7 +214,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _repo.watchIncomingInvites(_myDeviceId!),
       builder: (context, snapshot) {
-        final docs = snapshot.data?.docs ?? [];
+        final docs = (snapshot.data?.docs ?? [])
+            .where((d) => !Moderation.instance
+                .isBlocked(d.data()['fromDeviceId'] as String?))
+            .toList();
         if (docs.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -500,6 +519,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 );
               }
               final docs = snapshot.data!.docs.toList();
+              docs.removeWhere((d) => Moderation.instance
+                  .isBlocked(d.data()['hostDeviceId'] as String?));
               // Kazanma oranına göre azalan sırala (misafirler/oranı
               // olmayanlar en sona düşer). Sıralama istemci tarafında.
               docs.sort((a, b) {
@@ -675,6 +696,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   );
                 }
                 final docs = snapshot.data!.docs.toList();
+                docs.removeWhere((d) => Moderation.instance.isBlocked(d.id));
                 docs.sort((a, b) {
                   final da = a.data();
                   final db = b.data();

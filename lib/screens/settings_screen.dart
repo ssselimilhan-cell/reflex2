@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
+import '../settings/moderation.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -122,6 +123,14 @@ class SettingsScreen extends StatelessWidget {
                     style: const TextStyle(color: Colors.white)),
                 value: settings.soundEnabled,
                 onChanged: settings.setSoundEnabled,
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.block, color: Colors.white70),
+                title: Text(
+                    '${t('blocked_players')} (${Moderation.instance.blocked.length})',
+                    style: const TextStyle(color: Colors.white)),
+                onTap: () => showBlockedPlayersDialog(context),
               ),
               const SizedBox(height: 8),
               SwitchListTile(

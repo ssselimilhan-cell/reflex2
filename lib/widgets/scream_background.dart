@@ -34,16 +34,20 @@ class _ScreamBackgroundState extends State<ScreamBackground>
 
   @override
   Widget build(BuildContext context) {
-    // Dokunuşlar arkadaki bu dekora takılmasın, hep düğmelere gitsin.
+    // Dokunuşlar arkadaki bu dekora takılmasın; RepaintBoundary sayesinde
+    // bu sürekli animasyon, üstteki düğmelerin yeniden çizilmesini
+    // tetiklemez.
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: _ScreamPainter(_controller.value),
-            size: Size.infinite,
-          );
-        },
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return CustomPaint(
+              painter: _ScreamPainter(_controller.value),
+              size: Size.infinite,
+            );
+          },
+        ),
       ),
     );
   }
@@ -87,7 +91,7 @@ class _ScreamPainter extends CustomPainter {
       final phase = t * 2 * math.pi + i * 0.65;
       final amplitude = 14.0 + (i % 4) * 5;
       var started = false;
-      for (double x = 0; x <= size.width; x += 10) {
+      for (double x = 0; x <= size.width; x += 16) {
         final y = baseY +
             amplitude * math.sin((x / size.width) * 3.5 * math.pi + phase);
         if (!started) {

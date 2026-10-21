@@ -1,7 +1,33 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../settings/user_profile.dart';
+
+/// base64 fotoğrafı her yeniden çizimde baştan çözmek (ve her seferinde
+/// yeni bir bayt dizisiyle görüntü önbelleğini kaçırmak) uygulamayı
+/// yavaşlatıyordu. Çözülmüş baytlar burada saklanır; aynı fotoğraf için
+/// hep AYNI nesne döner, böylece Flutter görüntüyü önbellekten gösterir.
+final Map<String, Uint8List> _decodedPhotoCache = {};
+
+Uint8List? _decodePhoto(String b64) {
+  final cached = _decodedPhotoCache[b64];
+  if (cached != null) return cached;
+  try {
+    final bytes = base64Decode(b64);
+    if (_decodedPhotoCache.length >= 40) {
+      _decodedPhotoCache.remove(_decodedPhotoCache.keys.first);
+    }
+    _decodedPhotoCache[b64] = bytes;
+    return bytes;
+  } catch (_) {
+    return null;
+  }
+}
+
+final Map<String, bool> _fileExistsCache = {};
+bool _fileExists(String path) =>
+    _fileExistsCache.putIfAbsent(path, () => File(path).existsSync());
 
 /// Profilin fotoğrafı varsa onu, yoksa seçili ikon+renk kombinasyonunu
 /// gösteren küçük dairesel avatar.
@@ -52,11 +78,9 @@ class ProfileAvatar extends StatelessWidget {
   }
 
   Widget _buildFromOwnProfile(UserProfile profile) {
-    if (profile.photoPath != null) {
-      final file = File(profile.photoPath!);
-      if (file.existsSync()) {
-        return CircleAvatar(radius: radius, backgroundImage: FileImage(file));
-      }
+    final path = profile.photoPath;
+    if (path != null && _fileExists(path)) {
+      return CircleAvatar(radius: radius, backgroundImage: FileImage(File(path)));
     }
     return CircleAvatar(
       radius: radius,
@@ -72,11 +96,9 @@ class ProfileAvatar extends StatelessWidget {
   Widget _buildFromRemoteData(
       String? photoBase64, int iconIndex, Color color) {
     if (photoBase64 != null && photoBase64.isNotEmpty) {
-      try {
-        final bytes = base64Decode(photoBase64);
+      final bytes = _decodePhoto(photoBase64);
+      if (bytes != null) {
         return CircleAvatar(radius: radius, backgroundImage: MemoryImage(bytes));
-      } catch (_) {
-        // Bozuk/eksik veri varsa ikona düş.
       }
     }
     final safeIndex = iconIndex.clamp(0, kAvatarIcons.length - 1);

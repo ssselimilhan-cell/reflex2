@@ -490,6 +490,61 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Жалоба получена, спасибо.',
     'zh': '已收到举报，谢谢。'
   },
+  'leaderboard_error': {
+    'tr': 'Liderlik tablosu yüklenemedi. İnternet bağlantını kontrol et; sorun sürerse Firestore kuralında game_results koleksiyonunun açık olduğundan emin ol.',
+    'en': 'Could not load the leaderboard. Check your connection; if it persists, make sure the game_results collection is allowed in your Firestore rules.',
+    'ru': 'Не удалось загрузить таблицу лидеров. Проверьте соединение; если ошибка повторяется, проверьте правила Firestore для game_results.',
+    'zh': '无法加载排行榜。请检查网络；若仍失败，请确认 Firestore 规则允许 game_results 集合。'
+  },
+  'terms_title': {
+    'tr': 'Kullanım Koşulları',
+    'en': 'Terms of Use',
+    'ru': 'Условия использования',
+    'zh': '使用条款'
+  },
+  'terms_body': {
+    'tr': 'Online özellikleri (lobi, sohbet, davet, liderlik tablosu, profil) kullanarak şunları kabul edersin:\n\n• Hakaret, taciz, nefret söylemi, müstehcen veya yasa dışı içerik (mesaj, isim, fotoğraf) yasaktır.\n• Başkalarının kişisel bilgilerini paylaşmazsın.\n• Uygunsuz içeriği veya davranışı oyun içinden "Rakibi Bildir" ile bildirebilir, oyuncuları "Engelle" ile engelleyebilirsin.\n• Bildirimler incelenir; kuralları ihlal eden içerikler kaldırılabilir ve oyuncuların erişimi sınırlanabilir.\n• Verilerin Gizlilik Politikası\'na göre işlenir.',
+    'en': 'By using the online features (lobby, chat, invites, leaderboard, profile) you agree that:\n\n• Insults, harassment, hate speech, sexual or illegal content (messages, names, photos) is not allowed.\n• You will not share other people\'s personal information.\n• You can report inappropriate content or behavior in-game with "Report Opponent" and block players with "Block".\n• Reports are reviewed; content that breaks the rules may be removed and players may lose access.\n• Your data is processed according to the Privacy Policy.',
+    'ru': 'Используя онлайн-функции (лобби, чат, приглашения, таблицу лидеров, профиль), вы соглашаетесь:\n\n• Оскорбления, домогательства, разжигание ненависти, сексуальный или незаконный контент (сообщения, имена, фото) запрещены.\n• Не публиковать чужие личные данные.\n• О неприемлемом контенте или поведении можно сообщить в игре через «Пожаловаться на соперника», а игроков — заблокировать.\n• Жалобы рассматриваются; нарушающий правила контент может быть удалён, а доступ игроков ограничен.\n• Ваши данные обрабатываются согласно Политике конфиденциальности.',
+    'zh': '使用在线功能（大厅、聊天、邀请、排行榜、个人资料）即表示你同意：\n\n• 禁止辱骂、骚扰、仇恨言论、色情或违法内容（消息、昵称、头像）。\n• 不得分享他人的个人信息。\n• 你可以在游戏内通过“举报对手”举报不当内容或行为，并可屏蔽玩家。\n• 举报会被审核；违规内容可能被删除，相关玩家可能被限制使用。\n• 你的数据将按照隐私政策处理。'
+  },
+  'block_user': {
+    'tr': 'Rakibi Engelle',
+    'en': 'Block Opponent',
+    'ru': 'Заблокировать соперника',
+    'zh': '屏蔽对手'
+  },
+  'block_short': {'tr': 'Engelle', 'en': 'Block', 'ru': 'Заблокировать', 'zh': '屏蔽'},
+  'block_confirm': {
+    'tr': 'Bu oyuncu engellensin mi? Odadan çıkarsın; bir daha lobide masaları ve davetleri sana görünmez.',
+    'en': 'Block this player? You will leave the room, and their tables and invites will no longer be shown to you.',
+    'ru': 'Заблокировать этого игрока? Вы покинете комнату, его столы и приглашения больше не будут отображаться.',
+    'zh': '确定屏蔽该玩家吗？你将离开房间，之后将不再看到其牌桌和邀请。'
+  },
+  'user_blocked': {
+    'tr': 'Oyuncu engellendi.',
+    'en': 'Player blocked.',
+    'ru': 'Игрок заблокирован.',
+    'zh': '已屏蔽该玩家。'
+  },
+  'blocked_players': {
+    'tr': 'Engellenen Oyuncular',
+    'en': 'Blocked Players',
+    'ru': 'Заблокированные игроки',
+    'zh': '已屏蔽的玩家'
+  },
+  'blocked_empty': {
+    'tr': 'Engellediğin oyuncu yok.',
+    'en': 'You have not blocked anyone.',
+    'ru': 'Вы никого не блокировали.',
+    'zh': '你没有屏蔽任何玩家。'
+  },
+  'unblock': {
+    'tr': 'Engeli Kaldır',
+    'en': 'Unblock',
+    'ru': 'Разблокировать',
+    'zh': '解除屏蔽'
+  },
   'streak_bonus_label': {
     'tr': 'Kart!',
     'en': 'Card(s)!',

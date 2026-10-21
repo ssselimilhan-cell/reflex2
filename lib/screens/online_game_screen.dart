@@ -12,6 +12,7 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/player_header.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
+import '../settings/moderation.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
@@ -47,6 +48,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   int _lastTotalColumnCards = -1;
   bool _nomatchSoundPlayed = false;
   String? _opponentDeviceId;
+  String? _opponentName;
+  bool _leavingBlocked = false;
   int? _celebrationBonus;
 
   PlayerSide get mySide =>
@@ -72,6 +75,35 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     } else if (!_localView.isDeadlocked) {
       _nomatchSoundPlayed = false;
     }
+  }
+
+  /// Rakibi engeller (onay sonrası) ve odadan çıkar.
+  Future<void> _confirmBlockOpponent() async {
+    final id = _opponentDeviceId;
+    if (id == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('block_user')),
+        content: Text(t('block_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(t('decline')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(t('block_user')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await Moderation.instance.block(id, _opponentName);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(t('user_blocked'))));
+    Navigator.of(context).pop();
   }
 
   /// Rakibi bildirmek için neden seçtiren küçük bir pencere açar.
@@ -234,11 +266,17 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
           appBar: AppBar(
             title: Text('${t('room')}: ${widget.roomCode}'),
             actions: [
-              IconButton(
+              PopupMenuButton<String>(
                 icon: const Icon(Icons.flag_outlined),
                 tooltip: t('report_user'),
-                onPressed: _showReportDialog,
-
+                onSelected: (v) {
+                  if (v == 'report') _showReportDialog();
+                  if (v == 'block') _confirmBlockOpponent();
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'report', child: Text(t('report_user'))),
+                  PopupMenuItem(value: 'block', child: Text(t('block_user'))),
+                ],
               ),
               IconButton(
                 icon: Icon(AppSettings.instance.soundEnabled
@@ -275,6 +313,17 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               _opponentDeviceId = (mySide == PlayerSide.player1
                   ? data['guestDeviceId']
                   : data['hostDeviceId']) as String?;
+              _opponentName = (mySide == PlayerSide.player1
+                  ? data['guestDisplayName']
+                  : data['hostDisplayName']) as String?;
+              // Daha önce engellediğim biri odaya girdiyse otomatik çık.
+              if (Moderation.instance.isBlocked(_opponentDeviceId) &&
+                  !_leavingBlocked) {
+                _leavingBlocked = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) Navigator.of(context).maybePop();
+                });
+              }
 
                 if (roomStatus == 'waiting') {
                 return Center(
