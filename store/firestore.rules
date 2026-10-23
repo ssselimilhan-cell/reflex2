@@ -40,6 +40,23 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Arkadaşlık istekleri ve arkadaşlıklar
+    match /friend_requests/{requestId} {
+      allow read: if true;
+      allow create: if request.resource.data.fromDeviceId is string
+                    && request.resource.data.toDeviceId is string;
+      allow update: if false;
+      allow delete: if true;
+    }
+
+    match /friendships/{pairId} {
+      allow read: if true;
+      allow create: if request.resource.data.users is list
+                    && request.resource.data.users.size() == 2;
+      allow update: if false;
+      allow delete: if true;
+    }
+
     // Şikayetler: herkes gönderebilir, uygulamadan kimse okuyamaz
     // (sadece sen, Firebase Console'dan görürsün).
     match /reports/{reportId} {

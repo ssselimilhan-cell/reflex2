@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'settings/app_settings.dart';
 import 'settings/user_profile.dart';
 import 'settings/moderation.dart';
+import 'settings/progress.dart';
 
 /// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
 /// haldeyse) uygulamanın çökmesini engellemek için bu bayrak kullanılır.
@@ -25,6 +26,7 @@ void main() async {
   // zaman okunur; Firestore senkronizasyonu sadece profil varsa denenir).
   await UserProfile.instance.load();
   await Moderation.instance.load();
+  await Progress.instance.load();
   runApp(const StresApp());
 }
 
@@ -39,6 +41,7 @@ class StresApp extends StatelessWidget {
         return MaterialApp(
           title: 'Stres',
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: rootMessengerKey,
           theme: ThemeData(
             colorSchemeSeed: AppSettings.instance.themeColor,
             useMaterial3: true,

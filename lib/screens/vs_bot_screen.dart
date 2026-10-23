@@ -10,13 +10,19 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
+import '../settings/progress.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'settings_screen.dart';
 
 class VsBotScreen extends StatefulWidget {
-  const VsBotScreen({super.key});
+  /// true ise "Oyunu Başlat" düğmesine basılmadan oyun hemen başlar
+  /// (Hızlı Eşleş bota düştüğünde ve ilk açılış eğitiminde kullanılır).
+  final bool autoStart;
+  final double? initialDifficulty;
+
+  const VsBotScreen({super.key, this.autoStart = false, this.initialDifficulty});
 
   @override
   State<VsBotScreen> createState() => _VsBotScreenState();
@@ -41,6 +47,14 @@ class _VsBotScreenState extends State<VsBotScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDifficulty != null) {
+      difficulty = widget.initialDifficulty!;
+    }
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _beginGame();
+      });
+    }
     // NOT: Artık ekran açılır açılmaz otomatik başlamıyor — "Oyunu
     // Başlat" düğmesine basılana kadar bekliyor. Zorluk da o ekranda
     // (oyun başlamadan ÖNCE) ayarlanabiliyor.
@@ -58,6 +72,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
     engine.onStreakBonus = (side, bonus) {
       if (side == PlayerSide.player1 && mounted) {
         SoundManager.instance.play(Sfx.streak);
+        Progress.instance.recordStreakBonus();
         setState(() => _celebrationBonus = bonus);
       }
     };
@@ -87,6 +102,8 @@ class _VsBotScreenState extends State<VsBotScreen> {
       ScoreBoard.instance.addBot(engine.status == GameStatus.player1Wins);
       SoundManager.instance.play(
           engine.status == GameStatus.player1Wins ? Sfx.win : Sfx.lose);
+      Progress.instance
+          .recordGame(won: engine.status == GameStatus.player1Wins);
     }
   }
 

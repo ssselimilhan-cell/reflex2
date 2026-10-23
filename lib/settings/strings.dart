@@ -545,6 +545,240 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Разблокировать',
     'zh': '解除屏蔽'
   },
+  'chat_title': {
+    'tr': 'Sohbet',
+    'en': 'Chat',
+    'ru': 'Чат',
+    'zh': '聊天'
+  },
+  'chat_clear': {
+    'tr': 'Sohbeti sil',
+    'en': 'Clear chat',
+    'ru': 'Очистить чат',
+    'zh': '清空聊天'
+  },
+  'chat_clear_confirm': {
+    'tr': 'Bu sohbetteki mesajlar yalnızca senin ekranından silinir. Sohbete normal şekilde devam edebilirsin.',
+    'en': 'Messages will be removed from your screen only. You can keep chatting as usual.',
+    'ru': 'Сообщения будут удалены только на вашем экране. Вы можете продолжать общение.',
+    'zh': '消息仅会从你的屏幕上删除，你可以继续正常聊天。'
+  },
+  'chat_empty': {
+    'tr': 'Henüz mesaj yok',
+    'en': 'No messages yet',
+    'ru': 'Сообщений пока нет',
+    'zh': '暂无消息'
+  },
+  'friend_add': {
+    'tr': 'Arkadaş Ekle',
+    'en': 'Add Friend',
+    'ru': 'Добавить в друзья',
+    'zh': '添加好友'
+  },
+  'friend_remove': {
+    'tr': 'Arkadaşlıktan Çıkar',
+    'en': 'Remove Friend',
+    'ru': 'Удалить из друзей',
+    'zh': '删除好友'
+  },
+  'friend_request_sent': {
+    'tr': 'Arkadaşlık isteği gönderildi.',
+    'en': 'Friend request sent.',
+    'ru': 'Запрос в друзья отправлен.',
+    'zh': '好友请求已发送。'
+  },
+  'friend_already': {
+    'tr': 'Zaten arkadaşsınız.',
+    'en': 'You are already friends.',
+    'ru': 'Вы уже друзья.',
+    'zh': '你们已经是好友。'
+  },
+  'friend_added': {
+    'tr': 'Arkadaş eklendi!',
+    'en': 'Friend added!',
+    'ru': 'Друг добавлен!',
+    'zh': '已添加好友！'
+  },
+  'friend_error': {
+    'tr': 'Arkadaşlık isteği gönderilemedi. İnternet bağlantını kontrol et.',
+    'en': 'Could not send the friend request. Check your connection.',
+    'ru': 'Не удалось отправить запрос. Проверьте соединение.',
+    'zh': '无法发送好友请求，请检查网络。'
+  },
+  'friend_need_profile': {
+    'tr': 'Arkadaş eklemek için önce bir profil oluşturmalısın.',
+    'en': 'Create a profile first to add friends.',
+    'ru': 'Сначала создайте профиль, чтобы добавлять друзей.',
+    'zh': '请先创建个人资料再添加好友。'
+  },
+  'friend_guest': {
+    'tr': 'Bu oyuncunun profili yok, arkadaş olarak eklenemez.',
+    'en': 'This player has no profile and cannot be added as a friend.',
+    'ru': 'У этого игрока нет профиля, его нельзя добавить в друзья.',
+    'zh': '该玩家没有个人资料，无法添加为好友。'
+  },
+  'friend_request_text': {
+    'tr': 'seni arkadaş olarak eklemek istiyor',
+    'en': 'wants to add you as a friend',
+    'ru': 'хочет добавить вас в друзья',
+    'zh': '想添加你为好友'
+  },
+  'friends_filter': {
+    'tr': 'Sadece arkadaşlar',
+    'en': 'Friends only',
+    'ru': 'Только друзья',
+    'zh': '仅好友'
+  },
+  'no_friends_yet': {
+    'tr': 'Henüz arkadaşın yok.',
+    'en': 'No friends yet.',
+    'ru': 'Друзей пока нет.',
+    'zh': '还没有好友。'
+  },
+  'menu_quick_match': {
+    'tr': 'Hızlı Eşleş',
+    'en': 'Quick Match',
+    'ru': 'Быстрая игра',
+    'zh': '快速匹配'
+  },
+  'qm_searching': {
+    'tr': 'Rakip aranıyor…',
+    'en': 'Finding an opponent…',
+    'ru': 'Поиск соперника…',
+    'zh': '正在寻找对手…'
+  },
+  'qm_hint': {
+    'tr': 'Rakip bulunamazsa {n} saniye sonra bota karşı başlarsın.',
+    'en': 'If no opponent is found, you will play a bot in {n} s.',
+    'ru': 'Если соперник не найден, через {n} с начнётся игра с ботом.',
+    'zh': '若未找到对手，{n} 秒后将与机器人对战。'
+  },
+  'qm_play_bot_now': {
+    'tr': 'Şimdi bota karşı oyna',
+    'en': 'Play the bot now',
+    'ru': 'Играть с ботом сейчас',
+    'zh': '立即对战机器人'
+  },
+  'daily_title': {
+    'tr': 'Günlük Görevler',
+    'en': 'Daily Missions',
+    'ru': 'Ежедневные задания',
+    'zh': '每日任务'
+  },
+  'mission_play3': {
+    'tr': '3 oyun oyna',
+    'en': 'Play 3 games',
+    'ru': 'Сыграйте 3 игры',
+    'zh': '玩3局游戏'
+  },
+  'mission_win1': {
+    'tr': 'Bir oyun kazan',
+    'en': 'Win a game',
+    'ru': 'Выиграйте игру',
+    'zh': '赢一局'
+  },
+  'mission_bonus1': {
+    'tr': 'Bir seri avantajı kazan',
+    'en': 'Earn a streak bonus',
+    'ru': 'Получите бонус за серию',
+    'zh': '获得一次连击奖励'
+  },
+  'mission_done': {
+    'tr': 'Görev tamamlandı',
+    'en': 'Mission complete',
+    'ru': 'Задание выполнено',
+    'zh': '任务完成'
+  },
+  'streak_hint': {
+    'tr': 'Her gün en az bir oyun oynayarak serini sürdür.',
+    'en': 'Keep your streak by playing at least one game every day.',
+    'ru': 'Играйте хотя бы одну игру в день, чтобы сохранить серию.',
+    'zh': '每天至少玩一局以保持连续天数。'
+  },
+  'settings_haptics': {
+    'tr': 'Titreşim',
+    'en': 'Vibration',
+    'ru': 'Вибрация',
+    'zh': '振动'
+  },
+  'ob_skip': {
+    'tr': 'Atla',
+    'en': 'Skip',
+    'ru': 'Пропустить',
+    'zh': '跳过'
+  },
+  'ob_next': {
+    'tr': 'İleri',
+    'en': 'Next',
+    'ru': 'Далее',
+    'zh': '下一步'
+  },
+  'ob_play_first': {
+    'tr': 'İlk oyunumu oynat',
+    'en': 'Play my first game',
+    'ru': 'Сыграть первую игру',
+    'zh': '开始第一局'
+  },
+  'ob_to_menu': {
+    'tr': 'Menüye git',
+    'en': 'Go to menu',
+    'ru': 'В меню',
+    'zh': '进入菜单'
+  },
+  'show_tutorial': {
+    'tr': 'Eğitimi tekrar göster',
+    'en': 'Replay tutorial',
+    'ru': 'Повторить обучение',
+    'zh': '重新观看教程'
+  },
+  'ob1_title': {
+    'tr': 'Aynı değerleri yakala',
+    'en': 'Spot the matches',
+    'ru': 'Находи совпадения',
+    'zh': '找出相同的牌'
+  },
+  'ob1_body': {
+    'tr': 'Masadaki 8 kolonun üst kartlarına bak. Aynı değere sahip kartlar parlar. Parlayan bir kolona dokun!',
+    'en': 'Watch the top cards of the 8 columns. Cards with the same value light up. Tap a glowing column!',
+    'ru': 'Смотрите на верхние карты 8 столбцов. Карты с одинаковым значением подсвечиваются. Нажмите на подсвеченный столбец!',
+    'zh': '观察8列牌最上面的牌。数值相同的牌会发光。点击发光的牌列！'
+  },
+  'ob2_title': {
+    'tr': 'Desteni ilk bitiren kazanır',
+    'en': 'Empty your deck first',
+    'ru': 'Первым избавьтесь от колоды',
+    'zh': '最先出完牌堆者获胜'
+  },
+  'ob2_body': {
+    'tr': 'Parlayan kolona dokununca destenden bir kart atılır ve eşleşmeyi kapatır. Rakipten önce desteni bitir!',
+    'en': 'Tapping a glowing column plays a card from your deck and covers the match. Finish your deck before your opponent!',
+    'ru': 'Нажатие на подсвеченный столбец кладёт карту из вашей колоды и закрывает совпадение. Опередите соперника!',
+    'zh': '点击发光的牌列会打出一张牌并盖住配对。比对手更快出完牌堆！'
+  },
+  'ob3_title': {
+    'tr': 'Seri yap, bonus kazan',
+    'en': 'Build a streak, win bonuses',
+    'ru': 'Серия — бонусы',
+    'zh': '连击赢奖励'
+  },
+  'ob3_body': {
+    'tr': 'Rakip hamle yapamadan art arda hamle yaparsan destenden kartlar kendiliğinden düşer:',
+    'en': 'Make moves in a row before your opponent moves and your deck shrinks on its own:',
+    'ru': 'Делайте ходы подряд, пока соперник не ходит, и ваша колода сама уменьшится:',
+    'zh': '在对手出牌之前连续出牌，你的牌堆会自动减少：'
+  },
+  'ob4_title': {
+    'tr': 'Hazırsın!',
+    'en': 'You\'re ready!',
+    'ru': 'Вы готовы!',
+    'zh': '准备好了！'
+  },
+  'ob4_body': {
+    'tr': 'Kolay bir botla ilk oyununu hemen oynayabilirsin. Bu eğitimi istediğin zaman Oyun Kuralları ekranından tekrar izleyebilirsin.',
+    'en': 'Play your first game right now against an easy bot. You can replay this tutorial anytime from the Rules screen.',
+    'ru': 'Сыграйте первую игру прямо сейчас против лёгкого бота. Обучение можно повторить в разделе «Правила».',
+    'zh': '现在就和简单难度的机器人玩第一局吧。你可以随时在“游戏规则”中重新观看本教程。'
+  },
   'streak_bonus_label': {
     'tr': 'Kart!',
     'en': 'Card(s)!',

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
@@ -26,12 +27,25 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   bool _manualJoinExpanded = false;
   _PlayerSort _playerSort = _PlayerSort.alphabetical;
   String? _myDeviceId;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _friendSub;
+  Set<String> _friendIds = {};
+  bool _friendsOnly = false;
 
   @override
   void initState() {
     super.initState();
     _deviceId().then((id) {
-      if (mounted) setState(() => _myDeviceId = id);
+      if (!mounted) return;
+      setState(() => _myDeviceId = id);
+      _friendSub = _repo.watchFriendships(id).listen((snap) {
+        final ids = <String>{};
+        for (final d in snap.docs) {
+          for (final u in (d.data()['users'] as List? ?? const [])) {
+            if (u != id) ids.add(u as String);
+          }
+        }
+        if (mounted) setState(() => _friendIds = ids);
+      }, onError: (_) {});
     });
   }
 
@@ -186,11 +200,37 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14)),
                   ),
                 ),
+                const SizedBox(height: 8),
+                _friendIds.contains(targetDeviceId)
+                    ? TextButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(sheetContext);
+                          if (_myDeviceId != null) {
+                            await _repo.removeFriend(
+                                _myDeviceId!, targetDeviceId);
+                          }
+                        },
+                        icon: const Icon(Icons.favorite,
+                            color: Colors.pinkAccent, size: 18),
+                        label: Text(t('friend_remove'),
+                            style: const TextStyle(color: Colors.white70)),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _sendFriendRequest(targetDeviceId);
+                        },
+                        icon: const Icon(Icons.person_add_alt_1),
+                        label: Text(t('friend_add')),
+                      ),
                 const SizedBox(height: 6),
                 TextButton.icon(
                   onPressed: () async {
                     Navigator.pop(sheetContext);
                     await Moderation.instance.block(targetDeviceId, name);
+                    if (_myDeviceId != null) {
+                      _repo.removeFriend(_myDeviceId!, targetDeviceId);
+                    }
                     if (!mounted) return;
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -298,6 +338,104 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     );
   }
 
+  Future<void> _sendFriendRequest(String targetDeviceId) async {
+    final p = UserProfile.instance;
+    String key;
+    if (!p.hasProfile) {
+      key = 'friend_need_profile';
+    } else {
+      final id = await _deviceId();
+      final r = await _repo.sendFriendRequest(
+        fromDeviceId: id,
+        toDeviceId: targetDeviceId,
+        fromDisplayName: p.displayName,
+        fromAvatarIconIndex: p.avatarIconIndex,
+        fromAvatarColorValue: p.avatarColor.value,
+        fromPhotoBase64: p.photoBase64,
+      );
+      key = switch (r) {
+        'sent' => 'friend_request_sent',
+        'already' => 'friend_already',
+        'accepted' => 'friend_added',
+        _ => 'friend_error',
+      };
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(t(key))));
+  }
+
+  Widget _buildIncomingFriendRequests() {
+    if (_myDeviceId == null) return const SizedBox.shrink();
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _repo.watchIncomingFriendRequests(_myDeviceId!),
+      builder: (context, snapshot) {
+        final docs = (snapshot.data?.docs ?? [])
+            .where((d) => !Moderation.instance
+                .isBlocked(d.data()['fromDeviceId'] as String?))
+            .toList();
+        if (docs.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Column(
+            children: docs.map((doc) {
+              final data = doc.data();
+              final fromId = data['fromDeviceId'] as String? ?? '';
+              final fromName =
+                  data['fromDisplayName'] as String? ?? t('guest_label');
+              final fromColor = data['fromAvatarColorValue'] as int?;
+              return Card(
+                color: Colors.pinkAccent.withOpacity(0.15),
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.pinkAccent, width: 1.2),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      ProfileAvatar.remote(
+                        radius: 16,
+                        photoBase64: data['fromPhotoBase64'] as String?,
+                        iconIndex: data['fromAvatarIconIndex'] as int?,
+                        color: fromColor != null
+                            ? Color(fromColor)
+                            : Colors.white24,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '$fromName ${t('friend_request_text')}',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 13),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close,
+                            color: Colors.white54, size: 20),
+                        onPressed: () => _repo.declineFriendRequest(doc.id),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _repo.acceptFriendRequest(
+                          requestId: doc.id,
+                          fromDeviceId: fromId,
+                          toDeviceId: _myDeviceId!,
+                        ),
+                        child: Text(t('accept')),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _joinRoomByCode(String rawCode) async {
     final code = rawCode.trim().toUpperCase();
     if (code.isEmpty) return;
@@ -342,6 +480,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   @override
   void dispose() {
     _codeController.dispose();
+    _friendSub?.cancel();
     super.dispose();
   }
 
@@ -357,6 +496,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             child: Column(
               children: [
                 _buildIncomingInvites(),
+                _buildIncomingFriendRequests(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: SizedBox(
@@ -678,6 +818,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   Icons.tag, _PlayerSort.gamesPlayed, t('sort_games')),
               _sortIconButton(
                   Icons.emoji_events, _PlayerSort.winRate, t('sort_winrate')),
+              _friendsToggleButton(),
             ],
           ),
           const Divider(color: Colors.white24, height: 8),
@@ -697,6 +838,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 }
                 final docs = snapshot.data!.docs.toList();
                 docs.removeWhere((d) => Moderation.instance.isBlocked(d.id));
+                if (_friendsOnly) {
+                  docs.retainWhere((d) => _friendIds.contains(d.id));
+                }
                 docs.sort((a, b) {
                   final da = a.data();
                   final db = b.data();
@@ -726,7 +870,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Text(t('no_open_tables'),
+                      child: Text(
+                          _friendsOnly ? t('no_friends_yet') : t('no_open_tables'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               color: Colors.white38, fontSize: 11)),
@@ -771,13 +916,25 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      if (_friendIds.contains(docs[i].id))
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 3),
+                                          child: Icon(Icons.favorite,
+                                              color: Colors.pinkAccent, size: 11),
+                                        ),
+                                    ],
+                                  ),
                                   Text(
                                     '$played · ${rate == null ? "—" : "${rate.round()}%"}',
                                     style: const TextStyle(
@@ -796,6 +953,25 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _friendsToggleButton() {
+    return Tooltip(
+      message: t('friends_filter'),
+      child: GestureDetector(
+        onTap: () => setState(() => _friendsOnly = !_friendsOnly),
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: _friendsOnly ? Colors.white24 : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.favorite,
+              size: 16,
+              color: _friendsOnly ? Colors.pinkAccent : Colors.white54),
+        ),
       ),
     );
   }

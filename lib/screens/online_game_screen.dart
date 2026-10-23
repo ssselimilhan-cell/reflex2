@@ -12,6 +12,7 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/player_header.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
+import '../settings/progress.dart';
 import '../settings/moderation.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -49,7 +50,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   bool _nomatchSoundPlayed = false;
   String? _opponentDeviceId;
   String? _opponentName;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _friendSub;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _incomingFriendDocs = [];
   bool _leavingBlocked = false;
+  bool _autoAccepted = false;
   int? _celebrationBonus;
 
   PlayerSide get mySide =>
@@ -77,6 +81,85 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     }
   }
 
+  void _snack(String msg) => ScaffoldMessenger.of(context)
+      .showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _addFriendOpponent() async {
+    final id = _opponentDeviceId;
+    if (id == null) return;
+    final p = UserProfile.instance;
+    if (!p.hasProfile) {
+      _snack(t('friend_need_profile'));
+      return;
+    }
+    if (_opponentName == null) {
+      _snack(t('friend_guest'));
+      return;
+    }
+    final r = await _repo.sendFriendRequest(
+      fromDeviceId: p.deviceId ?? widget.deviceId,
+      toDeviceId: id,
+      fromDisplayName: p.displayName,
+      fromAvatarIconIndex: p.avatarIconIndex,
+      fromAvatarColorValue: p.avatarColor.value,
+      fromPhotoBase64: p.photoBase64,
+    );
+    if (!mounted) return;
+    _snack(t(switch (r) {
+      'sent' => 'friend_request_sent',
+      'already' => 'friend_already',
+      'accepted' => 'friend_added',
+      _ => 'friend_error',
+    }));
+  }
+
+  QueryDocumentSnapshot<Map<String, dynamic>>? _friendRequestFromOpponent() {
+    final opp = _opponentDeviceId;
+    if (opp == null) return null;
+    for (final d in _incomingFriendDocs) {
+      if (d.data()['fromDeviceId'] == opp) return d;
+    }
+    return null;
+  }
+
+  Widget _buildFriendRequestBanner(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final sender = doc.data()['fromDisplayName'] as String? ?? t('opponent');
+    final me = UserProfile.instance.deviceId ?? widget.deviceId;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.pinkAccent.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.pinkAccent.withOpacity(0.6)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.favorite, color: Colors.pinkAccent, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text('$sender ${t('friend_request_text')}',
+                style: const TextStyle(color: Colors.white, fontSize: 12)),
+          ),
+          TextButton(
+            onPressed: () => _repo.declineFriendRequest(doc.id),
+            child: Text(t('decline'),
+                style: const TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            onPressed: () => _repo.acceptFriendRequest(
+              requestId: doc.id,
+              fromDeviceId: doc.data()['fromDeviceId'] as String,
+              toDeviceId: me,
+            ),
+            child: Text(t('accept')),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Rakibi engeller (onay sonrası) ve odadan çıkar.
   Future<void> _confirmBlockOpponent() async {
     final id = _opponentDeviceId;
@@ -100,6 +183,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     );
     if (ok != true) return;
     await Moderation.instance.block(id, _opponentName);
+    _repo.removeFriend(UserProfile.instance.deviceId ?? widget.deviceId, id);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(t('user_blocked'))));
@@ -151,6 +235,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     if (wasInitialLoad || eventId <= 0) return;
     final amount = (data['lastStreakBonusAmount'] as num?)?.toInt();
     if (amount == null) return;
+    if (data['lastStreakBonusSide'] == mySide.name) {
+      Progress.instance.recordStreakBonus();
+    }
     SoundManager.instance.play(Sfx.streak);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _celebrationBonus = amount);
@@ -244,7 +331,20 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Rakipten gelen arkadaşlık isteği oyun içinde de görünsün.
+    _friendSub = _repo.watchIncomingFriendRequests(widget.deviceId).listen(
+      (snap) {
+        if (mounted) setState(() => _incomingFriendDocs = snap.docs);
+      },
+      onError: (_) {},
+    );
+  }
+
+  @override
   void dispose() {
+    _friendSub?.cancel();
     for (final t in _pendingTimers) {
       t.cancel();
     }
@@ -271,10 +371,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 tooltip: t('report_user'),
                 onSelected: (v) {
                   if (v == 'report') _showReportDialog();
+                  if (v == 'friend') _addFriendOpponent();
                   if (v == 'block') _confirmBlockOpponent();
                 },
                 itemBuilder: (_) => [
                   PopupMenuItem(value: 'report', child: Text(t('report_user'))),
+                  PopupMenuItem(value: 'friend', child: Text(t('friend_add'))),
                   PopupMenuItem(value: 'block', child: Text(t('block_user'))),
                 ],
               ),
@@ -324,6 +426,16 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   if (mounted) Navigator.of(context).maybePop();
                 });
               }
+
+                // Hızlı Eşleş odalarında başlatma isteğini ev sahibi otomatik kabul eder.
+                if (data['quickMatch'] == true &&
+                    roomStatus == 'start_requested' &&
+                    data['startRequestedBy'] != mySide.name &&
+                    !_autoAccepted) {
+                  _autoAccepted = true;
+                  WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _repo.acceptStart(widget.roomCode));
+                }
 
                 if (roomStatus == 'waiting') {
                 return Center(
@@ -449,12 +561,13 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 _scoreCounted = true;
                 final iWon = (_localView.status == GameStatus.player1Wins) ==
                     (mySide == PlayerSide.player1);
-                WidgetsBinding.instance.addPostFrameCallback((_) {
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
                   ScoreBoard.instance.addOnline(iWon);
                   SoundManager.instance.play(iWon ? Sfx.win : Sfx.lose);
+                  Progress.instance.recordGame(won: iWon);
                   UserProfile.instance.recordOnlineResult(iWon);
                   final profile = UserProfile.instance;
-                  _repo.recordGameResult(
+                  final saveError = await _repo.recordGameResult(
                     deviceId: profile.deviceId ?? widget.deviceId,
                     won: iWon,
                     displayName:
@@ -467,6 +580,13 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     photoBase64:
                         profile.hasProfile ? profile.photoBase64 : null,
                   );
+                  // Kayıt başarısız olursa (ör. Firestore kuralı yüzünden)
+                  // sessiz kalma, nedenini göster.
+                  if (saveError != null && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        duration: const Duration(seconds: 8),
+                        content: Text('Sonuç liderlik tablosuna kaydedilemedi: $saveError')));
+                  }
                 });
               } else if (!finished) {
                 _scoreCounted = false;
@@ -536,6 +656,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                           rightLabel: t('opponent'),
                           rightCount: oppStockCount,
                         ),
+                        if (_friendRequestFromOpponent() != null)
+                          _buildFriendRequestBanner(_friendRequestFromOpponent()!),
                         // Rakip ve kendi 4'lü sıraları ortada; aralarında
                         // "yarım kart" kadar boşluk bırakılıyor (cardH/2).
                         Expanded(

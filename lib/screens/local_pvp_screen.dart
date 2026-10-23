@@ -8,6 +8,7 @@ import '../widgets/game_result_overlay.dart';
 import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
+import '../settings/progress.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
 import 'settings_screen.dart';
@@ -119,6 +120,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       _scoreCounted = true;
       ScoreBoard.instance.addLocal(engine.status == GameStatus.player1Wins);
       SoundManager.instance.play(Sfx.win);
+      Progress.instance.recordGame(won: false);
     }
     if (engine.isDeadlocked) {
       _handleDeadlock();

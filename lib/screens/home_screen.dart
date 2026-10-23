@@ -6,6 +6,9 @@ import 'settings_screen.dart';
 import 'profile_screen.dart';
 import 'rules_screen.dart';
 import 'leaderboard_screen.dart';
+import 'quick_match_screen.dart';
+import 'onboarding_screen.dart';
+import '../widgets/daily_card.dart';
 import '../settings/moderation.dart';
 import '../main.dart';
 import '../settings/app_settings.dart';
@@ -29,7 +32,9 @@ class HomeScreen extends StatelessWidget {
             child: Stack(
               children: [
                 const Positioned.fill(child: ScreamBackground()),
+                const _OnboardingTrigger(),
                 Center(
+                  child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -45,7 +50,31 @@ class HomeScreen extends StatelessWidget {
                       Text(t('app_subtitle'),
                           style: const TextStyle(
                               color: Colors.white70, fontSize: 16)),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 14),
+                      const DailyCard(),
+                      const SizedBox(height: 22),
+                      _MenuButton(
+                        label: t('menu_quick_match'),
+                        icon: Icons.bolt,
+                        highlight: true,
+                        onTap: () async {
+                          if (!firebaseAvailable) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const VsBotScreen(autoStart: true)));
+                            return;
+                          }
+                          if (!await ensureTermsAccepted(context)) return;
+                          if (!context.mounted) return;
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const QuickMatchScreen()));
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       _MenuButton(
                         label: t('menu_local'),
                         icon: Icons.people,
@@ -111,6 +140,7 @@ class HomeScreen extends StatelessWidget {
                                 builder: (_) => const SettingsScreen())),
                       ),
                     ],
+                  ),
                   ),
                 ),
                 // Sağ üst köşede profil özeti / oluşturma girişi
@@ -192,9 +222,13 @@ class _MenuButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final bool highlight;
 
   const _MenuButton(
-      {required this.label, required this.icon, required this.onTap});
+      {required this.label,
+      required this.icon,
+      required this.onTap,
+      this.highlight = false});
 
   @override
   Widget build(BuildContext context) {
@@ -206,12 +240,36 @@ class _MenuButton extends StatelessWidget {
         icon: Icon(icon),
         label: Text(label, style: const TextStyle(fontSize: 16)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: AppSettings.instance.themeColor,
+          backgroundColor: highlight ? Colors.amber : Colors.white,
+          foregroundColor:
+              highlight ? Colors.black87 : AppSettings.instance.themeColor,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );
   }
+}
+
+/// Ana ekran açıldığında, eğitim daha önce gösterilmediyse bir kez açar.
+class _OnboardingTrigger extends StatefulWidget {
+  const _OnboardingTrigger();
+
+  @override
+  State<_OnboardingTrigger> createState() => _OnboardingTriggerState();
+}
+
+class _OnboardingTriggerState extends State<_OnboardingTrigger> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || AppSettings.instance.onboardingDone) return;
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }

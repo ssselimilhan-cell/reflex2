@@ -124,6 +124,14 @@ class SettingsScreen extends StatelessWidget {
                 value: settings.soundEnabled,
                 onChanged: settings.setSoundEnabled,
               ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: Colors.amber,
+                title: Text(t('settings_haptics'),
+                    style: const TextStyle(color: Colors.white)),
+                value: settings.hapticsEnabled,
+                onChanged: settings.setHapticsEnabled,
+              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.block, color: Colors.white70),

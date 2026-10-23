@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../widgets/game_demo_animation.dart';
+import 'onboarding_screen.dart';
 
 class RulesScreen extends StatelessWidget {
   const RulesScreen({super.key});
@@ -42,6 +43,17 @@ class RulesScreen extends StatelessWidget {
                         const GameDemoAnimation(),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const OnboardingScreen())),
+                    icon: const Icon(Icons.school_outlined,
+                        color: Colors.white70),
+                    label: Text(t('show_tutorial'),
+                        style: const TextStyle(color: Colors.white70)),
                   ),
                 ],
               ),

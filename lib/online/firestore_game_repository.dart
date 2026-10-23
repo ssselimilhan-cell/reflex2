@@ -24,6 +24,7 @@ class OnlineRoomRepository {
     int? hostAvatarIconIndex,
     int? hostAvatarColorValue,
     String? hostPhotoBase64,
+    bool quickMatch = false,
   }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
@@ -43,6 +44,7 @@ class OnlineRoomRepository {
       'hostAvatarIconIndex': hostAvatarIconIndex,
       'hostAvatarColorValue': hostAvatarColorValue,
       'hostPhotoBase64': hostPhotoBase64,
+      'quickMatch': quickMatch,
       'createdAt': FieldValue.serverTimestamp(),
       ...engine.toMap(),
     });
@@ -334,7 +336,8 @@ class OnlineRoomRepository {
   /// mı) buraya kaydeder. Liderlik tablosu bu kayıtları zaman aralığına
   /// göre filtreleyip istemci tarafında sayarak oluşturuluyor (ayrı bir
   /// sunucu/Cloud Function olmadığı için).
-  Future<void> recordGameResult({
+  /// Başarılıysa null, başarısızsa hata metnini döndürür (ekranda gösterilir).
+  Future<String?> recordGameResult({
     required String deviceId,
     required bool won,
     String? displayName,
@@ -352,7 +355,10 @@ class OnlineRoomRepository {
         'photoBase64': photoBase64,
         'playedAt': FieldValue.serverTimestamp(),
       });
-    } catch (_) {}
+      return null;
+    } catch (e) {
+      return '$e';
+    }
   }
 
   /// [since] tarihinden itibaren kazanılmış tüm oyunları dinler —
@@ -385,6 +391,98 @@ class OnlineRoomRepository {
         'reason': reason,
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } catch (_) {}
+  }
+
+  // ---- Arkadaşlar ----
+
+  CollectionReference<Map<String, dynamic>> get _friendRequests =>
+      FirebaseFirestore.instance.collection('friend_requests');
+  CollectionReference<Map<String, dynamic>> get _friendships =>
+      FirebaseFirestore.instance.collection('friendships');
+
+  /// İki oyuncu için sıradan bağımsız, tek bir kimlik.
+  String _pairId(String a, String b) =>
+      a.compareTo(b) <= 0 ? '${a}_$b' : '${b}_$a';
+
+  /// Dönüş: 'sent' | 'already' | 'accepted' | 'error'
+  /// Karşı taraf zaten bana istek göndermişse otomatik kabul edilir.
+  Future<String> sendFriendRequest({
+    required String fromDeviceId,
+    required String toDeviceId,
+    String? fromDisplayName,
+    int? fromAvatarIconIndex,
+    int? fromAvatarColorValue,
+    String? fromPhotoBase64,
+  }) async {
+    if (fromDeviceId == toDeviceId) return 'error';
+    try {
+      if ((await _friendships.doc(_pairId(fromDeviceId, toDeviceId)).get())
+          .exists) {
+        return 'already';
+      }
+      final reverse = _friendRequests.doc('${toDeviceId}_$fromDeviceId');
+      if ((await reverse.get()).exists) {
+        await acceptFriendRequest(
+            requestId: reverse.id,
+            fromDeviceId: toDeviceId,
+            toDeviceId: fromDeviceId);
+        return 'accepted';
+      }
+      final mine = _friendRequests.doc('${fromDeviceId}_$toDeviceId');
+      if ((await mine.get()).exists) return 'sent';
+      await mine.set({
+        'fromDeviceId': fromDeviceId,
+        'toDeviceId': toDeviceId,
+        'fromDisplayName': fromDisplayName,
+        'fromAvatarIconIndex': fromAvatarIconIndex,
+        'fromAvatarColorValue': fromAvatarColorValue,
+        'fromPhotoBase64': fromPhotoBase64,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return 'sent';
+    } catch (_) {
+      return 'error';
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchIncomingFriendRequests(
+      String myDeviceId) {
+    return _friendRequests
+        .where('toDeviceId', isEqualTo: myDeviceId)
+        .snapshots();
+  }
+
+  Future<void> acceptFriendRequest({
+    required String requestId,
+    required String fromDeviceId,
+    required String toDeviceId,
+  }) async {
+    try {
+      final ref = _friendships.doc(_pairId(fromDeviceId, toDeviceId));
+      if (!(await ref.get()).exists) {
+        final ids = [fromDeviceId, toDeviceId]..sort();
+        await ref.set({'users': ids, 'createdAt': FieldValue.serverTimestamp()});
+      }
+      await _friendRequests.doc(requestId).delete();
+    } catch (_) {}
+  }
+
+  Future<void> declineFriendRequest(String requestId) async {
+    try {
+      await _friendRequests.doc(requestId).delete();
+    } catch (_) {}
+  }
+
+  /// Bu cihazın tüm arkadaşlık kayıtları (her kayıtta 'users' listesi var).
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchFriendships(
+      String myDeviceId) {
+    return _friendships.where('users', arrayContains: myDeviceId).snapshots();
+  }
+
+  Future<void> removeFriend(String myDeviceId, String otherDeviceId) async {
+    try {
+      await _friendships.doc(_pairId(myDeviceId, otherDeviceId)).delete();
     } catch (_) {}
   }
 }

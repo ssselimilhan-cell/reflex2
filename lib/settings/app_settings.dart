@@ -40,6 +40,10 @@ class AppSettings extends ChangeNotifier {
   bool assistedMode = true;
   /// Ses efektleri açık/kapalı.
   bool soundEnabled = true;
+  /// Hamle/kazanma anlarında hafif titreşim.
+  bool hapticsEnabled = true;
+  /// İlk açılış eğitimi gösterildi mi.
+  bool onboardingDone = false;
 
   static const List<Color> presetColors = [
     Color(0xFF0B6E4F), // yeşil (varsayılan)
@@ -96,6 +100,8 @@ class AppSettings extends ChangeNotifier {
       }
       assistedMode = prefs.getBool('assistedMode') ?? true;
       soundEnabled = prefs.getBool('soundEnabled') ?? true;
+      hapticsEnabled = prefs.getBool('hapticsEnabled') ?? true;
+      onboardingDone = prefs.getBool('onboardingDone') ?? false;
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
     }
@@ -121,7 +127,21 @@ class AppSettings extends ChangeNotifier {
       await prefs.setInt('cardTheme', cardTheme.index);
       await prefs.setBool('assistedMode', assistedMode);
       await prefs.setBool('soundEnabled', soundEnabled);
+      await prefs.setBool('hapticsEnabled', hapticsEnabled);
+      await prefs.setBool('onboardingDone', onboardingDone);
     } catch (_) {}
+  }
+
+  void setHapticsEnabled(bool v) {
+    hapticsEnabled = v;
+    notifyListeners();
+    _persist();
+  }
+
+  void setOnboardingDone(bool v) {
+    onboardingDone = v;
+    notifyListeners();
+    _persist();
   }
 
   void setSoundEnabled(bool v) {
