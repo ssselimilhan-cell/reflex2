@@ -1,4 +1,4 @@
-```dart
+
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
@@ -226,4 +226,3 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-```
