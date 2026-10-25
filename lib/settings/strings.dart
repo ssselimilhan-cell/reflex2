@@ -779,6 +779,72 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Сыграйте первую игру прямо сейчас против лёгкого бота. Обучение можно повторить в разделе «Правила».',
     'zh': '现在就和简单难度的机器人玩第一局吧。你可以随时在“游戏规则”中重新观看本教程。'
   },
+  'share_room_text': {
+    'tr': 'STRES oynayalım! Oda kodu: {code}\nUygulamayı aç → Online → Kod ile katıl.\n{url}',
+    'en': 'Let\'s play STRES! Room code: {code}\nOpen the app → Online → Join with code.\n{url}',
+    'ru': 'Давай сыграем в STRES! Код комнаты: {code}\nОткрой приложение → Онлайн → Войти по коду.\n{url}',
+    'zh': '一起玩 STRES 吧！房间码：{code}\n打开应用 → 在线 → 输入房间码加入。\n{url}'
+  },
+  'share_app_text': {
+    'tr': 'STRES: hızlı refleks kart oyunu. Gel oynayalım! {url}',
+    'en': 'STRES: a fast reflex card game. Come play! {url}',
+    'ru': 'STRES — быстрая карточная игра на реакцию. Давай играть! {url}',
+    'zh': 'STRES：快节奏反应纸牌游戏。来一起玩吧！{url}'
+  },
+  'share_code_button': {
+    'tr': 'Kodu arkadaşına gönder',
+    'en': 'Send the code to a friend',
+    'ru': 'Отправить код другу',
+    'zh': '把房间码发给好友'
+  },
+  'invite_friends': {
+    'tr': 'Arkadaşını davet et',
+    'en': 'Invite a friend',
+    'ru': 'Пригласить друга',
+    'zh': '邀请好友'
+  },
+  'rank_bronze': {
+    'tr': 'Bronz',
+    'en': 'Bronze',
+    'ru': 'Бронза',
+    'zh': '青铜'
+  },
+  'rank_silver': {
+    'tr': 'Gümüş',
+    'en': 'Silver',
+    'ru': 'Серебро',
+    'zh': '白银'
+  },
+  'rank_gold': {
+    'tr': 'Altın',
+    'en': 'Gold',
+    'ru': 'Золото',
+    'zh': '黄金'
+  },
+  'rank_diamond': {
+    'tr': 'Elmas',
+    'en': 'Diamond',
+    'ru': 'Алмаз',
+    'zh': '钻石'
+  },
+  'rank_legend': {
+    'tr': 'Efsane',
+    'en': 'Legend',
+    'ru': 'Легенда',
+    'zh': '传奇'
+  },
+  'next_rank_hint': {
+    'tr': 'Sonraki rütbe: {name} — {n} galibiyet kaldı',
+    'en': 'Next rank: {name} — {n} wins to go',
+    'ru': 'Следующий ранг: {name} — осталось побед: {n}',
+    'zh': '下一段位：{name} — 还差 {n} 场胜利'
+  },
+  'settings_telemetry': {
+    'tr': 'Anonim kullanım ve hata verisi gönder',
+    'en': 'Send anonymous usage and error data',
+    'ru': 'Отправлять анонимные данные об использовании и ошибках',
+    'zh': '发送匿名使用与错误数据'
+  },
   'streak_bonus_label': {
     'tr': 'Kart!',
     'en': 'Card(s)!',

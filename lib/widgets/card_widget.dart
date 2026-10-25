@@ -90,9 +90,30 @@ class _CardWidgetState extends State<CardWidget>
 
   @override
   Widget build(BuildContext context) {
-    final content = widget.faceDown || widget.card == null
-        ? _buildBack()
-        : _buildFace(widget.card!);
+    final isBack = widget.faceDown || widget.card == null;
+    // Kapalıdan açığa geçerken kart yatay eksende "çevrilir".
+    final content = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      transitionBuilder: (child, animation) {
+        final angle = Tween<double>(begin: math.pi / 2, end: 0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOut));
+        return AnimatedBuilder(
+          animation: angle,
+          child: child,
+          builder: (context, w) => Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(angle.value),
+            child: w,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<bool>(isBack),
+        child: isBack ? _buildBack() : _buildFace(widget.card!),
+      ),
+    );
 
     final highContrast = AppSettings.instance.highContrast;
     // Yüksek kontrast varsayılan açık: aktif kartlar parlak sarı/turkuaz

@@ -8,6 +8,7 @@ import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
+import '../settings/ranks.dart';
 import 'online_game_screen.dart';
 
 enum _PlayerSort { alphabetical, gamesPlayed, winRate }
@@ -172,7 +173,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Text('${rankFor(wins).emoji} ${t(rankFor(wins).nameKey)}',
+                  style: const TextStyle(color: Colors.amber, fontSize: 14)),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -918,6 +922,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 children: [
                                   Row(
                                     children: [
+                                      Text('${rankFor(wins).emoji} ',
+                                          style: const TextStyle(fontSize: 11)),
                                       Flexible(
                                         child: Text(name,
                                             maxLines: 1,

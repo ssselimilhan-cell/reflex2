@@ -57,6 +57,19 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Anonim kullanım olayları ve hata kayıtları: sadece yazılır, uygulamadan okunamaz
+    match /app_events/{eventId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() < 40;
+      allow read, update, delete: if false;
+    }
+
+    match /app_errors/{errorId} {
+      allow create: if request.resource.data.message is string
+                    && request.resource.data.message.size() < 600;
+      allow read, update, delete: if false;
+    }
+
     // Şikayetler: herkes gönderebilir, uygulamadan kimse okuyamaz
     // (sadece sen, Firebase Console'dan görürsün).
     match /reports/{reportId} {

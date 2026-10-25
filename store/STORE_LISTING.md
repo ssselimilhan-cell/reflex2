@@ -68,6 +68,8 @@ Toplanan veri türleri (hepsi **uygulama işlevi** amacıyla, **üçüncü taraf
 - **Mesajlar → Diğer uygulama içi mesajlar** (oyun sohbeti, oyundan çıkınca silinir)
 - **Uygulama etkinliği → Diğer kullanıcı tarafından oluşturulan içerik / oyun sonuçları**
 - **Cihaz veya diğer kimlikler** (uygulamanın ürettiği rastgele kimlik)
+- **Uygulama etkinliği → Uygulama etkileşimleri** (anonim olay sayıları; Ayarlar'dan kapatılabilir)
+- **Uygulama bilgileri ve performans → Kilitlenme günlükleri** (anonim; Ayarlar'dan kapatılabilir)
 
 Kullanıcı verisini silebilir mi: **Evet** (uygulamada Profili Sil + e-posta ile talep). Silme talebi bağlantısı olarak gizlilik politikası sayfasını ver.
 Firebase, Google'ın "hizmet sağlayıcı" olarak işlediği bir araçtır; formda "paylaşım" sayılmaz.

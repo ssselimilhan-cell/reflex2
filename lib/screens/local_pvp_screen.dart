@@ -9,6 +9,8 @@ import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
+import '../widgets/table_felt.dart';
+import '../settings/telemetry.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
 import 'settings_screen.dart';
@@ -61,6 +63,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
 
   void _beginGame() {
+    Telemetry.log('game_start', {'mode': 'local'});
     setState(() {
       engine.startNewGame();
       _gameStarted = true;
@@ -120,7 +123,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       _scoreCounted = true;
       ScoreBoard.instance.addLocal(engine.status == GameStatus.player1Wins);
       SoundManager.instance.play(Sfx.win);
-      Progress.instance.recordGame(won: false);
+      Progress.instance.recordGame(won: false, mode: 'local');
     }
     if (engine.isDeadlocked) {
       _handleDeadlock();
@@ -187,6 +190,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
           body: SafeArea(
             child: Stack(
               children: [
+                const Positioned.fill(child: TableFelt()),
                 if (!_gameStarted)
                   Center(
                     child: ElevatedButton.icon(

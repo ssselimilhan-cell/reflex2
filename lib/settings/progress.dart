@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'strings.dart';
+import 'telemetry.dart';
 
 /// Uygulama genelinde SnackBar gösterebilmek için (görev tamamlanınca).
 final GlobalKey<ScaffoldMessengerState> rootMessengerKey =
@@ -31,6 +33,8 @@ class Progress extends ChangeNotifier {
   int todayWins = 0;
   int todayBonuses = 0;
   int stars = 0;
+  int totalWins = 0;
+  bool reviewAsked = false;
   final Set<int> claimed = {};
 
   static String _fmt(DateTime d) =>
@@ -69,6 +73,8 @@ class Progress extends ChangeNotifier {
       todayWins = prefs.getInt('pg_wins') ?? 0;
       todayBonuses = prefs.getInt('pg_bonuses') ?? 0;
       stars = prefs.getInt('pg_stars') ?? 0;
+      totalWins = prefs.getInt('pg_totalWins') ?? 0;
+      reviewAsked = prefs.getBool('pg_reviewAsked') ?? false;
       claimed
         ..clear()
         ..addAll((prefs.getStringList('pg_claimed') ?? const <String>[])
@@ -88,6 +94,8 @@ class Progress extends ChangeNotifier {
       await prefs.setInt('pg_wins', todayWins);
       await prefs.setInt('pg_bonuses', todayBonuses);
       await prefs.setInt('pg_stars', stars);
+      await prefs.setInt('pg_totalWins', totalWins);
+      await prefs.setBool('pg_reviewAsked', reviewAsked);
       await prefs.setStringList(
           'pg_claimed', claimed.map((e) => '$e').toList());
     } catch (_) {}
@@ -106,7 +114,7 @@ class Progress extends ChangeNotifier {
   }
 
   /// Bir oyun bittiğinde çağrılır.
-  void recordGame({required bool won}) {
+  void recordGame({required bool won, String mode = 'other'}) {
     _rollover();
     final today = _today();
     if (lastPlayDay != today) {
@@ -114,16 +122,35 @@ class Progress extends ChangeNotifier {
       lastPlayDay = today;
     }
     todayGames++;
-    if (won) todayWins++;
+    if (won) {
+      todayWins++;
+      totalWins++;
+    }
+    Telemetry.log('game_end', {'mode': mode, 'won': won});
     _checkMissions();
+    _maybeAskReview();
     _persist();
     notifyListeners();
+  }
+
+  /// 3. galibiyette (yalnızca bir kez) Play Store yorum penceresini açar.
+  void _maybeAskReview() {
+    if (reviewAsked || totalWins < 3) return;
+    reviewAsked = true;
+    Telemetry.log('review_prompt');
+    Future.delayed(const Duration(seconds: 3), () async {
+      try {
+        final review = InAppReview.instance;
+        if (await review.isAvailable()) await review.requestReview();
+      } catch (_) {}
+    });
   }
 
   /// Oyuncu bir art arda hamle avantajı kazandığında çağrılır.
   void recordStreakBonus() {
     _rollover();
     todayBonuses++;
+    Telemetry.log('streak_bonus');
     _checkMissions();
     _persist();
     notifyListeners();

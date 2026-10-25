@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
+import '../settings/share_helper.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -132,6 +133,14 @@ class SettingsScreen extends StatelessWidget {
                 value: settings.hapticsEnabled,
                 onChanged: settings.setHapticsEnabled,
               ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeColor: Colors.amber,
+                title: Text(t('settings_telemetry'),
+                    style: const TextStyle(color: Colors.white)),
+                value: settings.telemetryEnabled,
+                onChanged: settings.setTelemetryEnabled,
+              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.block, color: Colors.white70),
@@ -139,6 +148,13 @@ class SettingsScreen extends StatelessWidget {
                     '${t('blocked_players')} (${Moderation.instance.blocked.length})',
                     style: const TextStyle(color: Colors.white)),
                 onTap: () => showBlockedPlayersDialog(context),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.share, color: Colors.white70),
+                title: Text(t('invite_friends'),
+                    style: const TextStyle(color: Colors.white)),
+                onTap: shareApp,
               ),
               const SizedBox(height: 8),
               SwitchListTile(

@@ -7,6 +7,7 @@ import '../online/persistent_device_id.dart';
 import '../settings/app_settings.dart';
 import '../settings/moderation.dart';
 import '../settings/strings.dart';
+import '../settings/telemetry.dart';
 import '../settings/user_profile.dart';
 import 'online_game_screen.dart';
 import 'vs_bot_screen.dart';
@@ -50,6 +51,7 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
   }
 
   Future<void> _start() async {
+    Telemetry.log('quick_match_start');
     try {
       final id = await _id();
       if (await _tryJoinExisting(id, null)) return;
@@ -150,6 +152,7 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
     if (_done || !mounted) return;
     _done = true;
     _cancelTimers();
+    Telemetry.log('quick_match_found', {'host': isHost});
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -181,6 +184,7 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
       } catch (_) {}
     }
     if (!mounted) return;
+    Telemetry.log('quick_match_bot');
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

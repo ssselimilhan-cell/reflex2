@@ -8,6 +8,7 @@ import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
+import '../settings/ranks.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -162,7 +163,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _StatBox(label: t('losses'), value: profile.onlineLosses),
           ],
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 18),
+        _RankCard(wins: profile.onlineWins),
+        const SizedBox(height: 28),
         Padding(
           // Buton tam ekran kenarına yapışmasın diye biraz yukarı alındı.
           // (Spacer() yerine sabit boşluk — kaydırılabilir ekranla uyumlu
@@ -339,6 +342,64 @@ class _StatBox extends StatelessWidget {
                 style: const TextStyle(color: Colors.white70, fontSize: 11)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Rütbe rozeti ve sonraki rütbeye ilerleme çubuğu.
+class _RankCard extends StatelessWidget {
+  final int wins;
+  const _RankCard({required this.wins});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = rankFor(wins);
+    final next = nextRankFor(wins);
+    final progress = next == null
+        ? 1.0
+        : ((wins - r.minWins) / (next.minWins - r.minWins))
+            .clamp(0.0, 1.0)
+            .toDouble();
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Text(r.emoji, style: const TextStyle(fontSize: 36)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t(r.nameKey),
+                    style: const TextStyle(
+                        color: Colors.amber,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: Colors.white12,
+                  color: Colors.amber,
+                ),
+                if (next != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    t('next_rank_hint')
+                        .replaceAll('{name}', t(next.nameKey))
+                        .replaceAll('{n}', '${next.minWins - wins}'),
+                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

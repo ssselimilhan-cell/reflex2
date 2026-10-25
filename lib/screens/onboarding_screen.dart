@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
+import '../settings/telemetry.dart';
 import '../widgets/game_demo_animation.dart';
 import 'vs_bot_screen.dart';
 
@@ -21,6 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    Telemetry.log('onboarding_shown');
     // Bir kez gösterilsin: yarıda bırakılsa bile bir daha otomatik açılmaz.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppSettings.instance.setOnboardingDone(true);
@@ -34,6 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _playFirstGame() {
+    Telemetry.log('onboarding_first_game');
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (_) =>
           const VsBotScreen(autoStart: true, initialDifficulty: 0.2),

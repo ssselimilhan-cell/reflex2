@@ -11,6 +11,8 @@ import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
+import '../widgets/table_felt.dart';
+import '../settings/telemetry.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
@@ -63,6 +65,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
 
   void _beginGame() {
+    Telemetry.log('game_start', {'mode': 'bot'});
     setState(() => _gameStarted = true);
     _startNewGame();
   }
@@ -103,7 +106,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
       SoundManager.instance.play(
           engine.status == GameStatus.player1Wins ? Sfx.win : Sfx.lose);
       Progress.instance
-          .recordGame(won: engine.status == GameStatus.player1Wins);
+          .recordGame(won: engine.status == GameStatus.player1Wins, mode: 'bot');
     }
   }
 
@@ -233,6 +236,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
           body: SafeArea(
             child: Stack(
               children: [
+                const Positioned.fill(child: TableFelt()),
                 if (!_gameStarted)
                   Center(
                     child: Padding(

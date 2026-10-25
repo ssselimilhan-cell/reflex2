@@ -13,6 +13,8 @@ import '../widgets/player_header.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
+import '../settings/share_helper.dart';
+import '../widgets/table_felt.dart';
 import '../settings/moderation.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -450,6 +452,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         style:
                             const TextStyle(color: Colors.white, fontSize: 18),
                       ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () => shareRoomCode(widget.roomCode),
+                        icon: const Icon(Icons.share),
+                        label: Text(t('share_code_button')),
+                      ),
                     ],
                   ),
                 );
@@ -564,7 +572,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) async {
                   ScoreBoard.instance.addOnline(iWon);
                   SoundManager.instance.play(iWon ? Sfx.win : Sfx.lose);
-                  Progress.instance.recordGame(won: iWon);
+                  Progress.instance.recordGame(won: iWon, mode: 'online');
                   UserProfile.instance.recordOnlineResult(iWon);
                   final profile = UserProfile.instance;
                   final saveError = await _repo.recordGameResult(
@@ -638,6 +646,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               // gerek yok.
               return Stack(
                 children: [
+                  const Positioned.fill(child: TableFelt()),
                   Column(
                     children: [
                       ListenableBuilder(

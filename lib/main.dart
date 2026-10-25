@@ -1,3 +1,4 @@
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -6,6 +7,7 @@ import 'settings/app_settings.dart';
 import 'settings/user_profile.dart';
 import 'settings/moderation.dart';
 import 'settings/progress.dart';
+import 'settings/telemetry.dart';
 
 /// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
 /// haldeyse) uygulamanın çökmesini engellemek için bu bayrak kullanılır.
@@ -13,12 +15,22 @@ bool firebaseAvailable = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Yakalanmayan hatalar anonim hata kaydına gider (Telemetry hazır değilse yok sayılır).
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    Telemetry.error(details.exception, details.stack);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    Telemetry.error(error, stack);
+    return true;
+  };
   await AppSettings.instance.load();
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     firebaseAvailable = true;
+    Telemetry.ready = true;
   } catch (e) {
     firebaseAvailable = false;
   }
@@ -27,6 +39,7 @@ void main() async {
   await UserProfile.instance.load();
   await Moderation.instance.load();
   await Progress.instance.load();
+  Telemetry.log('app_open');
   runApp(const StresApp());
 }
 
