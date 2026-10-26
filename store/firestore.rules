@@ -70,6 +70,16 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // Geri bildirimler: herkes gönderebilir, uygulamadan kimse okuyamaz
+    // (sadece sen, Firebase Console'dan görürsün).
+    match /feedback/{feedbackId} {
+      allow create: if request.resource.data.message is string
+                    && request.resource.data.message.size() >= 5
+                    && request.resource.data.message.size() <= 500
+                    && request.resource.data.type in ['bug', 'idea', 'other'];
+      allow read, update, delete: if false;
+    }
+
     // Şikayetler: herkes gönderebilir, uygulamadan kimse okuyamaz
     // (sadece sen, Firebase Console'dan görürsün).
     match /reports/{reportId} {

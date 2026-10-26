@@ -797,6 +797,41 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Отправить код другу',
     'zh': '把房间码发给好友'
   },
+  'rate_app': {
+    'tr': 'Uygulamayı Değerlendir',
+    'en': 'Rate the App',
+    'ru': 'Оценить приложение',
+    'zh': '为应用评分'
+  },
+  'feedback_title': {
+    'tr': 'Geri Bildirim Gönder',
+    'en': 'Send Feedback',
+    'ru': 'Отправить отзыв',
+    'zh': '发送反馈'
+  },
+  'feedback_hint': {
+    'tr': 'Görüşünü, önerini veya karşılaştığın hatayı yaz (kişisel bilgi yazma).',
+    'en': 'Tell us your thoughts, ideas or the bug you hit (no personal info).',
+    'ru': 'Напишите мнение, идею или найденную ошибку (без личных данных).',
+    'zh': '请写下你的意见、建议或遇到的问题（请勿填写个人信息）。'
+  },
+  'feedback_type_bug': {'tr': 'Hata', 'en': 'Bug', 'ru': 'Ошибка', 'zh': '问题'},
+  'feedback_type_idea': {'tr': 'Öneri', 'en': 'Idea', 'ru': 'Идея', 'zh': '建议'},
+  'feedback_type_other': {'tr': 'Diğer', 'en': 'Other', 'ru': 'Другое', 'zh': '其他'},
+  'feedback_send': {'tr': 'Gönder', 'en': 'Send', 'ru': 'Отправить', 'zh': '发送'},
+  'feedback_cancel': {'tr': 'Vazgeç', 'en': 'Cancel', 'ru': 'Отмена', 'zh': '取消'},
+  'feedback_thanks': {
+    'tr': 'Geri bildirimin alındı, teşekkürler!',
+    'en': 'Feedback received, thank you!',
+    'ru': 'Отзыв получен, спасибо!',
+    'zh': '已收到你的反馈，谢谢！'
+  },
+  'feedback_failed': {
+    'tr': 'Gönderilemedi. İnternet bağlantını kontrol edip tekrar dene.',
+    'en': 'Could not send. Check your connection and try again.',
+    'ru': 'Не удалось отправить. Проверьте соединение и попробуйте снова.',
+    'zh': '发送失败。请检查网络后重试。'
+  },
   'invite_friends': {
     'tr': 'Arkadaşını davet et',
     'en': 'Invite a friend',

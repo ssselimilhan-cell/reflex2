@@ -3,6 +3,7 @@ import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
 import '../settings/share_helper.dart';
+import '../settings/feedback.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -155,6 +156,21 @@ class SettingsScreen extends StatelessWidget {
                 title: Text(t('invite_friends'),
                     style: const TextStyle(color: Colors.white)),
                 onTap: shareApp,
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.star_rate, color: Colors.white70),
+                title: Text(t('rate_app'),
+                    style: const TextStyle(color: Colors.white)),
+                onTap: openStoreReview,
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading:
+                    const Icon(Icons.feedback_outlined, color: Colors.white70),
+                title: Text(t('feedback_title'),
+                    style: const TextStyle(color: Colors.white)),
+                onTap: () => showFeedbackDialog(context),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
