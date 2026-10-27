@@ -43,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ));
   }
 
-  Widget _buildPage(String emoji, String titleKey, String bodyKey, Widget? extra) {
+  Widget _page(String emoji, String titleKey, String bodyKey, Widget? extra) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
@@ -96,9 +96,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _page = i),
                 children: [
-                  _buildPage('👀', 'ob1_title', 'ob1_body', const GameDemoAnimation()),
-                  _buildPage('🏁', 'ob2_title', 'ob2_body', null),
-                  _buildPage(
+                  _page('👀', 'ob1_title', 'ob1_body', const GameDemoAnimation()),
+                  _page('🏁', 'ob2_title', 'ob2_body', null),
+                  _page(
                     '🔥',
                     'ob3_title',
                     'ob3_body',
@@ -108,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _streakRow('8', '🏆 +3'),
                     ]),
                   ),
-                  _buildPage('🚀', 'ob4_title', 'ob4_body', null),
+                  _page('🚀', 'ob4_title', 'ob4_body', null),
                 ],
               ),
             ),

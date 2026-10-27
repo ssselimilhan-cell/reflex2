@@ -2,7 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'app_settings.dart';
 
-enum Sfx { play, deal, streak, win, lose, nomatch }
+enum Sfx { play, deal, streak, win, lose, nomatch, message }
 
 /// Kısa ses efektlerini ve hafif titreşimleri tetikler. Ses ve titreşim
 /// ayrı ayrı kapatılabilir. Herhangi bir hata oyunu ASLA bozmaz.
@@ -30,6 +30,8 @@ class SoundManager {
           HapticFeedback.mediumImpact();
         case Sfx.deal:
           break;
+        case Sfx.message:
+          HapticFeedback.selectionClick();
       }
     } catch (_) {}
   }

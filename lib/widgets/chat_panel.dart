@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../online/firestore_game_repository.dart';
+import '../settings/sound_manager.dart';
 import '../settings/strings.dart';
 
 typedef _Doc = QueryDocumentSnapshot<Map<String, dynamic>>;
@@ -33,6 +34,9 @@ class _ChatPanelState extends State<ChatPanel> {
 
   /// Panelde görülmüş (okunmuş) mesajlar.
   final Set<String> _seenIds = {};
+
+  /// Yeni okunmamış mesaj gelince ses/titreşim için.
+  int _lastUnread = 0;
 
   Future<void> _openChat() async {
     await showModalBottomSheet<void>(
@@ -66,6 +70,10 @@ class _ChatPanelState extends State<ChatPanel> {
                 d.data()['sender'] != widget.mySide.name &&
                 !_seenIds.contains(d.id))
             .length;
+        if (unread > _lastUnread) {
+          SoundManager.instance.play(Sfx.message);
+        }
+        _lastUnread = unread;
         final lastText = visible.isEmpty
             ? null
             : (visible.last.data()['text'] as String? ?? '');

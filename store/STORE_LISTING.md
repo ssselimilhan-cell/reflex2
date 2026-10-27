@@ -67,6 +67,7 @@ Toplanan veri türleri (hepsi **uygulama işlevi** amacıyla, **üçüncü taraf
 - **Fotoğraflar ve videolar → Fotoğraflar** (isteğe bağlı profil fotoğrafı)
 - **Mesajlar → Diğer uygulama içi mesajlar** (oyun sohbeti, oyundan çıkınca silinir)
 - **Uygulama etkinliği → Diğer kullanıcı tarafından oluşturulan içerik / oyun sonuçları**
+- **Mesajlar → Diğer uygulama içi mesajlar** (geri bildirim mesajları da dahil)
 - **Cihaz veya diğer kimlikler** (uygulamanın ürettiği rastgele kimlik)
 - **Uygulama etkinliği → Uygulama etkileşimleri** (anonim olay sayıları; Ayarlar'dan kapatılabilir)
 - **Uygulama bilgileri ve performans → Kilitlenme günlükleri** (anonim; Ayarlar'dan kapatılabilir)

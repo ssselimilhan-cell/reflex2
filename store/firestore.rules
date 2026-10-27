@@ -70,13 +70,10 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // Geri bildirimler: herkes gönderebilir, uygulamadan kimse okuyamaz
-    // (sadece sen, Firebase Console'dan görürsün).
+    // Geri bildirimler (öneri/şikayet/hata): sadece yazılır, uygulamadan okunamaz
     match /feedback/{feedbackId} {
       allow create: if request.resource.data.message is string
-                    && request.resource.data.message.size() >= 5
-                    && request.resource.data.message.size() <= 500
-                    && request.resource.data.type in ['bug', 'idea', 'other'];
+                    && request.resource.data.message.size() < 600;
       allow read, update, delete: if false;
     }
 

@@ -3,7 +3,9 @@ import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
 import '../settings/share_helper.dart';
-import '../settings/feedback.dart';
+import '../settings/app_links.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'feedback_dialog.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -159,18 +161,39 @@ class SettingsScreen extends StatelessWidget {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.star_rate, color: Colors.white70),
-                title: Text(t('rate_app'),
+                leading: const Icon(Icons.mail_outline, color: Colors.white70),
+                title: Text(t('contact_us'),
                     style: const TextStyle(color: Colors.white)),
-                onTap: openStoreReview,
+                onTap: () => showFeedbackDialog(context),
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading:
-                    const Icon(Icons.feedback_outlined, color: Colors.white70),
-                title: Text(t('feedback_title'),
+                leading: const Icon(Icons.privacy_tip_outlined,
+                    color: Colors.white70),
+                title: Text(t('privacy_policy'),
                     style: const TextStyle(color: Colors.white)),
-                onTap: () => showFeedbackDialog(context),
+                onTap: () => launchUrl(Uri.parse(kPrivacyUrl),
+                    mode: LaunchMode.externalApplication),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.description_outlined,
+                    color: Colors.white70),
+                title: Text(t('terms_title'),
+                    style: const TextStyle(color: Colors.white)),
+                onTap: () => showDialog<void>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(t('terms_title')),
+                    content: SingleChildScrollView(child: Text(t('terms_body'))),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(t('close_invite')),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
