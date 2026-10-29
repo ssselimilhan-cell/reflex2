@@ -1,0 +1,45 @@
+name: 1) Yükleme Anahtarı Oluştur (bir kez)
+
+# Play Store'a yüklenecek paketi imzalayan anahtarı SUNUCUDA üretir, senin
+# belirlediğin KEYSTORE_PASSPHRASE parolasıyla ŞİFRELER ve depoya
+# tools/upload-keystore.enc olarak kaydeder. Parola olmadan dosya işe yaramaz.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Anahtarı üret, şifrele, depoya kaydet
+        env:
+          P: ${{ secrets.KEYSTORE_PASSPHRASE }}
+        run: |
+          if [ -z "$P" ]; then
+            echo "::error::KEYSTORE_PASSPHRASE secret'ı tanımlı değil. Settings > Secrets and variables > Actions bölümünden ekle."; exit 1
+          fi
+          if ! printf '%s' "$P" | grep -Eq '^[A-Za-z0-9]{12,}$'; then
+            echo "::error::Parola en az 12 karakter olmalı ve sadece harf/rakam içermeli."; exit 1
+          fi
+          if [ -f tools/upload-keystore.enc ]; then
+            echo "::error::tools/upload-keystore.enc zaten var. Üzerine yazmamak için durduruldu."; exit 1
+          fi
+          keytool -genkeypair -keystore upload.jks -storepass "$P" -keypass "$P" \
+            -alias upload -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=STRES Upload Key, O=STRES, C=TR"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in upload.jks -out tools/upload-keystore.enc -pass env:P
+          rm -f upload.jks
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add tools/upload-keystore.enc
+          git commit -m "Yükleme anahtarı eklendi (şifreli)"
+          git push
