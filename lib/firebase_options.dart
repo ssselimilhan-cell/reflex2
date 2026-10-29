@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBj0JICSdvQlpxL1iv13A4FwvMzJP3qg6M',
-    appId: '1:820220592096:android:87231f850496f088657585',
+    appId: '1:820220592096:android:930e8a2b70c5e02a657585',
     messagingSenderId: '820220592096',
     projectId: 'stres-card',
     storageBucket: 'stres-card.firebasestorage.app',
