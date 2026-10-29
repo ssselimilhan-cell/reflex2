@@ -1,0 +1,74 @@
+name: 2) Mağaza Sürümü Derle (AAB + APK)
+
+# release.config içindeki ad ve paket adıyla, imzalı .aab (Play Store'a
+# yüklenecek) ve .apk (telefonda denemek için) üretir.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Yükleme anahtarını çöz ve imza ayarını yaz
+        env:
+          P: ${{ secrets.KEYSTORE_PASSPHRASE }}
+        run: |
+          if [ ! -f tools/upload-keystore.enc ]; then
+            echo "::error::tools/upload-keystore.enc yok. Önce '1) Yükleme Anahtarı Oluştur' iş akışını çalıştır."; exit 1
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -in tools/upload-keystore.enc -out android/upload-keystore.jks -pass env:P
+          {
+            echo "storePassword=$P"
+            echo "keyPassword=$P"
+            echo "keyAlias=upload"
+            echo "storeFile=$GITHUB_WORKSPACE/android/upload-keystore.jks"
+          } > android/key.properties
+
+      - name: Android ayarlarını hazırla (ad, paket adı, internet izni, imza)
+        run: |
+          source release.config
+          bash tools/prepare_android_release.sh "$APP_NAME" "$APP_ID"
+
+      - run: flutter pub get
+
+      - name: Uygulama ikonlarını üret
+        run: dart run flutter_launcher_icons
+
+      - run: flutter build appbundle --release
+
+      - run: flutter build apk --release
+
+      - name: Hedef API ve paket bilgisini denetle
+        run: |
+          AAPT=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          INFO=$("$AAPT" dump badging build/app/outputs/flutter-apk/app-release.apk | grep -E "^package:|targetSdkVersion|application-label:" || true)
+          echo "$INFO"
+          {
+            echo "### Derleme bilgisi"
+            echo '```'
+            echo "$INFO"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          T=$(echo "$INFO" | sed -n "s/.*targetSdkVersion:'\([0-9]*\)'.*/\1/p" | head -1)
+          if [ -n "$T" ] && [ "$T" -lt 36 ]; then
+            echo "::warning::targetSdkVersion=$T. Google Play 36 veya üstünü istiyor; yükleme reddedilebilir."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stres-kart-magaza-paketi
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-release.apk
