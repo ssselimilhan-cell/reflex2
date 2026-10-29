@@ -797,6 +797,73 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Отправить код другу',
     'zh': '把房间码发给好友'
   },
+  'settings_group_cards': {'tr': 'Kartlar', 'en': 'Cards', 'ru': 'Карты', 'zh': '卡牌'},
+  'settings_group_look': {
+    'tr': 'Görünüm ve dil',
+    'en': 'Appearance and language',
+    'ru': 'Внешний вид и язык',
+    'zh': '外观与语言'
+  },
+  'settings_group_game': {'tr': 'Oyun', 'en': 'Game', 'ru': 'Игра', 'zh': '游戏'},
+  'settings_group_audio': {
+    'tr': 'Ses ve titreşim',
+    'en': 'Sound and haptics',
+    'ru': 'Звук и вибрация',
+    'zh': '声音与震动'
+  },
+  'settings_group_privacy': {
+    'tr': 'Gizlilik ve topluluk',
+    'en': 'Privacy and community',
+    'ru': 'Конфиденциальность и сообщество',
+    'zh': '隐私与社区'
+  },
+  'settings_group_support': {
+    'tr': 'Destek',
+    'en': 'Support',
+    'ru': 'Поддержка',
+    'zh': '支持'
+  },
+  'rate_app': {
+    'tr': 'Uygulamayı Değerlendir',
+    'en': 'Rate the App',
+    'ru': 'Оценить приложение',
+    'zh': '为应用评分'
+  },
+  'feedback_title': {
+    'tr': 'Geri Bildirim Gönder',
+    'en': 'Send Feedback',
+    'ru': 'Отправить отзыв',
+    'zh': '发送反馈'
+  },
+  'feedback_hint': {
+    'tr': 'Görüşünü, önerini veya karşılaştığın hatayı yaz (kişisel bilgi yazma).',
+    'en': 'Tell us your thoughts, ideas or the bug you hit (no personal info).',
+    'ru': 'Напишите мнение, идею или найденную ошибку (без личных данных).',
+    'zh': '请写下你的意见、建议或遇到的问题（请勿填写个人信息）。'
+  },
+  'feedback_type_bug': {'tr': 'Hata', 'en': 'Bug', 'ru': 'Ошибка', 'zh': '问题'},
+  'feedback_type_idea': {'tr': 'Öneri', 'en': 'Idea', 'ru': 'Идея', 'zh': '建议'},
+  'feedback_type_other': {'tr': 'Diğer', 'en': 'Other', 'ru': 'Другое', 'zh': '其他'},
+  'feedback_send': {'tr': 'Gönder', 'en': 'Send', 'ru': 'Отправить', 'zh': '发送'},
+  'feedback_cancel': {'tr': 'Vazgeç', 'en': 'Cancel', 'ru': 'Отмена', 'zh': '取消'},
+  'feedback_thanks': {
+    'tr': 'Geri bildirimin alındı, teşekkürler!',
+    'en': 'Feedback received, thank you!',
+    'ru': 'Отзыв получен, спасибо!',
+    'zh': '已收到你的反馈，谢谢！'
+  },
+  'feedback_failed': {
+    'tr': 'Gönderilemedi. Biraz sonra tekrar dene.',
+    'en': 'Could not send. Please try again later.',
+    'ru': 'Не удалось отправить. Попробуйте позже.',
+    'zh': '发送失败，请稍后再试。'
+  },
+  'feedback_queued': {
+    'tr': 'Mesajın kaydedildi; bağlantı kurulunca otomatik gönderilecek.',
+    'en': 'Saved; it will be sent automatically once you are connected.',
+    'ru': 'Сохранено; будет отправлено автоматически при подключении.',
+    'zh': '已保存；联网后将自动发送。'
+  },
   'invite_friends': {
     'tr': 'Arkadaşını davet et',
     'en': 'Invite a friend',
@@ -844,66 +911,6 @@ const Map<String, Map<String, String>> _strings = {
     'en': 'Send anonymous usage and error data',
     'ru': 'Отправлять анонимные данные об использовании и ошибках',
     'zh': '发送匿名使用与错误数据'
-  },
-  'contact_us': {
-    'tr': 'Bize Ulaşın / Geri Bildirim',
-    'en': 'Contact Us / Feedback',
-    'ru': 'Связаться с нами / Отзыв',
-    'zh': '联系我们 / 反馈'
-  },
-  'feedback_type_suggestion': {
-    'tr': 'Öneri',
-    'en': 'Suggestion',
-    'ru': 'Предложение',
-    'zh': '建议'
-  },
-  'feedback_type_complaint': {
-    'tr': 'Şikayet',
-    'en': 'Complaint',
-    'ru': 'Жалоба',
-    'zh': '投诉'
-  },
-  'feedback_type_bug': {
-    'tr': 'Hata',
-    'en': 'Bug',
-    'ru': 'Ошибка',
-    'zh': '问题'
-  },
-  'feedback_hint': {
-    'tr': 'Mesajın',
-    'en': 'Your message',
-    'ru': 'Ваше сообщение',
-    'zh': '你的留言'
-  },
-  'feedback_contact_hint': {
-    'tr': 'İletişim (isteğe bağlı, e-posta)',
-    'en': 'Contact (optional, email)',
-    'ru': 'Контакт (необязательно, email)',
-    'zh': '联系方式（可选，邮箱）'
-  },
-  'feedback_send': {
-    'tr': 'Gönder',
-    'en': 'Send',
-    'ru': 'Отправить',
-    'zh': '发送'
-  },
-  'feedback_thanks': {
-    'tr': 'Teşekkürler, mesajın bize ulaştı.',
-    'en': 'Thank you, your message was received.',
-    'ru': 'Спасибо, ваше сообщение получено.',
-    'zh': '谢谢，我们已收到你的留言。'
-  },
-  'feedback_error': {
-    'tr': 'Gönderilemedi. İnternet bağlantını kontrol et.',
-    'en': 'Could not send. Check your connection.',
-    'ru': 'Не удалось отправить. Проверьте соединение.',
-    'zh': '发送失败，请检查网络。'
-  },
-  'privacy_policy': {
-    'tr': 'Gizlilik Politikası',
-    'en': 'Privacy Policy',
-    'ru': 'Политика конфиденциальности',
-    'zh': '隐私政策'
   },
   'streak_bonus_label': {
     'tr': 'Kart!',

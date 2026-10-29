@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
 import '../main.dart' show firebaseAvailable;
@@ -20,8 +22,14 @@ Future<void> openStoreReview() async {
 
 /// Geri bildirimi kendi Firestore'umuza yazar (koleksiyon: feedback).
 /// Kayıtları yalnızca sen Firebase Console'dan okursun.
-Future<bool> submitFeedback(String type, String message) async {
-  if (!firebaseAvailable || _sentThisSession >= 3) return false;
+/// Başarılıysa 'ok', değilse kısa bir hata kodu döner:
+///  - firebase-init: Firebase başlatılamadı (online özellikler de çalışmaz)
+///  - limit: oturum başına 3 gönderim sınırı
+///  - permission-denied: Firestore kuralı yazmaya izin vermiyor
+///  - timeout: sunucudan 15 sn içinde yanıt gelmedi (yazma sıraya alınır)
+Future<String> submitFeedback(String type, String message) async {
+  if (!firebaseAvailable) return 'firebase-init';
+  if (_sentThisSession >= 3) return 'limit';
   try {
     await FirebaseFirestore.instance.collection('feedback').add({
       'type': type,
@@ -30,12 +38,16 @@ Future<bool> submitFeedback(String type, String message) async {
       'lang': AppSettings.instance.language.name,
       'appVersion': Telemetry.appVersion,
       'createdAt': FieldValue.serverTimestamp(),
-    }).timeout(const Duration(seconds: 8));
+    }).timeout(const Duration(seconds: 15));
     _sentThisSession++;
     Telemetry.log('feedback_sent', {'type': type});
-    return true;
+    return 'ok';
+  } on TimeoutException {
+    return 'timeout';
+  } on FirebaseException catch (e) {
+    return e.code;
   } catch (_) {
-    return false;
+    return 'error';
   }
 }
 
@@ -45,7 +57,7 @@ Future<void> showFeedbackDialog(BuildContext context) async {
   final controller = TextEditingController();
   var type = 'idea';
   var sending = false;
-  final sent = await showDialog<bool>(
+  final result = await showDialog<String>(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
@@ -101,7 +113,14 @@ Future<void> showFeedbackDialog(BuildContext context) async {
       ),
     ),
   );
-  if (sent == null) return;
-  messenger.showSnackBar(SnackBar(
-      content: Text(sent ? t('feedback_thanks') : t('feedback_failed'))));
+  if (result == null) return;
+  final String text;
+  if (result == 'ok') {
+    text = t('feedback_thanks');
+  } else if (result == 'timeout') {
+    text = '${t('feedback_queued')} ($result)';
+  } else {
+    text = '${t('feedback_failed')} ($result)';
+  }
+  messenger.showSnackBar(SnackBar(content: Text(text)));
 }
