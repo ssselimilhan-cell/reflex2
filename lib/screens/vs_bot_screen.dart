@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../game/game_engine.dart';
 import '../game/bot_ai.dart';
+import '../game/bot_profile.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/score_bar_widget.dart';
 import '../widgets/game_result_overlay.dart';
@@ -11,6 +12,8 @@ import '../widgets/streak_celebration_overlay.dart';
 import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
+import '../settings/ladder.dart';
+import '../widgets/level_result_overlay.dart';
 import '../widgets/table_felt.dart';
 import '../settings/telemetry.dart';
 import '../settings/score_board.dart';
@@ -24,7 +27,15 @@ class VsBotScreen extends StatefulWidget {
   final bool autoStart;
   final double? initialDifficulty;
 
-  const VsBotScreen({super.key, this.autoStart = false, this.initialDifficulty});
+  /// Bot Yolu seviyesi (1-100). Verilirse zorluk çubuğu yerine o seviyenin
+  /// botu kullanılır ve oyun hemen başlar.
+  final int? level;
+
+  const VsBotScreen(
+      {super.key,
+      this.autoStart = false,
+      this.initialDifficulty,
+      this.level});
 
   @override
   State<VsBotScreen> createState() => _VsBotScreenState();
@@ -41,6 +52,8 @@ class _VsBotScreenState extends State<VsBotScreen> {
   bool _scoreCounted = false;
   bool _gameStarted = false;
   bool _resultDismissed = false;
+  bool _ladderRecorded = false;
+  int _ladderStars = 0;
   final List<Timer> _pendingTimers = [];
   /// Sadece OYUNCUNUN kazandığı avantaj kutlanıyor (botunki
   /// bildirilmiyor, rahatsız edici olmasın diye).
@@ -52,7 +65,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
     if (widget.initialDifficulty != null) {
       difficulty = widget.initialDifficulty!;
     }
-    if (widget.autoStart) {
+    if (widget.autoStart || widget.level != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _beginGame();
       });
@@ -65,7 +78,8 @@ class _VsBotScreenState extends State<VsBotScreen> {
   int get _stepMs => (500 * AppSettings.instance.animationSpeed).round();
 
   void _beginGame() {
-    Telemetry.log('game_start', {'mode': 'bot'});
+    Telemetry.log('game_start',
+        {'mode': 'bot', if (widget.level != null) 'level': widget.level});
     setState(() => _gameStarted = true);
     _startNewGame();
   }
@@ -82,10 +96,18 @@ class _VsBotScreenState extends State<VsBotScreen> {
     _scoreCounted = false;
     _paused = false;
     _resultDismissed = false;
+    _ladderRecorded = false;
+    _ladderStars = 0;
     _celebrationBonus = null;
     bot?.stop();
-    bot = BotAi(engine, PlayerSide.player2, _onBotMove, difficulty: difficulty)
-      ..start();
+    bot = BotAi(
+      engine,
+      PlayerSide.player2,
+      _onBotMove,
+      difficulty: difficulty,
+      profile:
+          widget.level != null ? BotProfile.forLevel(widget.level!) : null,
+    )..start();
     _startReveal();
   }
 
@@ -107,6 +129,16 @@ class _VsBotScreenState extends State<VsBotScreen> {
           engine.status == GameStatus.player1Wins ? Sfx.win : Sfx.lose);
       Progress.instance
           .recordGame(won: engine.status == GameStatus.player1Wins, mode: 'bot');
+      if (widget.level != null) {
+        final won = engine.status == GameStatus.player1Wins;
+        if (won && !_ladderRecorded) {
+          _ladderRecorded = true;
+          _ladderStars = LadderProgress.instance.recordWin(widget.level!);
+          Telemetry.log('level_clear', {'level': widget.level});
+        } else if (!won) {
+          Telemetry.log('level_fail', {'level': widget.level});
+        }
+      }
     }
   }
 
@@ -208,7 +240,9 @@ class _VsBotScreenState extends State<VsBotScreen> {
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
           appBar: AppBar(
-            title: Text(t('menu_bot')),
+            title: Text(widget.level != null
+                ? '${t('level')} ${widget.level}'
+                : t('menu_bot')),
             actions: [
               IconButton(
                 icon: Icon(AppSettings.instance.soundEnabled
@@ -435,15 +469,38 @@ class _VsBotScreenState extends State<VsBotScreen> {
                     onDone: () => setState(() => _celebrationBonus = null),
                   ),
                 if (finished && !_resultDismissed)
-                  GameResultOverlay(
-                    isWin: engine.status == GameStatus.player1Wins,
-                    title: engine.status == GameStatus.player1Wins
-                        ? t('you_won')
-                        : t('bot_won'),
-                    onPlayAgain: _startNewGame,
-                    onDismiss: () =>
-                        setState(() => _resultDismissed = true),
-                  ),
+                  (widget.level != null
+                      ? LevelResultOverlay(
+                          isWin: engine.status == GameStatus.player1Wins,
+                          level: widget.level!,
+                          starsGained: _ladderStars,
+                          isLastLevel:
+                              widget.level! >= LadderProgress.maxLevel,
+                          onRetry: _startNewGame,
+                          onBack: () => Navigator.pop(context),
+                          onNext: (engine.status == GameStatus.player1Wins &&
+                                  widget.level! < LadderProgress.maxLevel)
+                              ? () => Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => VsBotScreen(
+                                          level: widget.level! + 1,
+                                          autoStart: true),
+                                    ),
+                                  )
+                              : null,
+                          onDismiss: () =>
+                              setState(() => _resultDismissed = true),
+                        )
+                      : GameResultOverlay(
+                          isWin: engine.status == GameStatus.player1Wins,
+                          title: engine.status == GameStatus.player1Wins
+                              ? t('you_won')
+                              : t('bot_won'),
+                          onPlayAgain: _startNewGame,
+                          onDismiss: () =>
+                              setState(() => _resultDismissed = true),
+                        )),
               ],
             ),
           ),

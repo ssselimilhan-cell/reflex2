@@ -84,6 +84,14 @@ class Progress extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Dışarıdan (ör. Bot Yolu) yıldız eklemek için.
+  void addStars(int n) {
+    if (n <= 0) return;
+    stars += n;
+    _persist();
+    notifyListeners();
+  }
+
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();

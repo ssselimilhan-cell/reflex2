@@ -823,6 +823,144 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Поддержка',
     'zh': '支持'
   },
+  'menu_ladder': {
+    'tr': 'Bot Yolu',
+    'en': 'Bot Ladder',
+    'ru': 'Лестница ботов',
+    'zh': '机器人天梯'
+  },
+  'level': {
+    'tr': 'Seviye',
+    'en': 'Level',
+    'ru': 'Уровень',
+    'zh': '关卡'
+  },
+  'ladder_continue': {
+    'tr': 'Devam Et',
+    'en': 'Continue',
+    'ru': 'Продолжить',
+    'zh': '继续'
+  },
+  'ladder_free_play': {
+    'tr': 'Serbest Oyun (zorluğu kendin seç)',
+    'en': 'Free Play (choose the difficulty)',
+    'ru': 'Свободная игра (выберите сложность)',
+    'zh': '自由对战（自选难度）'
+  },
+  'ladder_locked': {
+    'tr': 'Bu seviyeyi açmak için önceki seviyeyi yen.',
+    'en': 'Beat the previous level to unlock this one.',
+    'ru': 'Победите предыдущий уровень, чтобы открыть этот.',
+    'zh': '击败上一关即可解锁。'
+  },
+  'ladder_bot_speed': {
+    'tr': 'Rakip tepki süresi',
+    'en': 'Opponent reaction time',
+    'ru': 'Время реакции соперника',
+    'zh': '对手反应时间'
+  },
+  'ladder_complete': {
+    'tr': 'Tüm seviyeleri geçtin, efsanesin!',
+    'en': 'You cleared every level, you are a legend!',
+    'ru': 'Вы прошли все уровни — вы легенда!',
+    'zh': '你已通关所有关卡，真是传奇！'
+  },
+  'level_cleared': {
+    'tr': 'Seviye geçildi!',
+    'en': 'Level cleared!',
+    'ru': 'Уровень пройден!',
+    'zh': '通关！'
+  },
+  'level_failed': {
+    'tr': 'Bu sefer olmadı',
+    'en': 'Not this time',
+    'ru': 'В этот раз не вышло',
+    'zh': '这次没成功'
+  },
+  'level_next': {
+    'tr': 'Sonraki Seviye',
+    'en': 'Next Level',
+    'ru': 'Следующий уровень',
+    'zh': '下一关'
+  },
+  'level_retry': {
+    'tr': 'Tekrar Dene',
+    'en': 'Try Again',
+    'ru': 'Ещё раз',
+    'zh': '再试一次'
+  },
+  'level_back': {
+    'tr': 'Yola Dön',
+    'en': 'Back to Path',
+    'ru': 'К карте',
+    'zh': '返回关卡'
+  },
+  'level_tip': {
+    'tr': 'İpucu: Kartlarını rakibin kolonlarına at. El yenilenince o kartlar rakibe geçer, desteni daha çabuk bitirirsin.',
+    'en': 'Tip: play your cards onto your opponent\'s columns. When the table is redealt those cards go to them, so your deck runs out sooner.',
+    'ru': 'Совет: кладите карты на колонки соперника. При новой раздаче они перейдут к нему, и ваша колода закончится быстрее.',
+    'zh': '提示：把牌放到对手的牌列上。重新发牌时这些牌会归对手，你的牌堆会更快用完。'
+  },
+  'realm_1': {
+    'tr': 'Meyve Bahçesi',
+    'en': 'Orchard',
+    'ru': 'Фруктовый сад',
+    'zh': '果园'
+  },
+  'realm_2': {
+    'tr': 'Han Kervanı',
+    'en': 'Caravan Inn',
+    'ru': 'Караван-сарай',
+    'zh': '商队客栈'
+  },
+  'realm_3': {
+    'tr': 'Saray Meydanı',
+    'en': 'Palace Square',
+    'ru': 'Дворцовая площадь',
+    'zh': '宫殿广场'
+  },
+  'realm_4': {
+    'tr': 'Nil Kıyısı',
+    'en': 'Nile Banks',
+    'ru': 'Берега Нила',
+    'zh': '尼罗河畔'
+  },
+  'realm_5': {
+    'tr': 'Roma Arenası',
+    'en': 'Roman Arena',
+    'ru': 'Римская арена',
+    'zh': '罗马斗兽场'
+  },
+  'realm_6': {
+    'tr': 'Vahşi Orman',
+    'en': 'Wild Jungle',
+    'ru': 'Дикие джунгли',
+    'zh': '野性丛林'
+  },
+  'realm_7': {
+    'tr': 'Ejderha Tapınağı',
+    'en': 'Dragon Temple',
+    'ru': 'Храм дракона',
+    'zh': '龙之神殿'
+  },
+  'realm_8': {
+    'tr': 'Matruşka Sarayı',
+    'en': 'Matryoshka Palace',
+    'ru': 'Дворец матрёшек',
+    'zh': '套娃宫殿'
+  },
+  'realm_9': {
+    'tr': 'Kremlin Kalesi',
+    'en': 'Kremlin Fortress',
+    'ru': 'Кремлёвская крепость',
+    'zh': '克里姆林要塞'
+  },
+  'realm_10': {
+    'tr': 'Efsaneler Arenası',
+    'en': 'Arena of Legends',
+    'ru': 'Арена легенд',
+    'zh': '传奇竞技场'
+  },
   'rate_app': {
     'tr': 'Uygulamayı Değerlendir',
     'en': 'Rate the App',

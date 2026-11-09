@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'local_pvp_screen.dart';
 import 'vs_bot_screen.dart';
+import 'ladder_screen.dart';
 import 'online_lobby_screen.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
@@ -85,12 +86,12 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _MenuButton(
-                        label: t('menu_bot'),
+                        label: t('menu_ladder'),
                         icon: Icons.smart_toy,
                         onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const VsBotScreen())),
+                                builder: (_) => const LadderScreen())),
                       ),
                       const SizedBox(height: 16),
                       _MenuButton(

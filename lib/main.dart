@@ -7,6 +7,7 @@ import 'settings/app_settings.dart';
 import 'settings/user_profile.dart';
 import 'settings/moderation.dart';
 import 'settings/progress.dart';
+import 'settings/ladder.dart';
 import 'settings/telemetry.dart';
 
 /// Firebase kurulumu henüz yapılmadıysa (firebase_options.dart placeholder
@@ -39,6 +40,7 @@ void main() async {
   await UserProfile.instance.load();
   await Moderation.instance.load();
   await Progress.instance.load();
+  await LadderProgress.instance.load();
   Telemetry.log('app_open');
   runApp(const StresApp());
 }
