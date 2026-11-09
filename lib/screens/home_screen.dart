@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'local_pvp_screen.dart';
 import 'vs_bot_screen.dart';
-import 'ladder_screen.dart';
 import 'online_lobby_screen.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
@@ -9,209 +8,217 @@ import 'rules_screen.dart';
 import 'leaderboard_screen.dart';
 import 'quick_match_screen.dart';
 import 'onboarding_screen.dart';
+import 'ladder_screen.dart';
+import '../models/playing_card.dart';
+import '../widgets/card_widget.dart';
 import '../widgets/daily_card.dart';
+import '../widgets/game_ui.dart';
+import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
 import '../main.dart';
 import '../settings/app_settings.dart';
+import '../settings/ladder.dart';
+import '../settings/progress.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
-import '../widgets/profile_avatar.dart';
-import '../widgets/scream_background.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  Future<void> _openQuickMatch(BuildContext context) async {
+    if (!firebaseAvailable) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const VsBotScreen(autoStart: true)));
+      return;
+    }
+    if (!await ensureTermsAccepted(context)) return;
+    if (!context.mounted) return;
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => const QuickMatchScreen()));
+  }
+
+  Future<void> _openOnline(BuildContext context) async {
+    if (!firebaseAvailable) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t('firebase_needed'))));
+      return;
+    }
+    if (!await ensureTermsAccepted(context)) return;
+    if (!context.mounted) return;
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => const OnlineLobbyScreen()));
+  }
+
+  Future<void> _openLeaderboard(BuildContext context) async {
+    if (!firebaseAvailable) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t('firebase_needed'))));
+      return;
+    }
+    if (!await ensureTermsAccepted(context)) return;
+    if (!context.mounted) return;
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([AppSettings.instance, UserProfile.instance]),
+      animation: Listenable.merge([
+        AppSettings.instance,
+        UserProfile.instance,
+        Progress.instance,
+        LadderProgress.instance,
+      ]),
       builder: (context, _) {
-        final profile = UserProfile.instance;
+        final settings = AppSettings.instance;
+        final ladder = LadderProgress.instance;
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
-          body: SafeArea(
-            child: Stack(
-              children: [
-                const Positioned.fill(child: ScreamBackground()),
-                const _OnboardingTrigger(),
-                Center(
-                  child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        t('app_title'),
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(t('app_subtitle'),
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 16)),
-                      const SizedBox(height: 14),
-                      const DailyCard(),
-                      const SizedBox(height: 22),
-                      _MenuButton(
-                        label: t('menu_quick_match'),
-                        icon: Icons.bolt,
-                        highlight: true,
-                        onTap: () async {
-                          if (!firebaseAvailable) {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) =>
-                                        const VsBotScreen(autoStart: true)));
-                            return;
-                          }
-                          if (!await ensureTermsAccepted(context)) return;
-                          if (!context.mounted) return;
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const QuickMatchScreen()));
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        label: t('menu_local'),
-                        icon: Icons.people,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LocalPvpScreen())),
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        label: t('menu_ladder'),
-                        icon: Icons.smart_toy,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LadderScreen())),
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        label: t('menu_online'),
-                        icon: Icons.wifi,
-                        onTap: () async {
-                          if (!firebaseAvailable) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(t('firebase_needed'))),
-                            );
-                            return;
-                          }
-                          if (!await ensureTermsAccepted(context)) return;
-                          if (!context.mounted) return;
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const OnlineLobbyScreen()));
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        label: t('menu_leaderboard'),
-                        icon: Icons.leaderboard,
-                        onTap: () async {
-                          if (!firebaseAvailable) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(t('firebase_needed'))),
-                            );
-                            return;
-                          }
-                          if (!await ensureTermsAccepted(context)) return;
-                          if (!context.mounted) return;
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const LeaderboardScreen()));
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        label: t('menu_settings'),
-                        icon: Icons.settings,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SettingsScreen())),
-                      ),
-                    ],
-                  ),
-                  ),
-                ),
-                // Sağ üst köşede profil özeti / oluşturma girişi
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Material(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () => Navigator.push(
+          backgroundColor: settings.themeColor,
+          body: Stack(
+            children: [
+              Positioned.fill(child: FeltBackground(base: settings.themeColor)),
+              const _OnboardingTrigger(),
+              SafeArea(
+                child: Column(
+                  children: [
+                    _TopBar(
+                      onProfile: () => Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (_) => const ProfileScreen())),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (profile.hasProfile)
-                              const ProfileAvatar(radius: 9)
-                            else
-                              const Icon(Icons.person,
-                                  color: Colors.white, size: 18),
-                            const SizedBox(width: 6),
-                            Text(
-                              profile.hasProfile
-                                  ? '${profile.displayName!}'
-                                      '${profile.onlineWinRate != null ? ' · ${profile.onlineWinRate!.round()}%' : ''}'
-                                  : t('create_profile'),
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 13),
+                      onSettings: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsScreen())),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: Column(
+                              children: [
+                                const Reveal(index: 0, child: _Hero()),
+                                const SizedBox(height: 20),
+                                Reveal(
+                                  index: 1,
+                                  child: GamePrimaryButton(
+                                    label: t('menu_quick_match'),
+                                    subtitle: t('tile_quick_sub'),
+                                    icon: Icons.bolt_rounded,
+                                    height: 68,
+                                    pulse: true,
+                                    onTap: () => _openQuickMatch(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Reveal(
+                                  index: 2,
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(
+                                          child: GameTile(
+                                            title: t('menu_ladder'),
+                                            subtitle:
+                                                '${t('level')} ${ladder.unlockedLevel}',
+                                            icon: Icons.smart_toy,
+                                            accent: const Color(0xFFFF8A65),
+                                            footer: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              child: LinearProgressIndicator(
+                                                value: ladder.highestCleared /
+                                                    LadderProgress.maxLevel,
+                                                minHeight: 5,
+                                                backgroundColor:
+                                                    const Color(0x33FFFFFF),
+                                                valueColor:
+                                                    const AlwaysStoppedAnimation<
+                                                        Color>(GameUi.gold),
+                                              ),
+                                            ),
+                                            onTap: () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        const LadderScreen())),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: GameTile(
+                                            title: t('menu_online'),
+                                            subtitle: t('tile_online_sub'),
+                                            icon: Icons.public,
+                                            accent: const Color(0xFF4FC3F7),
+                                            onTap: () => _openOnline(context),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Reveal(
+                                  index: 3,
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(
+                                          child: GameTile(
+                                            title: t('menu_local'),
+                                            subtitle: t('tile_local_sub'),
+                                            icon: Icons.people,
+                                            accent: const Color(0xFF81C784),
+                                            onTap: () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        const LocalPvpScreen())),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: GameTile(
+                                            title: t('menu_leaderboard'),
+                                            subtitle: t('tile_board_sub'),
+                                            icon: Icons.leaderboard,
+                                            accent: const Color(0xFFFFD54F),
+                                            onTap: () =>
+                                                _openLeaderboard(context),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                const Reveal(index: 4, child: DailyCard()),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          bottomNavigationBar: SafeArea(
-            child: Material(
-              color: Colors.black26,
-              child: InkWell(
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const RulesScreen())),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.menu_book,
-                          color: Colors.white70, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        t('rules_title'),
-                        style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
+                    _RulesBar(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RulesScreen())),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
@@ -219,33 +226,203 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _MenuButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool highlight;
+/// Üst çubuk: solda profil hapı, sağda yıldız sayısı ve ayarlar.
+class _TopBar extends StatelessWidget {
+  final VoidCallback onProfile;
+  final VoidCallback onSettings;
 
-  const _MenuButton(
-      {required this.label,
-      required this.icon,
-      required this.onTap,
-      this.highlight = false});
+  const _TopBar({required this.onProfile, required this.onSettings});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 260,
-      height: 56,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon),
-        label: Text(label, style: const TextStyle(fontSize: 16)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: highlight ? Colors.amber : Colors.white,
-          foregroundColor:
-              highlight ? Colors.black87 : AppSettings.instance.themeColor,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final profile = UserProfile.instance;
+    final rate = profile.onlineWinRate;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          Flexible(
+            child: Material(
+              color: Colors.transparent,
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: GameUi.glass,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: GameUi.hairline),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: onProfile,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 6, 14, 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (profile.hasProfile)
+                          const ProfileAvatar(radius: 15)
+                        else
+                          const CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Color(0x33FFFFFF),
+                            child: Icon(Icons.person,
+                                color: Colors.white, size: 18),
+                          ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            profile.hasProfile
+                                ? profile.displayName!
+                                : t('create_profile'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        if (profile.hasProfile && rate != null) ...[
+                          const SizedBox(width: 8),
+                          Text('${rate.round()}%',
+                              style: GameUi.display(13, color: GameUi.gold)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Spacer(),
+          GamePill(
+            leading:
+                const Icon(Icons.star_rounded, color: GameUi.gold, size: 20),
+            text: '${Progress.instance.stars}',
+          ),
+          const SizedBox(width: 10),
+          GameIconButton(
+            icon: Icons.settings,
+            tooltip: t('menu_settings'),
+            onTap: onSettings,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Logo ve üstünde hafifçe süzülen, eşleşen iki kartı gösteren yelpaze.
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(height: 4),
+        _CardFan(),
+        SizedBox(height: 6),
+        GameLogo(),
+      ],
+    );
+  }
+}
+
+class _CardFan extends StatefulWidget {
+  const _CardFan();
+
+  @override
+  State<_CardFan> createState() => _CardFanState();
+}
+
+class _CardFanState extends State<_CardFan>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  Widget _card(PlayingCard card, double angle, Offset offset,
+      {bool highlighted = false}) {
+    return Transform.translate(
+      offset: offset,
+      child: Transform.rotate(
+        angle: angle,
+        child: CardWidget(
+          card: card,
+          highlighted: highlighted,
+          width: 66,
+          height: 94,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final v = Curves.easeInOut.transform(_c.value);
+          return SizedBox(
+            height: 128,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _card(const PlayingCard(Suit.spades, 13), -0.30 + v * 0.04,
+                    Offset(-62, 10 - v * 3)),
+                _card(const PlayingCard(Suit.hearts, 7), 0.30 - v * 0.04,
+                    Offset(62, 10 + v * 3),
+                    highlighted: true),
+                _card(const PlayingCard(Suit.diamonds, 7), 0, Offset(0, -4 + v * 5),
+                    highlighted: true),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RulesBar extends StatelessWidget {
+  final VoidCallback onTap;
+  const _RulesBar({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0x33000000),
+      child: SafeArea(
+        top: false,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.menu_book, color: Colors.white70, size: 19),
+                const SizedBox(width: 8),
+                Text(
+                  t('rules_title'),
+                  style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

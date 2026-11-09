@@ -68,6 +68,13 @@ class StresApp extends StatelessWidget {
                   Color.lerp(AppSettings.instance.themeColor, Colors.black, 0.45),
               foregroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
+              centerTitle: true,
+              titleTextStyle: const TextStyle(
+                fontFamily: 'RussoOne',
+                fontSize: 19,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           builder: (context, child) {

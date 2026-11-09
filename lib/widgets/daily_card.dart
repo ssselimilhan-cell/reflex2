@@ -58,38 +58,65 @@ class DailyCard extends StatelessWidget {
       animation: Progress.instance,
       builder: (context, _) {
         final p = Progress.instance;
+        final total = Progress.missions.length;
+        final done = p.doneToday;
         return Material(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(22),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(22),
-            onTap: () => _openMissions(context),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('🔥 ${p.activeStreak}',
-                      style: const TextStyle(
-                          color: Colors.amber,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 14),
-                  Text('⭐ ${p.stars}',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 14),
-                  const Icon(Icons.flag_outlined,
-                      color: Colors.white70, size: 17),
-                  const SizedBox(width: 4),
-                  Text('${p.doneToday}/${Progress.missions.length}',
-                      style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600)),
-                ],
+          color: Colors.transparent,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: const Color(0x40000000),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0x24FFFFFF)),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => _openMissions(context),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                child: Row(
+                  children: [
+                    Text('🔥 ${p.activeStreak}',
+                        style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t('daily_title'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: total == 0 ? 0 : done / total,
+                              minHeight: 6,
+                              backgroundColor: const Color(0x33FFFFFF),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.amber),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Text('$done/$total',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right, color: Colors.white54),
+                  ],
+                ),
               ),
             ),
           ),

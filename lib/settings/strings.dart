@@ -961,6 +961,30 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Арена легенд',
     'zh': '传奇竞技场'
   },
+  'tile_quick_sub': {
+    'tr': 'Online rakip bul',
+    'en': 'Find an online opponent',
+    'ru': 'Найти соперника онлайн',
+    'zh': '匹配在线对手'
+  },
+  'tile_online_sub': {
+    'tr': 'Oda kur, arkadaşını davet et',
+    'en': 'Create a room, invite a friend',
+    'ru': 'Создайте комнату, позовите друга',
+    'zh': '创建房间，邀请好友'
+  },
+  'tile_local_sub': {
+    'tr': 'Aynı telefonda 2 kişi',
+    'en': 'Two players, one phone',
+    'ru': 'Двое на одном телефоне',
+    'zh': '双人同屏对战'
+  },
+  'tile_board_sub': {
+    'tr': 'Günlük, haftalık, aylık',
+    'en': 'Daily, weekly, monthly',
+    'ru': 'За день, неделю, месяц',
+    'zh': '日榜、周榜、月榜'
+  },
   'rate_app': {
     'tr': 'Uygulamayı Değerlendir',
     'en': 'Rate the App',

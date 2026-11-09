@@ -3,6 +3,7 @@ import '../game/bot_profile.dart';
 import '../settings/app_settings.dart';
 import '../settings/ladder.dart';
 import '../settings/strings.dart';
+import '../widgets/game_ui.dart';
 import 'vs_bot_screen.dart';
 
 const Color _panelColor = Color(0x40000000);
@@ -195,20 +196,11 @@ class _HeroCard extends StatelessWidget {
                 style: const TextStyle(color: Colors.white, fontSize: 14)),
           ],
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onPlay,
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(t('ladder_continue'),
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w600)),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black87,
-                minimumSize: const Size.fromHeight(52),
-              ),
-            ),
+          GamePrimaryButton(
+            label: t('ladder_continue'),
+            icon: Icons.play_arrow_rounded,
+            height: 58,
+            onTap: onPlay,
           ),
         ],
       ),

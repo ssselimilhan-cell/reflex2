@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../settings/strings.dart';
+import 'game_ui.dart';
 
 /// Oyun bittiğinde tüm ekranı kaplayan, gözden kaçmayacak kadar belirgin
 /// bir sonuç bildirimi. "Tekrar Oyna" düğmesi her modda burada.
@@ -80,18 +81,13 @@ class GameResultOverlay extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 28),
-                          ElevatedButton.icon(
-                            onPressed: onPlayAgain,
-                            icon: const Icon(Icons.replay),
-                            label: Text(t('play_again'),
-                                style: const TextStyle(fontSize: 16)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accent,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                          SizedBox(
+                            width: 220,
+                            child: GamePrimaryButton(
+                              label: t('play_again'),
+                              icon: Icons.replay,
+                              height: 54,
+                              onTap: onPlayAgain,
                             ),
                           ),
                         ],

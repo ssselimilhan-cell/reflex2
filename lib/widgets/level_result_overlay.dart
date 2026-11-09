@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../settings/strings.dart';
+import 'game_ui.dart';
 
 /// Bot Yolu'nda bir seviye bitince çıkan sonuç kutusu: kazanınca yıldız
 /// ve "Sonraki Seviye", kaybedince "Tekrar Dene" + ipucu.
@@ -109,19 +110,10 @@ class LevelResultOverlay extends StatelessWidget {
                                 height: 1.35)),
                       ],
                       const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: primaryAction,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.amber,
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size.fromHeight(48),
-                          ),
-                          child: Text(primaryLabel,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
-                        ),
+                      GamePrimaryButton(
+                        label: primaryLabel,
+                        height: 54,
+                        onTap: primaryAction,
                       ),
                       const SizedBox(height: 10),
                       Row(

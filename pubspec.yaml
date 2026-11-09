@@ -18,7 +18,6 @@ dependencies:
   audioplayers: ^6.1.0
   share_plus: ^10.1.4
   in_app_review: ^2.0.10
-  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +29,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/sounds/
+
+  # Başlık ve düğme yazı tipi (Russo One, SIL Open Font License; lisans
+  # metni assets/fonts/OFL.txt). Türkçe ve Kiril harfleri destekler;
+  # Çince gibi desteklenmeyen yazılarda sistem yazı tipine düşer.
+  fonts:
+    - family: RussoOne
+      fonts:
+        - asset: assets/fonts/RussoOne-Regular.ttf
 
 # Uygulama ikonu: terminalde `dart run flutter_launcher_icons` çalıştırınca
 # android/ klasöründeki ikonları otomatik üretir.
