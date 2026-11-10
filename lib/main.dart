@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'settings/app_settings.dart';
 import 'settings/user_profile.dart';
+import 'settings/auth_service.dart';
 import 'settings/moderation.dart';
 import 'settings/progress.dart';
 import 'settings/ladder.dart';

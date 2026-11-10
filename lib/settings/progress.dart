@@ -84,6 +84,34 @@ class Progress extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> restoreAccountData({
+    required int streakDays,
+    required String lastPlayDay,
+    required String missionDay,
+    required int todayGames,
+    required int todayWins,
+    required int todayBonuses,
+    required int stars,
+    required int totalWins,
+    required bool reviewAsked,
+    required List<int> claimedMissionIndexes,
+  }) async {
+    this.streakDays = streakDays;
+    this.lastPlayDay = lastPlayDay;
+    this.missionDay = missionDay;
+    this.todayGames = todayGames;
+    this.todayWins = todayWins;
+    this.todayBonuses = todayBonuses;
+    this.stars = stars;
+    this.totalWins = totalWins;
+    this.reviewAsked = reviewAsked;
+    claimed
+      ..clear()
+      ..addAll(claimedMissionIndexes);
+    await _persist();
+    notifyListeners();
+  }
+
   /// Dışarıdan (ör. Bot Yolu) yıldız eklemek için.
   void addStars(int n) {
     if (n <= 0) return;

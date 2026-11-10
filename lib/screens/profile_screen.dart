@@ -166,9 +166,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final credential = await AuthService.instance.signInWithGoogle();
       if (!mounted) return;
       if (credential != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t('account_connected'))),
-        );
+        try {
+          await AuthService.instance.syncProgressForCurrentUser();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(t('account_connected'))),
+            );
+          }
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(t('account_sync_pending'))),
+            );
+          }
+        }
       }
     } catch (error) {
       if (mounted) _showAuthError(error);
@@ -246,10 +257,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         await AuthService.instance.signInWithEmail(email, password);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(t('account_connected'))),
-        );
+      try {
+        await AuthService.instance.syncProgressForCurrentUser();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(t('account_connected'))),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(t('account_sync_pending'))),
+          );
+        }
       }
     } catch (error) {
       if (mounted) _showAuthError(error);

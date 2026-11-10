@@ -82,6 +82,79 @@ class GuestProgressSnapshot {
     );
   }
 
+  /// Combines guest and account progress without blindly adding counters:
+  /// max values avoid duplicating progress when the same device signs in again.
+  static GuestProgressSnapshot merge(
+    GuestProgressSnapshot local,
+    GuestProgressSnapshot remote,
+  ) {
+    final localIsNewer = local.missionDay.compareTo(remote.missionDay) > 0;
+    final sameDay = local.missionDay == remote.missionDay;
+    final daily = localIsNewer ? local : remote;
+    final claimed = sameDay
+        ? {...local.claimedMissionIndexes, ...remote.claimedMissionIndexes}
+        : daily.claimedMissionIndexes.toSet();
+    return GuestProgressSnapshot(
+      exportedAtUtc: DateTime.now().toUtc().toIso8601String(),
+      displayName: (remote.displayName?.trim().isNotEmpty ?? false)
+          ? remote.displayName
+          : local.displayName,
+      onlineWins: local.onlineWins > remote.onlineWins
+          ? local.onlineWins : remote.onlineWins,
+      onlineLosses: local.onlineLosses > remote.onlineLosses
+          ? local.onlineLosses : remote.onlineLosses,
+      avatarIconIndex: remote.avatarIconIndex,
+      avatarColorValue: remote.avatarColorValue,
+      photoBase64: remote.photoBase64 ?? local.photoBase64,
+      streakDays: local.streakDays > remote.streakDays
+          ? local.streakDays : remote.streakDays,
+      lastPlayDay: local.lastPlayDay.compareTo(remote.lastPlayDay) > 0
+          ? local.lastPlayDay : remote.lastPlayDay,
+      missionDay: local.missionDay.compareTo(remote.missionDay) > 0
+          ? local.missionDay : remote.missionDay,
+      todayGames: sameDay
+          ? (local.todayGames > remote.todayGames ? local.todayGames : remote.todayGames)
+          : daily.todayGames,
+      todayWins: sameDay
+          ? (local.todayWins > remote.todayWins ? local.todayWins : remote.todayWins)
+          : daily.todayWins,
+      todayBonuses: sameDay
+          ? (local.todayBonuses > remote.todayBonuses ? local.todayBonuses : remote.todayBonuses)
+          : daily.todayBonuses,
+      stars: local.stars > remote.stars ? local.stars : remote.stars,
+      totalWins: local.totalWins > remote.totalWins
+          ? local.totalWins : remote.totalWins,
+      reviewAsked: local.reviewAsked || remote.reviewAsked,
+      claimedMissionIndexes: claimed.toList()..sort(),
+      highestClearedLevel: local.highestClearedLevel > remote.highestClearedLevel
+          ? local.highestClearedLevel : remote.highestClearedLevel,
+    );
+  }
+
+  Future<void> applyToLocal() async {
+    await UserProfile.instance.restoreAccountData(
+      displayName: displayName,
+      onlineWins: onlineWins,
+      onlineLosses: onlineLosses,
+      avatarIconIndex: avatarIconIndex,
+      avatarColorValue: avatarColorValue,
+      photoBase64: photoBase64,
+    );
+    await Progress.instance.restoreAccountData(
+      streakDays: streakDays,
+      lastPlayDay: lastPlayDay,
+      missionDay: missionDay,
+      todayGames: todayGames,
+      todayWins: todayWins,
+      todayBonuses: todayBonuses,
+      stars: stars,
+      totalWins: totalWins,
+      reviewAsked: reviewAsked,
+      claimedMissionIndexes: claimedMissionIndexes,
+    );
+    await LadderProgress.instance.restoreAccountData(highestClearedLevel);
+  }
+
   String toJson() => jsonEncode(toMap());
 
   factory GuestProgressSnapshot.fromJson(String source) {

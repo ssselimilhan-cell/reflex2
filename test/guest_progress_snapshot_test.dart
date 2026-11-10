@@ -170,5 +170,23 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test('merges account and guest progress without double-counting', () {
+      final local = sampleSnapshot().toMap()
+        ..['onlineWins'] = 8
+        ..['stars'] = 12
+        ..['highestClearedLevel'] = 18;
+      final remote = sampleSnapshot().toMap()
+        ..['onlineWins'] = 5
+        ..['stars'] = 20
+        ..['highestClearedLevel'] = 25;
+      final merged = GuestProgressSnapshot.merge(
+        GuestProgressSnapshot.fromMap(local),
+        GuestProgressSnapshot.fromMap(remote),
+      );
+      expect(merged.onlineWins, 8);
+      expect(merged.stars, 20);
+      expect(merged.highestClearedLevel, 25);
+    });
   });
 }

@@ -33,6 +33,12 @@ class LadderProgress extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> restoreAccountData(int level) async {
+    highestCleared = level.clamp(0, maxLevel).toInt();
+    await _save();
+    notifyListeners();
+  }
+
   /// İlk geçişte kazanılan yıldız: seviye 1-30 → 1, 31-60 → 2, 61-100 → 3;
   /// her 10. seviye (patron) için +5 bonus.
   static int starsForLevel(int level) {

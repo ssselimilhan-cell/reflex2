@@ -161,6 +161,26 @@ class UserProfile extends ChangeNotifier {
     await _syncToFirestore();
   }
 
+  Future<void> restoreAccountData({
+    required String? displayName,
+    required int onlineWins,
+    required int onlineLosses,
+    required int avatarIconIndex,
+    required int avatarColorValue,
+    required String? photoBase64,
+  }) async {
+    this.displayName = displayName;
+    this.onlineWins = onlineWins;
+    this.onlineLosses = onlineLosses;
+    this.avatarIconIndex = avatarIconIndex;
+    avatarColor = Color(avatarColorValue);
+    this.photoBase64 = photoBase64;
+    photoPath = null;
+    notifyListeners();
+    await _persistLocal();
+    await _syncToFirestore();
+  }
+
   Future<void> deleteProfile() async {
     final oldId = deviceId;
     displayName = null;
