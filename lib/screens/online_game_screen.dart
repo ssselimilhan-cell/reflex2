@@ -517,6 +517,21 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 final roomStatus = data['roomStatus'] as String;
                 _currentRoomStatus = roomStatus;
                 if (widget.isHost &&
+                    (roomStatus == 'ready' || roomStatus == 'active') &&
+                    data['guestDeviceId'] != null && !_opponentArrivalNotified) {
+                  _opponentArrivalNotified = true;
+                  final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      duration: const Duration(seconds: 6),
+                      backgroundColor: const Color(0xFF176B45),
+                      content: Text('$arrivedName masaya oturdu! Turnuva maçı başlıyor.',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ));
+                  });
+                }
+                if (widget.isHost &&
                     data['guestDeviceId'] != null &&
                     data['inviteJoinRewarded'] != true &&
                     data['inviteToDeviceId'] == data['guestDeviceId']) {
@@ -628,19 +643,6 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
               if (roomStatus == 'ready') {
                 _roomExpiryTimer?.cancel();
-                if (widget.isHost && data['guestDeviceId'] != null && !_opponentArrivalNotified) {
-                  _opponentArrivalNotified = true;
-                  final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      duration: const Duration(seconds: 6),
-                      backgroundColor: const Color(0xFF176B45),
-                      content: Text('$arrivedName masaya oturdu! Maç başlatılmaya hazır.',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                    ));
-                  });
-                }
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
