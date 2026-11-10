@@ -163,23 +163,54 @@ class _CardWidgetState extends State<CardWidget>
   }
 
   Widget _buildBack() {
+    final base = AppSettings.instance.cardBackColor;
+    final emblemSize = math.min(widget.width, widget.height) * 0.30;
     return Container(
       decoration: BoxDecoration(
-        color: AppSettings.instance.cardBackColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(base, Colors.white, 0.16)!,
+            base,
+            Color.lerp(base, Colors.black, 0.30)!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
       ),
-      child: Center(
-        child: Container(
-          width: widget.width * 0.6,
-          height: widget.height * 0.7,
+      child: Padding(
+        padding: EdgeInsets.all(widget.width * 0.055),
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.white38, width: 1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0x99FFFFFF), width: 0.9),
           ),
-          child: Icon(Icons.style,
-              color: Colors.white54,
-              size: math.min(widget.width, widget.height) * 0.32),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(7),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CustomPaint(painter: _CardBackPatternPainter()),
+                Center(
+                  child: Container(
+                    width: emblemSize * 1.65,
+                    height: emblemSize * 1.65,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.10),
+                      border: Border.all(color: Colors.white.withOpacity(0.58), width: 1.1),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 8),
+                      ],
+                    ),
+                    child: Icon(Icons.auto_awesome_rounded,
+                        color: Colors.white.withOpacity(0.92), size: emblemSize),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -196,14 +227,14 @@ class _CardWidgetState extends State<CardWidget>
   /// büyük sembol görsel olarak üst üste biniyordu. Şimdi hem köşeler
   /// küçültüldü hem de offset'ler kart boyutuyla orantılı.
   Widget _buildFace(PlayingCard c) {
-    final color = c.isRed ? Colors.red.shade700 : Colors.black87;
-    final cornerRankSize = widget.height * 0.16;
-    final cornerSuitSize = widget.height * 0.11;
+    final color = c.isRed ? const Color(0xFFBE2638) : const Color(0xFF172235);
+    final cornerRankSize = widget.height * 0.155;
+    final cornerSuitSize = widget.height * 0.105;
     final theme = widget.themeOverride ?? AppSettings.instance.cardTheme;
     final centerSize = switch (theme) {
-      CardFaceTheme.figure => widget.height * 0.40, // "boydan" figür — en baskın
-      CardFaceTheme.classic => widget.height * 0.30, // köşelerle dengeli kalsın
-      _ => widget.height * 0.36, // diğer temalar daha canlı/büyük
+      CardFaceTheme.figure => widget.height * 0.40,
+      CardFaceTheme.classic => widget.height * 0.30,
+      _ => widget.height * 0.36,
     };
 
     Widget corner() {
@@ -211,44 +242,72 @@ class _CardWidgetState extends State<CardWidget>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            c.rankLabel,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: cornerRankSize,
-              height: 1.0,
-            ),
-          ),
-          Text(
-            c.suitSymbol,
-            style:
-                TextStyle(color: color, fontSize: cornerSuitSize, height: 1.0),
-          ),
+          Text(c.rankLabel,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Roboto',
+                fontSize: cornerRankSize,
+                height: 0.98,
+              )),
+          Text(c.suitSymbol,
+              style: TextStyle(color: color, fontSize: cornerSuitSize, height: 1.0)),
         ],
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFFFFF), Color(0xFFFFFDF7), Color(0xFFF1F0E9)],
+        ),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.black12, width: 1),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: widget.height * 0.035,
-            left: widget.width * 0.07,
-            child: corner(),
-          ),
-          Positioned(
-            bottom: widget.height * 0.035,
-            right: widget.width * 0.07,
-            child: Transform.rotate(angle: math.pi, child: corner()),
-          ),
-          Center(child: _buildCenterSymbol(c, color, centerSize, theme)),
+        border: Border.all(color: const Color(0xFFD7D9DE), width: 0.9),
+        boxShadow: const [
+          BoxShadow(color: Color(0x180B1424), blurRadius: 3, offset: Offset(0, 1)),
         ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(widget.width * 0.045),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: const Color(0x1C64748B), width: 0.65),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: widget.height * 0.018,
+                left: widget.width * 0.025,
+                child: corner(),
+              ),
+              Positioned(
+                bottom: widget.height * 0.018,
+                right: widget.width * 0.025,
+                child: Transform.rotate(angle: math.pi, child: corner()),
+              ),
+              Center(
+                child: Container(
+                  width: centerSize * 1.42,
+                  height: centerSize * 1.42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        color.withOpacity(theme == CardFaceTheme.classic ? 0.09 : 0.13),
+                        color.withOpacity(0.025),
+                      ],
+                    ),
+                    border: Border.all(color: color.withOpacity(0.10), width: 0.8),
+                  ),
+                  child: Center(child: _buildCenterSymbol(c, color, centerSize, theme)),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -387,4 +446,34 @@ class _CardWidgetState extends State<CardWidget>
     final isRed = s == Suit.hearts || s == Suit.diamonds;
     return isRed ? '💃' : '🕺';
   }
+}
+
+
+/// İnce çapraz çizgiler ve köşe motifleri, kapalı kartın arkasına
+/// baskılı oyun kartı hissi verir. Çizim tamamen vektöreldir.
+class _CardBackPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = Colors.white.withOpacity(0.13)
+      ..strokeWidth = 0.65
+      ..style = PaintingStyle.stroke;
+    final step = math.max(8.0, size.shortestSide * 0.22);
+    for (double x = -size.height; x < size.width + size.height; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
+    }
+    final dot = Paint()
+      ..color = Colors.white.withOpacity(0.22)
+      ..style = PaintingStyle.fill;
+    final radius = math.max(0.8, size.shortestSide * 0.018);
+    for (final x in [size.width * 0.16, size.width * 0.84]) {
+      for (final y in [size.height * 0.12, size.height * 0.88]) {
+        canvas.drawCircle(Offset(x, y), radius, dot);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CardBackPatternPainter oldDelegate) => false;
 }
