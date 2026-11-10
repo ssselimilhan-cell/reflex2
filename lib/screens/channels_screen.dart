@@ -186,10 +186,10 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         child: const Row(children: [
           Icon(Icons.hub_rounded, color: Color(0xFFFBBF24), size: 34), SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Kendi topluluğunu kur', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-            SizedBox(height: 4),
+            Text('Kendi topluluğunu kur', style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
+            SizedBox(height: 6),
             Text('Kanalın maç odasından bağımsız kalır. Oyuncular katılabilir, ayrılabilir ve kanaldan maç daveti alabilir.',
-              style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.35)),
+              style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4)),
           ])),
         ]),
       ),
@@ -221,15 +221,15 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(data['name'] as String? ?? 'Kanal', maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                     if ((data['description'] as String? ?? '').isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(data['description'] as String, maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                        style: const TextStyle(color: Colors.white70, fontSize: 14)),
                     ],
                     const SizedBox(height: 5),
                     Text('${data['memberCount'] ?? 0} oyuncu  ·  ${data['ownerDisplayName'] ?? 'Topluluk'}',
-                      style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 13, fontWeight: FontWeight.w700)),
                   ])),
                   StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                     stream: _deviceId == null ? null : _repo.watchChannelMembership(doc.id, _deviceId!),
@@ -238,7 +238,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       return FilledButton(
                         onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
                         style: FilledButton.styleFrom(backgroundColor: isMember ? const Color(0xFF263B55) : const Color(0xFF2563EB), foregroundColor: Colors.white),
-                        child: Text(isMember ? 'Aç' : 'Katıl'));
+                        child: Text(isMember ? 'Aç' : 'Katıl', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)));
                     }),
                 ])),
               );
