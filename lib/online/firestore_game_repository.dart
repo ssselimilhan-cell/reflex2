@@ -630,7 +630,7 @@ class OnlineRoomRepository {
         if (memberSnap.exists) {
           players.add({
             'uid': playerUid,
-            'deviceId': memberSnap.data()?['playerDeviceId'] as String? ?? playerUid,
+            'deviceId': memberSnap.data()?['playerDeviceId'] as String? ?? '',
             'name': memberSnap.data()?['displayName'] as String? ?? 'Oyuncu',
           });
         }
