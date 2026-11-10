@@ -7,6 +7,11 @@ service cloud.firestore {
         && request.auth.token.email_verified == true;
     }
 
+    // Admin-only app configuration (including one-time catalog initialization marker).
+    match /app_config/{configId} {
+      allow read, write: if isShopAdmin();
+    }
+
     // Theme catalog: players can only read published items; only the verified owner can manage it.
     match /cosmetic_catalog/{itemId} {
       allow read: if isShopAdmin() || resource.data.isPublished == true;
