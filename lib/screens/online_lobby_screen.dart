@@ -562,7 +562,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       final roomClosed = roomSnapshot.data?.exists != true || status == 'cancelled';
                       final hasOpponent = guestId != null && !roomClosed;
                       final roomStarted = status == 'active';
-                      if (guestId != null && guestId != _lastMinimizedRoomGuestId) {
+                      if (!roomClosed && guestId != null && guestId != _lastMinimizedRoomGuestId) {
                         _lastMinimizedRoomGuestId = guestId;
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (!mounted) return;
@@ -573,7 +573,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                           ));
                         });
-                      } else if (guestId == null) {
+                      } else if (guestId == null || roomClosed) {
                         _lastMinimizedRoomGuestId = null;
                       }
                       final label = roomClosed
