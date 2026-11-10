@@ -630,38 +630,6 @@ class _ProfileMetric extends StatelessWidget {
   );
 }
 
-class _StatBox extends StatelessWidget {
-  final String label;
-  final int value;
-
-  const _StatBox({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text('$value',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(color: Colors.white70, fontSize: 11)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Rütbe rozeti ve sonraki rütbeye ilerleme çubuğu.
 class _RankCard extends StatelessWidget {
   final int wins;

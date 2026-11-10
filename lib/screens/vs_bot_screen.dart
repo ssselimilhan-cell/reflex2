@@ -312,7 +312,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
                               colors: [Color(0xE6253B58), Color(0xE6101B2C)],
                             ),
                             borderRadius: BorderRadius.circular(26),
-                            border: Border.all(color: GameUi.cyan.withOpacity(0.24)),
+                            border: Border.all(color: GameUi.gold.withOpacity(0.24)),
                             boxShadow: const [
                               BoxShadow(color: Color(0x50000000), blurRadius: 28, offset: Offset(0, 12)),
                             ],
@@ -329,7 +329,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
                                     colors: [Color(0xFF2563EB), Color(0xFF0891B2)],
                                   ),
                                   boxShadow: [
-                                    BoxShadow(color: GameUi.cyan.withOpacity(0.25), blurRadius: 22),
+                                    BoxShadow(color: GameUi.gold.withOpacity(0.25), blurRadius: 22),
                                   ],
                                 ),
                                 child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 38),
@@ -348,8 +348,8 @@ class _VsBotScreenState extends State<VsBotScreen> {
                                       data: SliderTheme.of(context).copyWith(
                                         activeTrackColor: difficultyColor,
                                         inactiveTrackColor: Colors.white12,
-                                        thumbColor: GameUi.cyan,
-                                        overlayColor: GameUi.cyan.withOpacity(0.16),
+                                        thumbColor: GameUi.gold,
+                                        overlayColor: GameUi.gold.withOpacity(0.16),
                                         trackHeight: 5,
                                       ),
                                       child: Slider(
@@ -415,9 +415,9 @@ class _VsBotScreenState extends State<VsBotScreen> {
                             icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
                             label: Text(_paused ? t('resume') : t('pause')),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: GameUi.cyan,
+                              foregroundColor: GameUi.gold,
                               backgroundColor: GameUi.surface.withOpacity(0.72),
-                              side: BorderSide(color: GameUi.cyan.withOpacity(0.42)),
+                              side: BorderSide(color: GameUi.gold.withOpacity(0.42)),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
