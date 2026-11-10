@@ -265,7 +265,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await AuthService.instance.syncProgressForCurrentUser();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(t('account_connected'))),
+            SnackBar(content: Text(choice
+              ? 'Hesap oluşturuldu. E-posta adresine gönderdiğimiz doğrulama bağlantısını onayla.'
+              : t('account_connected'))),
           );
         }
       } catch (_) {
@@ -302,7 +304,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'user-not-found' || 'wrong-password' || 'invalid-credential' =>
               t('auth_invalid_credentials'),
             'network-request-failed' => t('auth_network_error'),
-            _ => error.message ?? t('auth_error'),
+            'operation-not-allowed' => 'Bu giriş yöntemi Firebase Console > Authentication > Sign-in method bölümünde etkinleştirilmemiş.',
+            'app-not-authorized' || 'invalid-api-key' => 'Firebase Android uygulama yapılandırması/API anahtarı uyuşmuyor. Paket adı ve google-services.json kontrol edilmeli.',
+            'unauthorized-domain' => 'Bu uygulama alan adı Firebase Authentication için yetkilendirilmemiş.',
+            'google-sign-in-configuration-error' || 'google-token-missing' => 'Google girişi Firebase tarafında tamamlanmamış. Google sağlayıcısı, SHA-1/SHA-256 parmak izleri ve Android OAuth istemcisi yapılandırılmalı. Ayrıntı: ${error.message ?? error.code}',
+            _ => '${error.code}: ${error.message ?? t('auth_error')}',
           }
         : error.toString();
     ScaffoldMessenger.of(context).showSnackBar(
