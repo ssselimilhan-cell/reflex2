@@ -515,7 +515,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             const SizedBox(width: 9),
                             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(data['title'] as String? ?? 'Turnuva', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-                              Text(participants.length.toString() + '/' + maxPlayers.toString() + ' oyuncu · ' + (status == 'registration' ? 'Kayıt açık' : 'Devam ediyor'),
+                              Text(participants.length.toString() + '/' + maxPlayers.toString() + ' oyuncu · ' + (status == 'registration' ? 'Kayıt açık' : status == 'completed' ? 'Tamamlandı' : 'Devam ediyor'),
                                 style: const TextStyle(color: Colors.white60, fontSize: 11)),
                             ])),
                             if (status == 'registration' && !isParticipant)
@@ -533,7 +533,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                                     deviceId: widget.deviceId,
                                   ),
                                 )),
-                                child: const Text('Eşleşmeler'),
+                                child: Text(status == 'completed' ? 'Geçmiş' : 'Eşleşmeler'),
                               ),
                           ]),
                         );
