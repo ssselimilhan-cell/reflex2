@@ -50,7 +50,7 @@ class DailyCard extends StatelessWidget {
                             color: GameUi.gold, size: 27),
                         const SizedBox(width: 9),
                         Expanded(
-                          child: Text(t('daily_title'),
+                          child: Text('Yıldız Kazan',
                               style: GameUi.display(20, color: Colors.white)),
                         ),
                         _StarReward(stars: p.stars),
@@ -66,7 +66,7 @@ class DailyCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(t('daily_title'),
+                          child: Text('Yıldız Kazan',
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -127,14 +127,14 @@ class DailyCard extends StatelessWidget {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(15, 14, 14, 14),
+                padding: const EdgeInsets.fromLTRB(12, 9, 11, 9),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         Container(
-                          width: 43,
-                          height: 43,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: GameUi.gold.withOpacity(0.13),
                             borderRadius: BorderRadius.circular(14),
@@ -150,10 +150,10 @@ class DailyCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(t('daily_title'),
+                              Text('Yıldız Kazan',
                                   style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w800)),
                               const SizedBox(height: 3),
                               Text(t('streak_hint'),
@@ -182,18 +182,18 @@ class DailyCard extends StatelessWidget {
                             color: Colors.white54, size: 20),
                       ],
                     ),
-                    const SizedBox(height: 13),
+                    const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
                         value: ratio,
-                        minHeight: 7,
+                        minHeight: 5,
                         backgroundColor: Colors.white12,
                         valueColor:
                             const AlwaysStoppedAnimation<Color>(GameUi.gold),
                       ),
                     ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         const Icon(Icons.stars_rounded,
@@ -211,7 +211,7 @@ class DailyCard extends StatelessWidget {
                               : t(Progress.missions[nextMission].titleKey),
                           style: const TextStyle(
                               color: GameUi.gold,
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w700),
                         ),
                       ],
