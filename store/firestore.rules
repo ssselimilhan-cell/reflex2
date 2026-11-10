@@ -78,12 +78,7 @@ service cloud.firestore {
         // Owner edits channel metadata / manages the channel.
         (resource.data.ownerDeviceId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'description', 'status', 'ownerDeviceId',
-                      'ownerDisplayName', 'memberCount', 'updatedAt', 'inviteCode'])
-          && (request.resource.data.ownerDeviceId == request.auth.uid
-              || request.resource.data.ownerDeviceId == null
-              || (existsAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId))
-                  && getAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId)).data.role == 'owner')))
+            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt', 'inviteCode']))
         ||
         // New member joins: their membership is created in the same batch.
         (existsAfter(channelMemberPath(channelId, request.auth.uid))
@@ -96,7 +91,20 @@ service cloud.firestore {
           && !existsAfter(channelMemberPath(channelId, request.auth.uid))
           && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['memberCount', 'updatedAt', 'ownerDeviceId', 'ownerDisplayName', 'status'])
-          && request.resource.data.memberCount == resource.data.memberCount - 1)
+          && request.resource.data.memberCount == resource.data.memberCount - 1
+          && (
+            // A regular member cannot alter channel ownership.
+            (resource.data.ownerDeviceId != request.auth.uid
+              && request.resource.data.ownerDeviceId == resource.data.ownerDeviceId
+              && request.resource.data.ownerDisplayName == resource.data.ownerDisplayName
+              && request.resource.data.status == resource.data.status)
+            ||
+            // The owner may transfer ownership to a remaining member, or close an empty channel.
+            (resource.data.ownerDeviceId == request.auth.uid
+              && (request.resource.data.ownerDeviceId == null
+                  || (existsAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId))
+                      && getAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId)).data.role == 'owner')))
+          ))
       );
 
       allow delete: if false;
