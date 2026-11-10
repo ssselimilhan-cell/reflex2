@@ -200,11 +200,50 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1'), {
     participantIds: arrayUnion('player-b'),
   }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1'), {
+    participantIds: arrayUnion('owner-a'),
+  }));
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1'), {
     participantIds: arrayUnion('somebody-else'),
   }));
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1'), {
     status: 'in_progress',
     startedAt: serverTimestamp(),
+  }));
+
+  const startBatch = writeBatch(ownerDb);
+  startBatch.update(doc(ownerDb, 'channels/private-one/tournaments/t1'), {
+    status: 'in_progress',
+    startedAt: serverTimestamp(),
+    currentRound: 1,
+    matchCount: 1,
+  });
+  startBatch.set(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    round: 1,
+    matchIndex: 1,
+    player1Uid: 'owner-a',
+    player1Name: 'Owner',
+    player2Uid: 'player-b',
+    player2Name: 'Player B',
+    winnerUid: null,
+    status: 'ready',
+    createdAt: serverTimestamp(),
+  });
+  await assertSucceeds(startBatch.commit());
+
+  await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    winnerUid: 'player-b',
+    status: 'completed',
+    resultAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    winnerUid: 'player-b',
+    status: 'completed',
+    resultAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(doc(outsiderDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    winnerUid: 'owner-a',
+    status: 'completed',
+    resultAt: serverTimestamp(),
   }));
 });
