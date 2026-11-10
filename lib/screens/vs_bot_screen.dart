@@ -31,12 +31,17 @@ class VsBotScreen extends StatefulWidget {
   /// Bot Yolu seviyesi (1-100). Verilirse zorluk çubuğu yerine o seviyenin
   /// botu kullanılır ve oyun hemen başlar.
   final int? level;
+  final Future<void> Function()? onGameFinished;
+  final Future<void> Function()? onAbandon;
 
-  const VsBotScreen(
-      {super.key,
-      this.autoStart = false,
-      this.initialDifficulty,
-      this.level});
+  const VsBotScreen({
+    super.key,
+    this.autoStart = false,
+    this.initialDifficulty,
+    this.level,
+    this.onGameFinished,
+    this.onAbandon,
+  });
 
   @override
   State<VsBotScreen> createState() => _VsBotScreenState();
@@ -54,6 +59,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
   bool _gameStarted = false;
   bool _resultDismissed = false;
   bool _ladderRecorded = false;
+  bool _matchCallbackInvoked = false;
   int _ladderStars = 0;
   final List<Timer> _pendingTimers = [];
   /// Sadece OYUNCUNUN kazandığı avantaj kutlanıyor (botunki
@@ -130,6 +136,12 @@ class _VsBotScreenState extends State<VsBotScreen> {
           engine.status == GameStatus.player1Wins ? Sfx.win : Sfx.lose);
       Progress.instance
           .recordGame(won: engine.status == GameStatus.player1Wins, mode: 'bot');
+      if (!_matchCallbackInvoked && widget.onGameFinished != null) {
+        _matchCallbackInvoked = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) widget.onGameFinished!.call();
+        });
+      }
       if (widget.level != null) {
         final won = engine.status == GameStatus.player1Wins;
         if (won && !_ladderRecorded) {
@@ -194,6 +206,9 @@ class _VsBotScreenState extends State<VsBotScreen> {
 
   @override
   void dispose() {
+    if (widget.onAbandon != null && !_matchCallbackInvoked) {
+      widget.onAbandon!.call();
+    }
     bot?.stop();
     for (final t in _pendingTimers) {
       t.cancel();
