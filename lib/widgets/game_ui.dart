@@ -127,7 +127,7 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
         child: AnimatedBuilder(
           animation: _pulse,
           builder: (context, child) {
-            final glow = widget.pulse ? 0.22 + 0.28 * _pulse.value : 0.22;
+            final glow = widget.pulse ? 0.18 + 0.24 * _pulse.value : 0.18;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 80),
               transform: Matrix4.translationValues(0, _down ? 3 : 0, 0),
@@ -137,15 +137,15 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [GameUi.goldLight, GameUi.gold, GameUi.goldDeep],
+                  colors: [const Color(0xFF60A5FA), GameUi.primary, const Color(0xFF1D4ED8)],
                 ),
-                border: Border.all(color: GameUi.goldEdge, width: 1.5),
+                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                      color: GameUi.goldEdge,
+                      color: const Color(0xFF1E40AF),
                       offset: Offset(0, _down ? 1 : 4)),
                   BoxShadow(
-                      color: GameUi.gold.withOpacity(glow),
+                      color: GameUi.cyan.withOpacity(glow),
                       blurRadius: 22,
                       spreadRadius: 1),
                 ],
@@ -182,7 +182,7 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (widget.icon != null) ...[
-                          Icon(widget.icon, color: GameUi.ink, size: 28),
+                          Icon(widget.icon, color: Colors.white, size: 28),
                           const SizedBox(width: 10),
                         ],
                         Column(
@@ -190,12 +190,12 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                           children: [
                             Text(widget.label,
                                 maxLines: 1,
-                                style: GameUi.display(21, color: GameUi.ink)),
+                                style: GameUi.display(21, color: Colors.white)),
                             if (widget.subtitle != null)
                               Text(widget.subtitle!,
                                   maxLines: 1,
                                   style: const TextStyle(
-                                      color: Color(0xB31A1208),
+                                      color: Color(0xCCFFFFFF),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600)),
                           ],
@@ -243,7 +243,7 @@ class GameTile extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0x2EFFFFFF), Color(0x40000000)],
+            colors: [Color(0xCC1B293D), Color(0xB3101827)],
           ),
           border: Border.all(color: GameUi.hairline),
         ),
@@ -392,7 +392,7 @@ class GameLogo extends StatelessWidget {
                 shaderCallback: (rect) => const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [GameUi.goldLight, GameUi.gold, GameUi.goldDeep],
+                  colors: [Colors.white, GameUi.cyan, GameUi.primary],
                 ).createShader(rect),
                 blendMode: BlendMode.srcIn,
                 child: Text(t('app_title'), style: style),
