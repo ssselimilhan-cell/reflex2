@@ -432,6 +432,12 @@ class OnlineRoomRepository {
     required int maxPlayers,
   }) async {
     final uid = _requireChannelUid(creatorDeviceId);
+    if (title.trim().length < 2 || title.trim().length > 40 ||
+        !['single_elimination', 'round_robin'].contains(format) ||
+        ![8, 16, 32, 64].contains(maxPlayers) ||
+        (format == 'round_robin' && maxPlayers > 16)) {
+      throw ArgumentError('Turnuva adı, formatı veya oyuncu sınırı geçersiz. Herkes birbiriyle formatında sınır en fazla 16 oyuncudur.');
+    }
     final channel = _channels.doc(channelId);
     final snapshot = await channel.get();
     if (!snapshot.exists || snapshot.data()?['ownerDeviceId'] != uid) {
