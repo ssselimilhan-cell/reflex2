@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
-import '../online/persistent_device_id.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'online_game_screen.dart';
+import 'profile_screen.dart';
 
 class ChannelsScreen extends StatefulWidget {
   const ChannelsScreen({super.key});
@@ -24,10 +25,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   @override
   void initState() {
     super.initState();
-    (UserProfile.instance.deviceId == null
-            ? getPersistentDeviceId()
-            : Future.value(UserProfile.instance.deviceId))
-        .then((id) { if (mounted) setState(() => _deviceId = id); });
+    // Güvenli kanal üyeliği yalnızca Firebase hesabının UID'siyle yapılır.
+    _deviceId = FirebaseAuth.instance.currentUser?.uid;
   }
 
   Future<void> _createChannel() async {
@@ -147,6 +146,12 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     ));
   }
 
+  Future<void> _openAccountForChannels() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+    if (!mounted) return;
+    setState(() => _deviceId = FirebaseAuth.instance.currentUser?.uid);
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFF101827),
@@ -157,7 +162,27 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827),
       icon: const Icon(Icons.add_rounded),
       label: const Text('Kanal oluştur', style: TextStyle(fontWeight: FontWeight.bold))),
-    body: SafeArea(child: Column(children: [
+    body: _deviceId == null
+      ? SafeArea(child: Center(child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.lock_rounded, color: Color(0xFFFBBF24), size: 48),
+            const SizedBox(height: 14),
+            const Text('Kanallar için hesap gerekli',
+              style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            const Text('Toplulukların ve davetli kanalların güvenli kalması için kanallar yalnızca giriş yapmış hesaplara açıktır. Misafir olarak diğer oyun modlarını kullanmaya devam edebilirsin.',
+              textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, height: 1.4)),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: _openAccountForChannels,
+              icon: const Icon(Icons.account_circle_rounded),
+              label: const Text('Giriş yap / Hesap oluştur'),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827)),
+            ),
+          ]),
+        )))
+      : SafeArea(child: Column(children: [
       Container(
         margin: const EdgeInsets.fromLTRB(16, 14, 16, 12), padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
