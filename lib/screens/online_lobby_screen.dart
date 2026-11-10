@@ -5,6 +5,7 @@ import '../online/firestore_game_repository.dart';
 import '../online/persistent_device_id.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
+import '../settings/progress.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
@@ -106,6 +107,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
         hostAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
         hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+        inviteToDeviceId: toDeviceId,
       );
       await _repo.sendInvite(
         toDeviceId: toDeviceId,
@@ -118,9 +120,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         fromPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
         fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
       );
+      Progress.instance.addStars(3);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Davet gönderildi. Masan açık; arkadaşın gelene kadar bekleyebilirsin.')),
+        const SnackBar(content: Text('Davet gönderildi: +3 ⭐. Arkadaşın katılırsa +30 ⭐ daha kazanacaksın.')),
       );
       // Davet gönderen de kendi bekleme masasına oturur. Oda, davetli
       // katılana kadar waiting durumunda kalır ve aynı ekrandan ready olur.
