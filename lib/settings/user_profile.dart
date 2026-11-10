@@ -60,6 +60,7 @@ class UserProfile extends ChangeNotifier {
 
   bool _loaded = false;
   String? _activeUid;
+  int _activationGeneration = 0;
 
   String _key(String name, [String? uid]) =>
       uid == null ? name : 'account_${uid}_$name';
@@ -96,6 +97,7 @@ class UserProfile extends ChangeNotifier {
   Future<void> activateAccountProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    final generation = ++_activationGeneration;
     deviceId ??= await getPersistentDeviceId();
     final cameFromGuest = _activeUid == null;
     final prefs = await SharedPreferences.getInstance();
@@ -120,6 +122,8 @@ class UserProfile extends ChangeNotifier {
           .collection('users').doc(user.uid)
           .collection('private').doc('profile');
       final snap = await ref.get().timeout(const Duration(seconds: 6));
+      if (generation != _activationGeneration ||
+          FirebaseAuth.instance.currentUser?.uid != user.uid) return;
       if (snap.exists) {
         final data = snap.data()!;
         displayName = data['displayName'] as String?;
@@ -137,18 +141,28 @@ class UserProfile extends ChangeNotifier {
         }
         await ref.set(_accountProfileMap()).timeout(const Duration(seconds: 6));
       }
-      await _persistLocal();
+      if (generation != _activationGeneration ||
+          FirebaseAuth.instance.currentUser?.uid != user.uid) return;
+      await _persistLocal(accountUid: user.uid);
+      if (generation != _activationGeneration ||
+          FirebaseAuth.instance.currentUser?.uid != user.uid) return;
       await _syncPublicProfile().timeout(const Duration(seconds: 4));
     } catch (_) {
       // Oturum açma başarılı kalır; yerel hesap profili kullanılmaya devam eder.
-      await _persistLocal();
+      if (generation == _activationGeneration &&
+          FirebaseAuth.instance.currentUser?.uid == user.uid) {
+        await _persistLocal(accountUid: user.uid);
+      }
     }
+    if (generation != _activationGeneration ||
+        FirebaseAuth.instance.currentUser?.uid != user.uid) return;
     _activeUid = user.uid;
     notifyListeners();
   }
 
   /// Çıkışta hesaba ait profil cihazın misafir profilinin üzerine yazılmaz.
   Future<void> activateGuestProfile() async {
+    ++_activationGeneration;
     _activeUid = null;
     await _readLocal();
     try {
@@ -167,10 +181,10 @@ class UserProfile extends ChangeNotifier {
     'updatedAt': FieldValue.serverTimestamp(),
   };
 
-  Future<void> _persistLocal() async {
+  Future<void> _persistLocal({String? accountUid}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final uid = accountUid ?? FirebaseAuth.instance.currentUser?.uid;
       if (displayName != null) {
         await prefs.setString(_key('displayName', uid), displayName!);
       } else {
