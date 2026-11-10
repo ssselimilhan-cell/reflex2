@@ -239,8 +239,54 @@ class OnlineRoomRepository {
     });
   }
 
-  Future<void> leaveRoom(String code) async {
-    await _rooms.doc(code).update({'roomStatus': 'finished'});
+  /// Odadan açıkça ayrılma işlemi. Ev sahibi odayı iptal eder;
+  /// misafir oyun başlamadan ayrılırsa masa yeniden beklemeye açılır.
+  /// Ekranın dispose edilmesi veya geri tuşu bu metodu çağırmaz.
+  Future<void> leaveRoom(
+    String code,
+    String deviceId, {
+    required bool isHost,
+  }) async {
+    final ref = _rooms.doc(code);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final status = data['roomStatus'] as String? ?? 'finished';
+
+      if (isHost) {
+        if (data['hostDeviceId'] != deviceId) return;
+        tx.update(ref, {
+          'roomStatus': 'cancelled',
+          'cancelledBy': deviceId,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'startRequestedBy': null,
+          'rematchRequestedBy': null,
+        });
+        return;
+      }
+
+      if (data['guestDeviceId'] != deviceId) return;
+      final gameHasStarted = status == 'active' || status == 'finished';
+      if (gameHasStarted) {
+        tx.update(ref, {
+          'roomStatus': 'finished',
+          'guestLeftAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        tx.update(ref, {
+          'guestDeviceId': null,
+          'guestDisplayName': null,
+          'guestWinRate': null,
+          'guestAvatarIconIndex': null,
+          'guestAvatarColorValue': null,
+          'guestPhotoBase64': null,
+          'roomStatus': 'waiting',
+          'startRequestedBy': null,
+          'rematchRequestedBy': null,
+        });
+      }
+    });
   }
 
   // ---- Sohbet ----
