@@ -576,6 +576,12 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   ranks[stats[index].id] = lastRank;
                 }
                 Map<String, dynamic>? myStats;
+                for (final item in stats) {
+                  if (item.id == widget.deviceId) {
+                    myStats = item.data();
+                    break;
+                  }
+                }
                 final myRank = ranks[widget.deviceId];
                 if (stats.isEmpty && myStats == null) return const SizedBox.shrink();
                 final memberNames = {
