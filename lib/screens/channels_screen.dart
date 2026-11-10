@@ -555,19 +555,28 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     final podiumCompare = ((bData['podiums'] as num?) ?? 0)
                         .compareTo((aData['podiums'] as num?) ?? 0);
                     if (podiumCompare != 0) return podiumCompare;
-                    return ((bData['starsEarned'] as num?) ?? 0)
+                    final starsCompare = ((bData['starsEarned'] as num?) ?? 0)
                         .compareTo((aData['starsEarned'] as num?) ?? 0);
+                    if (starsCompare != 0) return starsCompare;
+                    return ((bData['secondPlaces'] as num?) ?? 0)
+                        .compareTo((aData['secondPlaces'] as num?) ?? 0);
                   });
-                Map<String, dynamic>? myStats;
-                int? myRank;
+                bool sameStanding(Map<String, dynamic> a, Map<String, dynamic> b) =>
+                    (a['championships'] ?? 0) == (b['championships'] ?? 0) &&
+                    (a['podiums'] ?? 0) == (b['podiums'] ?? 0) &&
+                    (a['starsEarned'] ?? 0) == (b['starsEarned'] ?? 0) &&
+                    (a['secondPlaces'] ?? 0) == (b['secondPlaces'] ?? 0);
+                final ranks = <String, int>{};
+                var lastRank = 0;
                 for (var index = 0; index < stats.length; index++) {
-                  final item = stats[index];
-                  if (item.id == widget.deviceId) {
-                    myStats = item.data();
-                    myRank = index + 1;
-                    break;
+                  final data = stats[index].data();
+                  if (index == 0 || !sameStanding(data, stats[index - 1].data())) {
+                    lastRank = index + 1;
                   }
+                  ranks[stats[index].id] = lastRank;
                 }
+                Map<String, dynamic>? myStats;
+                final myRank = ranks[widget.deviceId];
                 if (stats.isEmpty && myStats == null) return const SizedBox.shrink();
                 final memberNames = {
                   for (final member in members)
@@ -622,9 +631,10 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Row(children: [
                           SizedBox(width: 24, child: Text(
-                            '${i + 1}.',
+                            '${ranks[stats[i].id] ?? i + 1}.',
                             style: TextStyle(
-                              color: i == 0 ? const Color(0xFFFBBF24) : Colors.white60,
+                              color: (ranks[stats[i].id] ?? i + 1) == 1
+                                  ? const Color(0xFFFBBF24) : Colors.white60,
                               fontWeight: FontWeight.w900),
                           )),
                           Expanded(child: Text(
