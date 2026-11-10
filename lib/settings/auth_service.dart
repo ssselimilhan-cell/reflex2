@@ -46,7 +46,8 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
       final result = await FirebaseAuth.instance.signInWithCredential(credential);
-      await UserProfile.instance.activateAccountProfile();
+      await UserProfile.instance.activateAccountProfile()
+          .timeout(const Duration(seconds: 8));
       return result;
     } on FirebaseAuthException {
       rethrow;
@@ -63,7 +64,8 @@ class AuthService {
       email: email.trim().toLowerCase(),
       password: password,
     );
-    await UserProfile.instance.activateAccountProfile();
+    await UserProfile.instance.activateAccountProfile()
+        .timeout(const Duration(seconds: 8));
     return result;
   }
 
@@ -86,7 +88,8 @@ class AuthService {
     } catch (_) {
       // Authentication hesabı oluşturuldu; kullanıcı yeniden gönderebilir.
     }
-    await UserProfile.instance.activateAccountProfile();
+    await UserProfile.instance.activateAccountProfile()
+        .timeout(const Duration(seconds: 8));
     return credential;
   }
 
@@ -141,7 +144,8 @@ class AuthService {
     // Firebase oturumunu Google SDK temizliğinden önce kapat. Böylece
     // GoogleSignIn.signOut() hata verse bile uygulama misafir durumuna geçer.
     await FirebaseAuth.instance.signOut();
-    await UserProfile.instance.activateGuestProfile();
+    await UserProfile.instance.activateGuestProfile()
+        .timeout(const Duration(seconds: 3));
     try {
       await GoogleSignIn().signOut().timeout(const Duration(seconds: 2));
     } catch (_) {
