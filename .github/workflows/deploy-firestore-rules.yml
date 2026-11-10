@@ -31,12 +31,17 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STRES_CARD }}
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Firebase CLI kur
+        run: npm install --global firebase-tools
+      - name: Firestore güvenlik kurallarını yayımla
+        run: firebase deploy --only firestore:rules --project stres-card --non-interactive
       - name: Bekleyen masalar ve davetler için sunucu tarafı TTL etkinleştir
         run: |
           set -euo pipefail
-          gcloud firestore fields ttls update expiresAt --collection-group=rooms --enable-ttl --project=stres-card
-          gcloud firestore fields ttls update expiresAt --collection-group=invites --enable-ttl --project=stres-card
-          gcloud firestore fields ttls update expiresAt --collection-group=room_messages --enable-ttl --project=stres-card
+          echo "Bu adım için servis hesabında roles/datastore.indexAdmin rolü gerekir."
+          gcloud firestore fields ttls update expiresAt --collection-group=rooms --enable-ttl --async --project=stres-card
+          gcloud firestore fields ttls update expiresAt --collection-group=invites --enable-ttl --async --project=stres-card
+          gcloud firestore fields ttls update expiresAt --collection-group=room_messages --enable-ttl --async --project=stres-card
       - name: Eski oda ve davet kayıtlarının sürelerini güvenli biçimde düzelt
         env:
           GOOGLE_CLOUD_PROJECT: stres-card
@@ -44,7 +49,3 @@ jobs:
           set -euo pipefail
           npm install --no-save --no-package-lock firebase-admin
           node tools/backfill_waiting_room_expiry.cjs
-      - name: Firebase CLI kur
-        run: npm install --global firebase-tools
-      - name: Yalnızca Firestore güvenlik kurallarını yayımla
-        run: firebase deploy --only firestore:rules --project stres-card --non-interactive
