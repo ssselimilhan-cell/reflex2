@@ -38,10 +38,11 @@ service cloud.firestore {
       allow delete: if false;
 
 
-      match /messages/{messageId} {
+      match /room_messages/{messageId} {
         allow read: if true;
         allow create: if request.resource.data.text is string
-                      && request.resource.data.text.size() < 300;
+                      && request.resource.data.text.size() < 300
+                      && request.resource.data.expiresAt is timestamp;
         allow update: if false;
         allow delete: if true;
       }
