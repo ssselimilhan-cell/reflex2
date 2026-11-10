@@ -1,6 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isShopAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'ssselimilhan@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    // Theme catalog: players can only read published items; only the verified owner can manage it.
+    match /cosmetic_catalog/{itemId} {
+      allow read: if isShopAdmin() || (resource.data.isPublished == true
+        && resource.data.priceStars is int && resource.data.priceStars > 0);
+      allow create, update, delete: if isShopAdmin();
+    }
 
     // Account-owned cloud progress; each user can access only their own data.
     match /users/{userId}/private/{document=**} {
