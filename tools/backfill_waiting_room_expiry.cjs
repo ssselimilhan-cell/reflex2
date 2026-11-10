@@ -62,7 +62,27 @@ async function main() {
   }
   await commitUpdates('invites', inviteUpdates);
 
-  console.log(`Expiry backfill complete: ${roomUpdates.length} rooms, ${inviteUpdates.length} invites.`);
+  const messages = await db.collectionGroup('room_messages').get();
+  const messageUpdates = [];
+  for (const doc of messages.docs) {
+    const data = doc.data();
+    if (data.expiresAt instanceof Timestamp) continue;
+    const sentAt = data.sentAt;
+    const base = sentAt instanceof Timestamp ? sentAt.toMillis() : now;
+    messageUpdates.push({
+      id: doc.ref.path,
+      data: { expiresAt: Timestamp.fromMillis(base + 7 * 24 * 60 * 60 * 1000) },
+    });
+  }
+  for (let offset = 0; offset < messageUpdates.length; offset += 450) {
+    const batch = db.batch();
+    for (const update of messageUpdates.slice(offset, offset + 450)) {
+      batch.update(db.doc(update.id), update.data);
+    }
+    await batch.commit();
+  }
+
+  console.log(`Expiry backfill complete: ${roomUpdates.length} rooms, ${inviteUpdates.length} invites, ${messageUpdates.length} room messages.`);
 }
 
 main().catch((error) => {
