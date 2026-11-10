@@ -205,13 +205,18 @@ test('invite-only channel join requests require owner approval before membership
     status: 'pending',
     requestedAt: serverTimestamp(),
   }));
-  await assertFails(getDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
+  const memberBeforeApproval = await assertSucceeds(
+    getDoc(doc(playerDb, 'channels/request-channel/members/player-c')),
+  );
+  if (memberBeforeApproval.exists()) {
+    throw new Error('A join request must not create membership before owner approval.');
+  }
 
   const ownerDb = env.authenticatedContext('owner-a').firestore();
   const approval = writeBatch(ownerDb);
   approval.set(doc(ownerDb, 'channels/request-channel/members/player-c'), {
     deviceId: 'player-c',
-    playerDeviceId: '',
+    playerDeviceId: 'device-player-c',
     displayName: 'Player C',
     role: 'member',
     joinedAt: serverTimestamp(),
