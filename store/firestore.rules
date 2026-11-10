@@ -226,13 +226,31 @@ service cloud.firestore {
                 && request.resource.data.isBye == true
                 && request.resource.data.winnerUid == request.resource.data.player1Uid)
             );
-          allow update: if isChannelOwner(channelId)
-            && resource.data.status == 'ready'
-            && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['winnerUid', 'status', 'resultAt'])
-            && request.resource.data.status == 'completed'
-            && request.resource.data.winnerUid in
-              [resource.data.player1Uid, resource.data.player2Uid];
+          allow update: if (
+            // A match participant may attach exactly one room, and only as player 1.
+            (request.auth != null
+              && request.auth.uid == resource.data.player1Uid
+              && resource.data.status == 'ready'
+              && request.resource.data.status == 'ready'
+              && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt'])
+              && request.resource.data.roomCreatedBy == request.auth.uid
+              && request.resource.data.roomCode is string
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId == request.auth.uid
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.inviteToDeviceId == resource.data.player2Uid
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentChannelId == channelId
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentId == tournamentId
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentMatchId == matchId)
+            ||
+            // The channel owner remains the only person allowed to confirm a result and advance the bracket.
+            (isChannelOwner(channelId)
+              && resource.data.status == 'ready'
+              && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['winnerUid', 'status', 'resultAt'])
+              && request.resource.data.status == 'completed'
+              && request.resource.data.winnerUid in
+                [resource.data.player1Uid, resource.data.player2Uid])
+          );
           allow delete: if false;
         }
       }
