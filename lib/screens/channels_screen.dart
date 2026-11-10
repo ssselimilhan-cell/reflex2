@@ -558,8 +558,13 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     return ((bData['starsEarned'] as num?) ?? 0)
                         .compareTo((aData['starsEarned'] as num?) ?? 0);
                   });
-                final myStats = stats.where((item) => item.id == widget.deviceId)
-                    .map((item) => item.data()).firstOrNull;
+                Map<String, dynamic>? myStats;
+                for (final item in stats) {
+                  if (item.id == widget.deviceId) {
+                    myStats = item.data();
+                    break;
+                  }
+                }
                 if (stats.isEmpty && myStats == null) return const SizedBox.shrink();
                 final memberNames = {
                   for (final member in members)
