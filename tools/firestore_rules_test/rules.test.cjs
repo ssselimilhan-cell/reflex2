@@ -295,8 +295,11 @@ test('channel tournament stats are updated only once from a completed tournament
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,
-    participantIds: ['owner-a', 'player-b'],
+    participantIds: [],
     createdAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(tournament, {
+    participantIds: arrayUnion('owner-a'),
   }));
   await assertSucceeds(updateDoc(tournament, {
     status: 'completed',
