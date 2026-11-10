@@ -32,12 +32,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.length < 3 || name.length > 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Takma ad 3-20 karakter arasında olmalı.')),
+      );
+      return;
+    }
     if (!await ensureTermsAccepted(context)) return;
     if (!mounted) return;
     setState(() => _saving = true);
-    await UserProfile.instance.createProfile(name);
-    if (mounted) setState(() => _saving = false);
+    try {
+      await UserProfile.instance.createProfile(name);
+      _nameController.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Oyuncu takma adın kaydedildi.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profil kaydedilemedi: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
@@ -64,6 +84,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _editNickname() async {
+    final controller = TextEditingController(
+      text: UserProfile.instance.displayName ?? '',
+    );
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Takma adını değiştir', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 20,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Oyuncu takma adı',
+            hintText: 'Örn. RefleksUstası',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (name == null || !mounted) return;
+    if (name.length < 3 || name.length > 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Takma ad 3-20 karakter arasında olmalı.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await UserProfile.instance.createProfile(name);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Takma adın güncellendi.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Takma ad güncellenemedi: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Widget _buildAccountCard() {
@@ -528,6 +606,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 22),
         
         _RankCard(wins: profile.onlineWins),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: _saving ? null : _editNickname,
+          icon: const Icon(Icons.edit_rounded),
+          label: const Text('Takma adını değiştir'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFFFBBF24),
+            side: const BorderSide(color: Color(0x88FBBF24)),
+            padding: const EdgeInsets.symmetric(vertical: 13),
+          ),
+        ),
         const SizedBox(height: 28),
         Padding(
           // Buton tam ekran kenarına yapışmasın diye biraz yukarı alındı.
