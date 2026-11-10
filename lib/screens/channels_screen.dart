@@ -884,22 +884,33 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
           final winnerUid = tournament['winnerUid'] as String?;
           return Column(children: [
             if (status == 'completed')
-              Container(
-                margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF473A19),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0x99FBBF24)),
-                ),
-                child: Row(children: [
-                  const Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 26),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(
-                    winnerUid == null ? 'Turnuva tamamlandı · Beraberlik' : 'Turnuva şampiyonu: $winnerUid',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-                  )),
-                ]),
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _repo.watchChannelMembers(widget.channelId),
+                builder: (context, memberSnapshot) {
+                  final winnerName = winnerUid == null ? null :
+                    memberSnapshot.data?.docs
+                      .where((member) => member.id == winnerUid)
+                      .map((member) => member.data()['displayName'] as String? ?? 'Oyuncu')
+                      .firstOrNull;
+                  return Container(
+                    margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF473A19),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0x99FBBF24)),
+                    ),
+                    child: Row(children: [
+                      const Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 26),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(
+                        winnerUid == null ? 'Turnuva tamamlandı · Beraberlik' :
+                          'Turnuva şampiyonu: ${winnerName ?? 'Oyuncu'}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                      )),
+                    ]),
+                  );
+                },
               ),
             if (isCreator && status == 'in_progress')
               const Padding(
