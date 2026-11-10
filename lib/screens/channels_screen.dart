@@ -205,7 +205,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasError) return Center(child: Text('Kanallar yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.white70)));
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
-          final docs = snapshot.data!.docs.where((d) => d.data()['visibility'] != 'invite_only').toList();
+          final docs = snapshot.data!.docs.where((d) =>
+            d.data()['visibility'] == 'public' && d.data()['status'] == 'open').toList();
           if (docs.isEmpty) return const Center(child: Text('Henüz kanal yok. İlk kanalı sen oluştur!', style: TextStyle(color: Colors.white60)));
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 100), itemCount: docs.length,
