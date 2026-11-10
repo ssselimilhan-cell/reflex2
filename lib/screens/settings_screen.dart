@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';\nimport 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
@@ -879,7 +880,9 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                                       if (_pendingId.startsWith('builtin_')) {
                                         settings.setCardFaceTheme(_pendingStyle);
                                       } else {
-                                        final selectedDocs = snapshot.data!.docs.where((d) => d.id == _pendingId);\n                                        final selectedDoc = selectedDocs.isEmpty ? null : selectedDocs.first;\n                                        settings.setCatalogTheme(id: _pendingId, name: (selectedDoc?.data()['name'] as String?) ?? 'Tema', visualStyle: _pendingStyle);
+                                        final selectedDocs = snapshot.data!.docs.where((d) => d.id == _pendingId);
+                                        final selectedDoc = selectedDocs.isEmpty ? null : selectedDocs.first;
+                                        settings.setCatalogTheme(id: _pendingId, name: (selectedDoc?.data()['name'] as String?) ?? 'Tema', visualStyle: _pendingStyle);
                                       }
                                       setState(() => _expanded = false);
                                     }
