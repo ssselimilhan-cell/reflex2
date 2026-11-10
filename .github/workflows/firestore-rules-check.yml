@@ -1,0 +1,27 @@
+name: Firestore Rules Güvenlik Testleri
+
+on:
+  push:
+    paths:
+      - 'store/firestore.rules'
+      - 'tools/firestore_rules_test/**'
+      - '.github/workflows/firestore-rules-check.yml'
+      - 'firebase.json'
+  workflow_dispatch:
+
+jobs:
+  firestore-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install test dependencies
+        run: npm install --no-save --no-package-lock firebase-tools @firebase/rules-unit-testing firebase
+      - name: Run Firestore emulator security tests
+        run: npx firebase-tools emulators:exec --only firestore --project demo-stres-card --non-interactive "node --test tools/firestore_rules_test/rules.test.cjs"
