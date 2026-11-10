@@ -217,6 +217,7 @@ test('invite-only channel join requests require owner approval before membership
   });
   approval.update(doc(ownerDb, 'channels/request-channel'), {
     memberCount: increment(1),
+    lastApprovedUid: 'player-c',
     updatedAt: serverTimestamp(),
   });
   approval.delete(doc(ownerDb, 'channels/request-channel/join_requests/player-c'));
