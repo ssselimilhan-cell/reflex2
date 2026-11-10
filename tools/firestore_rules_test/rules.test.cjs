@@ -298,6 +298,12 @@ test('channel tournament stats are updated only once from a completed tournament
     participantIds: ['owner-a', 'player-b'],
     createdAt: serverTimestamp(),
   }));
+  await assertSucceeds(updateDoc(tournament, {
+    status: 'completed',
+    placements: {'owner-a': {rank: 1, stars: 100}},
+    winnerUid: 'owner-a',
+    completedAt: serverTimestamp(),
+  }));
   const stats = doc(ownerDb, 'channels/stats-channel/tournament_stats/owner-a');
   await assertSucceeds(setDoc(stats, {
     uid: 'owner-a',
