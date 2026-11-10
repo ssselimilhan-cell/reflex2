@@ -424,8 +424,11 @@ class OnlineRoomRepository {
     return uid;
   }
 
+  // Public channel discovery must not silently hide newer channels behind
+  // an arbitrary first-50 document window. Keep the query aligned with the
+  // public-only Firestore rule and stream the complete discoverable set.
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
-      _channels.where('visibility', isEqualTo: 'public').limit(50).snapshots();
+      _channels.where('visibility', isEqualTo: 'public').snapshots();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
       _channels.doc(channelId).collection('tournaments')
