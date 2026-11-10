@@ -46,6 +46,16 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if true;
       }
+
+      // Backward compatibility for already-installed clients; new builds use
+      // room_messages so their chat history can receive an independent TTL.
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if request.resource.data.text is string
+                      && request.resource.data.text.size() < 300;
+        allow update: if false;
+        allow delete: if true;
+      }
     }
 
     function channelMemberPath(channelId, uid) {
