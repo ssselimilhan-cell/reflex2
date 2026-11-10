@@ -651,6 +651,34 @@ class OnlineRoomRepository {
     });
   }
 
+  // ---- Kanal sohbeti ve kurucu duyuruları ----
+  CollectionReference<Map<String, dynamic>> _channelMessages(String channelId) =>
+      _channels.doc(channelId).collection('messages');
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelMessages(String channelId) =>
+      _channelMessages(channelId).orderBy('sentAt', descending: true).limit(100).snapshots();
+
+  Future<void> sendChannelMessage({
+    required String channelId,
+    required String senderUid,
+    required String senderName,
+    required String text,
+    bool announcement = false,
+  }) async {
+    final uid = _requireChannelUid(senderUid);
+    final message = text.trim();
+    if (message.isEmpty) return;
+    if (message.length > 500) throw ArgumentError('Mesaj en fazla 500 karakter olabilir.');
+    final name = senderName.trim();
+    await _channelMessages(channelId).add({
+      'senderUid': uid,
+      'senderName': name.isEmpty ? 'Oyuncu' : name.substring(0, name.length.clamp(0, 32)),
+      'text': message,
+      'isAnnouncement': announcement,
+      'sentAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ---- Liderlik tablosu ----
 
   CollectionReference<Map<String, dynamic>> get _gameResults =>
