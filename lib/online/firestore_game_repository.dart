@@ -150,6 +150,8 @@ class OnlineRoomRepository {
       final data = snap.data()!;
       if (data['roomStatus'] != 'waiting') return false;
       if (data['guestDeviceId'] != null) return false;
+      if (data['tournamentMatchId'] is String &&
+          data['inviteToDeviceId'] != guestDeviceId) return false;
 
       // NOT: Katılan oyuncu direkt oyunu başlatmaz — "ready" durumuna
       // geçer, oyun ancak taraflardan biri başlatıp diğeri kabul edince
