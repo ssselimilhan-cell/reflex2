@@ -28,7 +28,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.resource.data.roomStatus == 'waiting'
                     && request.resource.data.hostDeviceId is string;
-      allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId;
+      allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId
+        && (resource.data.tournamentMatchId == null
+          || request.resource.data.guestDeviceId == resource.data.guestDeviceId
+          || request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
+          || request.resource.data.guestDeviceId == null);
       allow delete: if false;
 
 
