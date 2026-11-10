@@ -323,25 +323,26 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                   ? fromName
                                   : '$fromName · ${fromWinRate.round()}%',
                               style: const TextStyle(
-                                  color: Colors.white, fontSize: 15),
+                                  color: Colors.white, fontSize: 17),
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close,
-                            color: Colors.white54, size: 20),
-                        tooltip: t('close_invite'),
-                        onPressed: () => _repo.closeInvite(doc.id),
+                      OutlinedButton(
+                        onPressed: _loading ? null : () => _repo.closeInvite(doc.id),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
+                        child: const Text('Reddet', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                       ),
+                      const SizedBox(width: 6),
                       ElevatedButton(
                         onPressed: _loading
                             ? null
-                            : () async {
-                                await _repo.closeInvite(doc.id);
-                                if (mounted) _joinRoomByCode(roomCode);
-                              },
-                        child: Text(t('accept')),
+                            : () => _joinRoomByCode(roomCode, inviteId: doc.id),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFBBF24),
+                          foregroundColor: const Color(0xFF101827),
+                        ),
+                        child: const Text('KABUL ET', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
                       ),
                     ],
                   ),
@@ -452,7 +453,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     );
   }
 
-  Future<void> _joinRoomByCode(String rawCode) async {
+  Future<void> _joinRoomByCode(String rawCode, {String? inviteId}) async {
     final code = rawCode.trim().toUpperCase();
     if (code.isEmpty) return;
     setState(() {
@@ -476,6 +477,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         return;
       }
       if (!mounted) return;
+      if (inviteId != null) await _repo.closeInvite(inviteId);
       await _openRoom(code: code, deviceId: deviceId, isHost: false);
     } catch (e) {
       setState(() => _error = 'Katılınamadı: $e');
