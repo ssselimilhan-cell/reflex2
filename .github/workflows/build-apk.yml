@@ -28,7 +28,7 @@ jobs:
       - run: flutter analyze --no-fatal-infos
 
   preview-apk:
-    if: github.event_name == 'workflow_dispatch' && inputs.build_preview_apk
+    if: needs.test.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.build_preview_apk) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-preview-apk]')))
     needs: test
     runs-on: ubuntu-latest
     steps:
