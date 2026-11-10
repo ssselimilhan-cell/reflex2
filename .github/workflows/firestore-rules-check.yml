@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - name: Install test dependencies
         run: npm install --no-save --no-package-lock firebase-tools @firebase/rules-unit-testing firebase
       - name: Run Firestore emulator security tests
