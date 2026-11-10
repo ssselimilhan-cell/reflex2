@@ -368,10 +368,11 @@ service cloud.firestore {
               && !('roomCreatedBy' in request.resource.data)
               && !('roomLinkedAt' in request.resource.data)
               && resource.data.roomCode is string
-              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.roomStatus == 'cancelled'
-              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentChannelId == channelId
-              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentId == tournamentId
-              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentMatchId == matchId)
+              && (!exists(/databases/$(database)/documents/rooms/$(resource.data.roomCode))
+                || (get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.roomStatus == 'cancelled'
+                  && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentChannelId == channelId
+                  && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentId == tournamentId
+                  && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentMatchId == matchId)))
             ||
             // The channel owner remains the only person allowed to confirm a result and advance the bracket.
             (isChannelOwner(channelId)
