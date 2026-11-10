@@ -189,7 +189,7 @@ class _CardWidgetState extends State<CardWidget>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CustomPaint(painter: _CardBackPatternPainter()),
+                CustomPaint(painter: _CardBackPatternPainter(theme: AppSettings.instance.cardTheme)),
                 Center(
                   child: Container(
                     width: emblemSize * 1.65,
@@ -506,6 +506,9 @@ class _CivilizationEmblemPainter extends CustomPainter {
 /// İnce çapraz çizgiler ve köşe motifleri, kapalı kartın arkasına
 /// baskılı oyun kartı hissi verir. Çizim tamamen vektöreldir.
 class _CardBackPatternPainter extends CustomPainter {
+  final CardFaceTheme theme;
+  const _CardBackPatternPainter({required this.theme});
+
   @override
   void paint(Canvas canvas, Size size) {
     final line = Paint()
@@ -517,17 +520,57 @@ class _CardBackPatternPainter extends CustomPainter {
       canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
       canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
     }
-    final dot = Paint()
-      ..color = Colors.white.withOpacity(0.22)
-      ..style = PaintingStyle.fill;
-    final radius = math.max(0.8, size.shortestSide * 0.018);
-    for (final x in [size.width * 0.16, size.width * 0.84]) {
-      for (final y in [size.height * 0.12, size.height * 0.88]) {
-        canvas.drawCircle(Offset(x, y), radius, dot);
-      }
+    final accent = Paint()
+      ..color = Colors.white.withOpacity(0.28)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.8, size.shortestSide * 0.012);
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide * 0.23;
+    canvas.drawRRect(RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center, width: radius * 2.5, height: radius * 2.5),
+      Radius.circular(radius * 0.18)), accent);
+    canvas.drawCircle(center, radius, accent);
+    // Her kültür için kart arkasında farklı bir geometrik imza.
+    switch (theme) {
+      case CardFaceTheme.ottoman:
+      case CardFaceTheme.persia:
+      case CardFaceTheme.india:
+        for (var i = 0; i < 8; i++) {
+          final a = i * math.pi / 4;
+          final p = Offset(center.dx + math.cos(a) * radius, center.dy + math.sin(a) * radius);
+          canvas.drawCircle(p, radius * 0.22, accent);
+        }
+        break;
+      case CardFaceTheme.egypt:
+        final pyramid = Path()..moveTo(center.dx-radius,center.dy+radius*0.72)..lineTo(center.dx,center.dy-radius)..lineTo(center.dx+radius,center.dy+radius*0.72)..close();
+        canvas.drawPath(pyramid, accent);
+        break;
+      case CardFaceTheme.rome:
+      case CardFaceTheme.germany:
+        for (var i=-1;i<=1;i++) {
+          final x=center.dx+i*radius*0.55;
+          canvas.drawLine(Offset(x,center.dy-radius),Offset(x,center.dy+radius),accent);
+        }
+        break;
+      case CardFaceTheme.france:
+        canvas.drawArc(Rect.fromCircle(center:center,radius:radius),math.pi,math.pi,false,accent);
+        canvas.drawLine(Offset(center.dx,center.dy-radius),Offset(center.dx,center.dy+radius),accent);
+        break;
+      case CardFaceTheme.japan:
+        canvas.drawArc(Rect.fromCircle(center:center,radius:radius),math.pi,math.pi,false,accent);
+        canvas.drawLine(Offset(center.dx-radius,center.dy),Offset(center.dx+radius,center.dy),accent);
+        break;
+      case CardFaceTheme.russia:
+        for (var i=-1;i<=1;i++) {
+          final x=center.dx+i*radius*0.55;
+          canvas.drawArc(Rect.fromCenter(center:Offset(x,center.dy),width:radius*0.85,height:radius*1.2),math.pi,math.pi,false,accent);
+        }
+        break;
+      default:
+        canvas.drawCircle(center,radius*0.48,accent);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _CardBackPatternPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CardBackPatternPainter oldDelegate) => oldDelegate.theme != theme;
 }
