@@ -25,6 +25,7 @@ class OnlineRoomRepository {
     int? hostAvatarColorValue,
     String? hostPhotoBase64,
     bool quickMatch = false,
+    String? inviteToDeviceId,
   }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
@@ -45,11 +46,37 @@ class OnlineRoomRepository {
       'hostAvatarColorValue': hostAvatarColorValue,
       'hostPhotoBase64': hostPhotoBase64,
       'quickMatch': quickMatch,
+      'inviteToDeviceId': inviteToDeviceId,
+      'inviteJoinRewarded': false,
       'createdAt': FieldValue.serverTimestamp(),
       ...engine.toMap(),
     });
 
     return code;
+  }
+
+  /// Davet edilen kişi bu masaya ilk kez katıldığında davet sahibine
+  /// 30 yıldız verir. Firestore transaction aynı ödülün iki kez yazılmasını önler.
+  Future<bool> claimInviteJoinReward(String code, String hostDeviceId) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      final invitee = data['inviteToDeviceId'] as String?;
+      if (data['hostDeviceId'] != hostDeviceId ||
+          invitee == null ||
+          invitee.isEmpty ||
+          data['guestDeviceId'] != invitee ||
+          data['inviteJoinRewarded'] == true) {
+        return false;
+      }
+      tx.update(ref, {
+        'inviteJoinRewarded': true,
+        'inviteJoinRewardedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
   }
 
   /// Lobide gösterilecek, henüz ikinci oyuncu beklemeyen açık masalar.
