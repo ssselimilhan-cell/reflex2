@@ -415,8 +415,11 @@ class _VsBotScreenState extends State<VsBotScreen> {
                             icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
                             label: Text(_paused ? t('resume') : t('pause')),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white38),
+                              foregroundColor: GameUi.cyan,
+                              backgroundColor: GameUi.surface.withOpacity(0.72),
+                              side: BorderSide(color: GameUi.cyan.withOpacity(0.42)),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
                           ),
                         ),
