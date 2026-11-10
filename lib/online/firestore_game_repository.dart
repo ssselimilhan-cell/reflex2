@@ -1167,6 +1167,7 @@ class OnlineRoomRepository {
         });
         tx.update(channel, {
           'memberCount': ((channelSnap.data()?['memberCount'] as num?) ?? 0).toInt() + 1,
+          'lastApprovedUid': requesterUid,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
