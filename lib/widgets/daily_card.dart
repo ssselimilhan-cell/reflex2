@@ -100,6 +100,10 @@ class DailyCard extends StatelessWidget {
         final total = Progress.missions.length;
         final done = p.doneToday;
         final ratio = total == 0 ? 0.0 : done / total;
+        var nextMission = 0;
+        while (nextMission < total && p.isClaimed(nextMission)) {
+          nextMission++;
+        }
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -204,7 +208,7 @@ class DailyCard extends StatelessWidget {
                         Text(
                           done == total
                               ? t('mission_done')
-                              : t('mission_play3'),
+                              : t(Progress.missions[nextMission].titleKey),
                           style: const TextStyle(
                               color: GameUi.gold,
                               fontSize: 11,
