@@ -12,7 +12,12 @@
           "package_name": "com.example.stres_kart"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "820220592096-g86ak9g0te07k9hdeea9gut5b6uilv89.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBj0JICSdvQlpxL1iv13A4FwvMzJP3qg6M"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "820220592096-g86ak9g0te07k9hdeea9gut5b6uilv89.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "820220592096-m74l1h168ip3ec6brkt3msgqd355qm1c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.stresKart"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +48,20 @@
           "package_name": "com.selimilhan.stres"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "820220592096-fq0tv6qtc9jmvm1mfpl560rk5nbuvl6c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.selimilhan.stres",
+            "certificate_hash": "c70f6274868153346278e4c2366b7307c782afe0"
+          }
+        },
+        {
+          "client_id": "820220592096-g86ak9g0te07k9hdeea9gut5b6uilv89.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBj0JICSdvQlpxL1iv13A4FwvMzJP3qg6M"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "820220592096-g86ak9g0te07k9hdeea9gut5b6uilv89.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "820220592096-m74l1h168ip3ec6brkt3msgqd355qm1c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.stresKart"
+              }
+            }
+          ]
         }
       }
     }
