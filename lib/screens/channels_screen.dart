@@ -1371,8 +1371,28 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                       if (roundCompare != 0) return roundCompare;
                       return ((a.data()['matchIndex'] as num?) ?? 0).compareTo((b.data()['matchIndex'] as num?) ?? 0);
                     });
-                  if (matches.isEmpty) return const Center(child: Text('Henüz eşleşme oluşturulmadı.',
-                    style: TextStyle(color: Colors.white54)));
+                  if (matches.isEmpty) return Center(child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(26),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B293D),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: const Color(0x66FBBF24)),
+                      ),
+                      child: const Column(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 58),
+                        SizedBox(height: 18),
+                        Text('TURNUVA EŞLEŞMELERİ HAZIRLANIYOR', textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+                        SizedBox(height: 10),
+                        Text('Oyuncular kayıt olduktan sonra turnuva yöneticisi turnuvayı başlatır. Eşleşmeler bu alanda büyük ve kolay okunur şekilde görünür.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.45)),
+                      ]),
+                    ),
+                  ));
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
                     itemCount: matches.length,
@@ -1511,8 +1531,9 @@ class _TournamentPlayerRow extends StatelessWidget {
     const SizedBox(width: 8),
     Expanded(child: Text(name,
       style: TextStyle(color: winner ? const Color(0xFFFBBF24) : Colors.white,
-        fontWeight: winner ? FontWeight.w900 : FontWeight.w600))),
-    if (isBye) const Text('BYE', style: TextStyle(color: Colors.white38, fontSize: 14)),
+        fontWeight: winner ? FontWeight.w900 : FontWeight.w700,
+        fontSize: 18))),
+    if (isBye) const Text('BAY GEÇTİ', style: TextStyle(color: Colors.white60, fontSize: 14, fontWeight: FontWeight.w800)),
     if (winner) const Icon(Icons.check_rounded, color: Color(0xFFFBBF24), size: 17),
   ]);
 }
@@ -1535,8 +1556,8 @@ class _TournamentStatPill extends StatelessWidget {
           fontWeight: FontWeight.w900)),
         const SizedBox(height: 2),
         Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white60, fontSize: 8,
-            fontWeight: FontWeight.w700)),
+          style: const TextStyle(color: Colors.white70, fontSize: 12,
+            fontWeight: FontWeight.w800)),
       ]),
     ),
   );
