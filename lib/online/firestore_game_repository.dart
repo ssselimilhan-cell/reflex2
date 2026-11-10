@@ -28,6 +28,9 @@ class OnlineRoomRepository {
     String? hostPhotoBase64,
     bool quickMatch = false,
     String? inviteToDeviceId,
+    String? tournamentChannelId,
+    String? tournamentId,
+    String? tournamentMatchId,
   }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
@@ -50,6 +53,9 @@ class OnlineRoomRepository {
       'quickMatch': quickMatch,
       'inviteToDeviceId': inviteToDeviceId,
       'inviteJoinRewarded': false,
+      if (tournamentChannelId != null) 'tournamentChannelId': tournamentChannelId,
+      if (tournamentId != null) 'tournamentId': tournamentId,
+      if (tournamentMatchId != null) 'tournamentMatchId': tournamentMatchId,
       'createdAt': FieldValue.serverTimestamp(),
       ...engine.toMap(),
     });
@@ -424,6 +430,38 @@ class OnlineRoomRepository {
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
       _channels.doc(channelId).collection('tournaments')
           .orderBy('createdAt', descending: true).snapshots();
+
+  /// A match participant links the official game room to their bracket match.
+  /// Only player 1 may open the room, preventing duplicate simultaneous rooms.
+  Future<void> linkTournamentMatchRoom({
+    required String channelId,
+    required String tournamentId,
+    required String matchId,
+    required String deviceId,
+    required String roomCode,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final match = tournament.collection('matches').doc(matchId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final tournamentSnap = await tx.get(tournament);
+      final matchSnap = await tx.get(match);
+      if (!tournamentSnap.exists || !matchSnap.exists ||
+          tournamentSnap.data()?['status'] != 'in_progress') {
+        throw StateError('Turnuva maçı artık başlatılamıyor.');
+      }
+      final data = matchSnap.data()!;
+      if (data['status'] != 'ready' || data['player1Uid'] != uid ||
+          data['player2Uid'] == null || data['roomCode'] != null) {
+        throw StateError('Bu maçı yalnızca ilk oyuncu, bir kez başlatabilir.');
+      }
+      tx.update(match, {
+        'roomCode': roomCode,
+        'roomCreatedBy': uid,
+        'roomLinkedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
 
   Future<String> createChannelTournament({
     required String channelId,
