@@ -230,7 +230,15 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           _openingMatch = true;
           _roomSub?.cancel();
           Navigator.push(context, MaterialPageRoute(builder: (_) =>
-            OnlineGameScreen(roomCode: code, deviceId: widget.deviceId, isHost: true)));
+            OnlineGameScreen(roomCode: code, deviceId: widget.deviceId, isHost: true)))
+            .then((_) {
+              if (mounted) {
+                setState(() {
+                  _pendingRoomCode = null;
+                  _openingMatch = false;
+                });
+              }
+            });
         }
       });
       ScaffoldMessenger.of(context).showSnackBar(
