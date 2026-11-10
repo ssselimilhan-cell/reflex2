@@ -31,43 +31,6 @@ service cloud.firestore {
       allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId;
       allow delete: if false;
 
-      // Channel-wide competitive statistics. Each tournament can be
-      // counted only once per player and values must match its final podium.
-      match /tournament_stats/{uid} {
-        allow read: if isChannelMember(channelId);
-        allow create: if isChannelOwner(channelId)
-          && request.resource.data.uid == uid
-          && request.resource.data.tournamentIds is list
-          && request.resource.data.tournamentIds.size() == 1
-          && request.resource.data.tournamentsPlayed == 1
-          && request.resource.data.championships == (request.resource.data.lastRank == 1 ? 1 : 0)
-          && request.resource.data.secondPlaces == (request.resource.data.lastRank == 2 ? 1 : 0)
-          && request.resource.data.thirdPlaces == (request.resource.data.lastRank == 3 ? 1 : 0)
-          && request.resource.data.podiums == (request.resource.data.lastRank in [1, 2, 3] ? 1 : 0)
-          && request.resource.data.starsEarned == request.resource.data.lastStars
-          && request.resource.data.lastTournamentId is string
-          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.status == 'completed'
-          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.creatorDeviceId == request.auth.uid
-          && request.resource.data.lastRank == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].rank : 0)
-          && request.resource.data.lastStars == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].stars : 0);
-        allow update: if isChannelOwner(channelId)
-          && request.resource.data.uid == uid
-          && request.resource.data.tournamentIds is list
-          && request.resource.data.tournamentIds.size() == resource.data.tournamentIds.size() + 1
-          && request.resource.data.tournamentIds.hasAll(resource.data.tournamentIds)
-          && request.resource.data.tournamentsPlayed == resource.data.tournamentsPlayed + 1
-          && request.resource.data.championships == resource.data.championships + (request.resource.data.lastRank == 1 ? 1 : 0)
-          && request.resource.data.secondPlaces == resource.data.secondPlaces + (request.resource.data.lastRank == 2 ? 1 : 0)
-          && request.resource.data.thirdPlaces == resource.data.thirdPlaces + (request.resource.data.lastRank == 3 ? 1 : 0)
-          && request.resource.data.podiums == resource.data.podiums + (request.resource.data.lastRank in [1, 2, 3] ? 1 : 0)
-          && request.resource.data.starsEarned == resource.data.starsEarned + request.resource.data.lastStars
-          && !(request.resource.data.lastTournamentId in resource.data.tournamentIds)
-          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.status == 'completed'
-          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.creatorDeviceId == request.auth.uid
-          && request.resource.data.lastRank == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].rank : 0)
-          && request.resource.data.lastStars == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].stars : 0);
-        allow delete: if false;
-      }
 
       match /messages/{messageId} {
         allow read: if true;
@@ -194,6 +157,45 @@ service cloud.firestore {
           && (!request.resource.data.isAnnouncement || isChannelOwner(channelId));
         allow update, delete: if false;
       }
+
+      // Channel-wide competitive statistics. Each tournament can be
+      // counted only once per player and values must match its final podium.
+      match /tournament_stats/{uid} {
+        allow read: if isChannelMember(channelId);
+        allow create: if isChannelOwner(channelId)
+          && request.resource.data.uid == uid
+          && request.resource.data.tournamentIds is list
+          && request.resource.data.tournamentIds.size() == 1
+          && request.resource.data.tournamentsPlayed == 1
+          && request.resource.data.championships == (request.resource.data.lastRank == 1 ? 1 : 0)
+          && request.resource.data.secondPlaces == (request.resource.data.lastRank == 2 ? 1 : 0)
+          && request.resource.data.thirdPlaces == (request.resource.data.lastRank == 3 ? 1 : 0)
+          && request.resource.data.podiums == (request.resource.data.lastRank in [1, 2, 3] ? 1 : 0)
+          && request.resource.data.starsEarned == request.resource.data.lastStars
+          && request.resource.data.lastTournamentId is string
+          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.status == 'completed'
+          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.creatorDeviceId == request.auth.uid
+          && request.resource.data.lastRank == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].rank : 0)
+          && request.resource.data.lastStars == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].stars : 0);
+        allow update: if isChannelOwner(channelId)
+          && request.resource.data.uid == uid
+          && request.resource.data.tournamentIds is list
+          && request.resource.data.tournamentIds.size() == resource.data.tournamentIds.size() + 1
+          && request.resource.data.tournamentIds.hasAll(resource.data.tournamentIds)
+          && request.resource.data.tournamentsPlayed == resource.data.tournamentsPlayed + 1
+          && request.resource.data.championships == resource.data.championships + (request.resource.data.lastRank == 1 ? 1 : 0)
+          && request.resource.data.secondPlaces == resource.data.secondPlaces + (request.resource.data.lastRank == 2 ? 1 : 0)
+          && request.resource.data.thirdPlaces == resource.data.thirdPlaces + (request.resource.data.lastRank == 3 ? 1 : 0)
+          && request.resource.data.podiums == resource.data.podiums + (request.resource.data.lastRank in [1, 2, 3] ? 1 : 0)
+          && request.resource.data.starsEarned == resource.data.starsEarned + request.resource.data.lastStars
+          && !(request.resource.data.lastTournamentId in resource.data.tournamentIds)
+          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.status == 'completed'
+          && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.creatorDeviceId == request.auth.uid
+          && request.resource.data.lastRank == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].rank : 0)
+          && request.resource.data.lastStars == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].stars : 0);
+        allow delete: if false;
+      }
+
 
       match /tournaments/{tournamentId} {
         allow read: if isChannelMember(channelId) || (request.auth != null
