@@ -248,3 +248,43 @@ test('private tournament data is member-only and members can only register thems
     resultAt: serverTimestamp(),
   }));
 });
+
+
+test('tournament podium rewards can only be claimed once by the eligible member', async () => {
+  await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const tournament = doc(ownerDb, 'channels/public-one/tournaments/podium');
+  await assertSucceeds(setDoc(tournament, {
+    title: 'Podium Cup',
+    format: 'single_elimination',
+    status: 'registration',
+    creatorDeviceId: 'owner-a',
+    maxPlayers: 8,
+    participantIds: ['owner-a'],
+    prizeStars: {'1': 100, '2': 60, '3': 30},
+    createdAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(tournament, {
+    status: 'completed',
+    placements: {
+      'owner-a': {rank: 1, stars: 100},
+      'player-b': {rank: 2, stars: 60},
+    },
+    winnerUid: 'owner-a',
+    completedAt: serverTimestamp(),
+  }));
+
+  await assertSucceeds(setDoc(doc(ownerDb, 'channels/public-one/tournaments/podium/reward_claims/owner-a'), {
+    uid: 'owner-a', rank: 1, stars: 100, claimedAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(ownerDb, 'channels/public-one/tournaments/podium/reward_claims/owner-a'), {
+    uid: 'owner-a', rank: 1, stars: 100, claimedAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(ownerDb, 'channels/public-one/tournaments/podium/reward_claims/owner-a-2'), {
+    uid: 'owner-a-2', rank: 1, stars: 100, claimedAt: serverTimestamp(),
+  }));
+  const outsiderDb = env.authenticatedContext('outsider').firestore();
+  await assertFails(setDoc(doc(outsiderDb, 'channels/public-one/tournaments/podium/reward_claims/outsider'), {
+    uid: 'outsider', rank: 1, stars: 100, claimedAt: serverTimestamp(),
+  }));
+});
