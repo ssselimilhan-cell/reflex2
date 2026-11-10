@@ -32,6 +32,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _friendSub;
   Set<String> _friendIds = {};
   bool _friendsOnly = false;
+  bool _showPlayers = false;
 
   @override
   void initState() {
@@ -490,15 +491,27 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
           appBar: AppBar(
-            title: Text(t('lobby_title')),
+            backgroundColor: const Color(0xFF142238),
+            foregroundColor: Colors.white,
+            title: Row(children: [
+              const Icon(Icons.public_rounded, color: Color(0xFFFBBF24), size: 23),
+              const SizedBox(width: 9),
+              Text(t('lobby_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            ]),
             actions: [
               Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: TextButton.icon(
+                padding: const EdgeInsets.only(right: 10),
+                child: OutlinedButton.icon(
                   onPressed: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const ChannelsScreen())),
-                  icon: const Icon(Icons.forum_rounded),
+                  icon: const Icon(Icons.forum_rounded, size: 17),
                   label: const Text('Kanallar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFBBF24),
+                    side: const BorderSide(color: Color(0x88FBBF24)),
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
               ),
             ],
@@ -508,119 +521,154 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               children: [
                 _buildIncomingInvites(),
                 _buildIncomingFriendRequests(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _loading ? null : _createRoom,
-                      icon: const Icon(Icons.add),
-                      label: Text(t('new_room')),
-                      style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14)),
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF243B58), Color(0xFF142238)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0x44FBBF24)),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x33000000), blurRadius: 14, offset: Offset(0, 6)),
+                    ],
                   ),
+                  child: Row(children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(colors: [Color(0xFFFFD84D), Color(0xFFF59E0B)]),
+                      ),
+                      child: const Icon(Icons.sports_esports_rounded, color: Color(0xFF172033), size: 24),
+                    ),
+                    const SizedBox(width: 13),
+                    const Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('GENEL LOBİ', style: TextStyle(
+                          color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.7)),
+                        SizedBox(height: 3),
+                        Text('Açık masalara katıl veya kendi masanı kur.',
+                          style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+                      ],
+                    )),
+                    if (_loading)
+                      const SizedBox(width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFBBF24))),
+                  ]),
                 ),
                 if (_error != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Text(_error!,
-                        style: const TextStyle(color: Colors.redAccent)),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
                   ),
-                // Kod ile katılma — arkadaşla özel oyun için, katlanır.
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 5, 16, 0),
                   child: Theme(
-                    data: Theme.of(context)
-                        .copyWith(dividerColor: Colors.transparent),
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(
-                      tilePadding: EdgeInsets.zero,
-                      title: Text(t('manual_join_title'),
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 14)),
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                      childrenPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      title: Row(children: [
+                        const Icon(Icons.key_rounded, color: Color(0xFFFBBF24), size: 17),
+                        const SizedBox(width: 8),
+                        Text(t('manual_join_title'),
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ]),
                       iconColor: Colors.white70,
                       collapsedIconColor: Colors.white70,
-                      onExpansionChanged: (v) =>
-                          setState(() => _manualJoinExpanded = v),
+                      onExpansionChanged: (v) => setState(() => _manualJoinExpanded = v),
                       initiallyExpanded: _manualJoinExpanded,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: _codeController,
-                                textAlign: TextAlign.center,
-                                textCapitalization:
-                                    TextCapitalization.characters,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    letterSpacing: 6),
-                                maxLength: 4,
-                                decoration: InputDecoration(
-                                  hintText: t('room_code_hint'),
-                                  hintStyle:
-                                      const TextStyle(color: Colors.white38),
-                                  counterText: '',
-                                  enabledBorder: const UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.white54),
-                                  ),
-                                ),
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: Column(children: [
+                            TextField(
+                              controller: _codeController,
+                              textAlign: TextAlign.center,
+                              textCapitalization: TextCapitalization.characters,
+                              style: const TextStyle(color: Colors.white, fontSize: 22, letterSpacing: 6),
+                              maxLength: 4,
+                              decoration: InputDecoration(
+                                hintText: t('room_code_hint'),
+                                hintStyle: const TextStyle(color: Colors.white38),
+                                counterText: '',
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.white54)),
                               ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: _loading
-                                    ? null
-                                    : () =>
-                                        _joinRoomByCode(_codeController.text),
-                                child: Text(t('join_room')),
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(width: double.infinity, child: FilledButton(
+                              onPressed: _loading ? null : () => _joinRoomByCode(_codeController.text),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFFBBF24),
+                                foregroundColor: const Color(0xFF101827)),
+                              child: Text(t('join_room')),
+                            )),
+                          ]),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const Divider(color: Colors.white24, height: 1),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-                  child: Row(
-                    children: [
-                      Text(t('open_tables'),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold)),
-                      const Spacer(),
-                      if (_loading)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111F31),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(children: [
+                      Expanded(child: _lobbyTabButton(
+                        label: t('open_tables'), icon: Icons.table_restaurant_rounded,
+                        selected: !_showPlayers, onTap: () => setState(() => _showPlayers = false))),
+                      const SizedBox(width: 4),
+                      Expanded(child: _lobbyTabButton(
+                        label: t('players_title'), icon: Icons.groups_rounded,
+                        selected: _showPlayers, onTap: () => setState(() => _showPlayers = true))),
+                    ]),
                   ),
                 ),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: _buildOpenTablesList(),
-                      ),
-                      _buildPlayersPanel(),
-                    ],
-                  ),
-                ),
+                Expanded(child: _showPlayers ? _buildPlayersPanel() : _buildOpenTablesList()),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _lobbyTabButton({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? const Color(0xFFFBBF24) : Colors.transparent,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: 17,
+              color: selected ? const Color(0xFF101827) : Colors.white60),
+            const SizedBox(width: 7),
+            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected ? const Color(0xFF101827) : Colors.white70,
+                fontSize: 12, fontWeight: FontWeight.w800))),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -814,8 +862,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   /// sayısı / online kazanma oranına göre sıralanabilen kompakt panel.
   Widget _buildPlayersPanel() {
     return Container(
-      width: 132,
-      margin: const EdgeInsets.only(right: 10, top: 4, bottom: 10),
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       decoration: BoxDecoration(
         color: Colors.black26,
         borderRadius: BorderRadius.circular(12),
