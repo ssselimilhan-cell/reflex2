@@ -451,6 +451,7 @@ class OnlineRoomRepository {
       'status': 'registration',
       'creatorDeviceId': uid,
       'participantIds': <String>[],
+      'prizeStars': {'1': 100, '2': 60, '3': 30},
       'createdAt': FieldValue.serverTimestamp(),
     });
     return ref.id;
@@ -558,7 +559,6 @@ class OnlineRoomRepository {
         'startedAt': FieldValue.serverTimestamp(),
         'currentRound': 1,
         'matchCount': matchIndex,
-        'prizeStars': {'1': 100, '2': 60, '3': 30},
       });
     });
   }
