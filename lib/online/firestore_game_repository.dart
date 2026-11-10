@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../game/game_engine.dart';
 
 /// Bir online oyun odasının Firestore üzerindeki temsili.
@@ -401,13 +402,23 @@ class OnlineRoomRepository {
   }
 
 
-  // ---- Kalıcı oyuncu kanalları (geçici maç odalarından bağımsız) ----
+  // ---- Kalıcı oyuncu kanalları: tüm kimlikler Firebase Auth UID'sidir ----
 
   CollectionReference<Map<String, dynamic>> get _channels =>
       FirebaseFirestore.instance.collection('channels');
+  CollectionReference<Map<String, dynamic>> get _channelInvites =>
+      FirebaseFirestore.instance.collection('channel_invites');
+
+  String _requireChannelUid(String suppliedUid) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid != suppliedUid) {
+      throw StateError('Kanalları kullanmak için giriş yapmalısın.');
+    }
+    return uid;
+  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
-      _channels.orderBy('updatedAt', descending: true).limit(50).snapshots();
+      _channels.where('visibility', isEqualTo: 'public').limit(50).snapshots();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
       _channels.doc(channelId).collection('tournaments')
@@ -420,9 +431,10 @@ class OnlineRoomRepository {
     required String format,
     required int maxPlayers,
   }) async {
+    final uid = _requireChannelUid(creatorDeviceId);
     final channel = _channels.doc(channelId);
     final snapshot = await channel.get();
-    if (!snapshot.exists || snapshot.data()?['ownerDeviceId'] != creatorDeviceId) {
+    if (!snapshot.exists || snapshot.data()?['ownerDeviceId'] != uid) {
       throw StateError('Yalnızca kanal kurucusu turnuva oluşturabilir.');
     }
     final ref = channel.collection('tournaments').doc();
@@ -431,7 +443,7 @@ class OnlineRoomRepository {
       'format': format,
       'maxPlayers': maxPlayers,
       'status': 'registration',
-      'creatorDeviceId': creatorDeviceId,
+      'creatorDeviceId': uid,
       'participantIds': <String>[],
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -443,6 +455,7 @@ class OnlineRoomRepository {
     required String tournamentId,
     required String deviceId,
   }) async {
+    final uid = _requireChannelUid(deviceId);
     final ref = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final snap = await tx.get(ref);
@@ -450,10 +463,10 @@ class OnlineRoomRepository {
       final data = snap.data()!;
       if (data['status'] != 'registration') return false;
       final ids = List<String>.from(data['participantIds'] ?? const <String>[]);
-      if (ids.contains(deviceId)) return true;
+      if (ids.contains(uid)) return true;
       final max = (data['maxPlayers'] as num?)?.toInt() ?? 32;
       if (ids.length >= max) return false;
-      tx.update(ref, {'participantIds': FieldValue.arrayUnion([deviceId])});
+      tx.update(ref, {'participantIds': FieldValue.arrayUnion([uid])});
       return true;
     });
   }
@@ -463,13 +476,12 @@ class OnlineRoomRepository {
     required String tournamentId,
     required String creatorDeviceId,
   }) async {
-    final channel = _channels.doc(channelId);
-    final tournament = channel.collection('tournaments').doc(tournamentId);
+    final uid = _requireChannelUid(creatorDeviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
     await FirebaseFirestore.instance.runTransaction((tx) async {
-      final channelSnap = await tx.get(channel);
       final tournamentSnap = await tx.get(tournament);
-      if (!channelSnap.exists || !tournamentSnap.exists ||
-          channelSnap.data()?['ownerDeviceId'] != creatorDeviceId ||
+      if (!tournamentSnap.exists ||
+          tournamentSnap.data()?['creatorDeviceId'] != uid ||
           tournamentSnap.data()?['status'] != 'registration') {
         throw StateError('Turnuva başlatılamadı.');
       }
@@ -478,17 +490,24 @@ class OnlineRoomRepository {
   }
 
   Future<String?> findChannelByInviteCode(String code) async {
-    final result = await _channels.where('inviteCode', isEqualTo: code.trim().toUpperCase()).limit(1).get();
-    if (result.docs.isEmpty || result.docs.first.data()['visibility'] != 'invite_only') return null;
-    return result.docs.first.id;
+    if (FirebaseAuth.instance.currentUser == null) {
+      throw StateError('Davet koduyla katılmak için giriş yapmalısın.');
+    }
+    final normalized = code.trim().toUpperCase();
+    if (normalized.length != 8) return null;
+    final invite = await _channelInvites.doc(normalized).get();
+    if (!invite.exists) return null;
+    return invite.data()?['channelId'] as String?;
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelMembers(String channelId) =>
       _channels.doc(channelId).collection('members').orderBy('joinedAt').snapshots();
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchChannelMembership(
-      String channelId, String deviceId) =>
-      _channels.doc(channelId).collection('members').doc(deviceId).snapshots();
+      String channelId, String deviceId) {
+    _requireChannelUid(deviceId);
+    return _channels.doc(channelId).collection('members').doc(deviceId).snapshots();
+  }
 
   Future<String> createChannel({
     required String ownerDeviceId,
@@ -497,30 +516,37 @@ class OnlineRoomRepository {
     required String description,
     bool inviteOnly = false,
   }) async {
+    final uid = _requireChannelUid(ownerDeviceId);
     final ref = _channels.doc();
     const inviteChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final inviteRandom = Random();
+    final inviteRandom = Random.secure();
     final inviteCode = List.generate(8, (_) => inviteChars[inviteRandom.nextInt(inviteChars.length)]).join();
     final now = FieldValue.serverTimestamp();
     final batch = FirebaseFirestore.instance.batch();
     batch.set(ref, {
       'name': name.trim(),
       'description': description.trim(),
-      'ownerDeviceId': ownerDeviceId,
+      'ownerDeviceId': uid,
       'ownerDisplayName': ownerDisplayName,
       'memberCount': 1,
       'createdAt': now,
       'updatedAt': now,
       'status': 'open',
       'visibility': inviteOnly ? 'invite_only' : 'public',
-      'inviteCode': inviteCode,
+      if (inviteOnly) 'inviteCode': inviteCode,
     });
-    batch.set(ref.collection('members').doc(ownerDeviceId), {
-      'deviceId': ownerDeviceId,
+    batch.set(ref.collection('members').doc(uid), {
+      'deviceId': uid,
       'displayName': ownerDisplayName,
       'joinedAt': now,
       'role': 'owner',
     });
+    if (inviteOnly) {
+      batch.set(_channelInvites.doc(inviteCode), {
+        'channelId': ref.id,
+        'createdAt': now,
+      });
+    }
     await batch.commit();
     return ref.id;
   }
@@ -531,30 +557,24 @@ class OnlineRoomRepository {
     required String displayName,
     String? inviteCode,
   }) async {
+    final uid = _requireChannelUid(deviceId);
     final channel = _channels.doc(channelId);
-    final member = channel.collection('members').doc(deviceId);
+    final member = channel.collection('members').doc(uid);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final channelSnap = await tx.get(channel);
-      if (!channelSnap.exists || channelSnap.data()?['status'] != 'open') return false;
-      final channelData = channelSnap.data()!;
-      if (channelData['visibility'] == 'invite_only' &&
-          (inviteCode == null || inviteCode.trim().toUpperCase() != channelData['inviteCode'])) return false;
+      if (!channelSnap.exists || channelSnap.data()?['status'] != 'open' ||
+          channelSnap.data()?['visibility'] != 'public') return false;
       final memberSnap = await tx.get(member);
       if (memberSnap.exists) return true;
       final data = channelSnap.data()!;
-      final becomesOwner = data['ownerDeviceId'] == null;
       tx.set(member, {
-        'deviceId': deviceId,
+        'deviceId': uid,
         'displayName': displayName,
         'joinedAt': FieldValue.serverTimestamp(),
-        'role': becomesOwner ? 'owner' : 'member',
+        'role': 'member',
       });
       tx.update(channel, {
         'memberCount': ((data['memberCount'] as num?) ?? 0).toInt() + 1,
-        if (becomesOwner) ...{
-          'ownerDeviceId': deviceId,
-          'ownerDisplayName': displayName,
-        },
         'updatedAt': FieldValue.serverTimestamp(),
       });
       return true;
@@ -566,17 +586,38 @@ class OnlineRoomRepository {
     required String deviceId,
     required String displayName,
   }) async {
-    final channelId = await findChannelByInviteCode(code);
-    if (channelId == null) return false;
-    return joinChannel(channelId: channelId, deviceId: deviceId,
-        displayName: displayName, inviteCode: code);
+    final uid = _requireChannelUid(deviceId);
+    final normalized = code.trim().toUpperCase();
+    if (normalized.length != 8) return false;
+    final invite = await _channelInvites.doc(normalized).get();
+    if (!invite.exists) return false;
+    final channelId = invite.data()?['channelId'] as String?;
+    if (channelId == null || channelId.isEmpty) return false;
+    final channel = _channels.doc(channelId);
+    final member = channel.collection('members').doc(uid);
+    if ((await member.get()).exists) return true;
+    final batch = FirebaseFirestore.instance.batch();
+    batch.set(member, {
+      'deviceId': uid,
+      'displayName': displayName,
+      'joinedAt': FieldValue.serverTimestamp(),
+      'role': 'member',
+      'inviteCode': normalized,
+    });
+    batch.update(channel, {
+      'memberCount': FieldValue.increment(1),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+    return true;
   }
 
   Future<void> leaveChannel(String channelId, String deviceId) async {
+    final uid = _requireChannelUid(deviceId);
     final channel = _channels.doc(channelId);
-    final member = channel.collection('members').doc(deviceId);
+    final member = channel.collection('members').doc(uid);
     final memberDocs = await channel.collection('members').get();
-    final replacement = memberDocs.docs.where((d) => d.id != deviceId).toList();
+    final replacement = memberDocs.docs.where((d) => d.id != uid).toList();
     final nextOwner = replacement.isEmpty ? null : replacement.first;
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final channelSnap = await tx.get(channel);
@@ -587,7 +628,7 @@ class OnlineRoomRepository {
       final nextOwnerSnap = nextOwnerRef == null ? null : await tx.get(nextOwnerRef);
       if (!channelSnap.exists || !memberSnap.exists) return;
       final data = channelSnap.data()!;
-      final isOwner = data['ownerDeviceId'] == deviceId;
+      final isOwner = data['ownerDeviceId'] == uid;
       tx.delete(member);
       if (isOwner && nextOwnerRef != null && nextOwnerSnap?.exists == true) {
         tx.update(nextOwnerRef, {'role': 'owner'});
@@ -597,6 +638,7 @@ class OnlineRoomRepository {
         if (isOwner) ...{
           'ownerDeviceId': nextOwner?.id,
           'ownerDisplayName': nextOwner?.data()['displayName'],
+          if (nextOwner == null) 'status': 'closed',
         },
         'updatedAt': FieldValue.serverTimestamp(),
       });
