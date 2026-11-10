@@ -37,6 +37,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   String? _minimizedRoomCode;
   String? _lastMinimizedRoomGuestId;
   bool _minimizedRoomIsHost = true;
+  final Map<String, DateTime> _waitingRoomDeadlines = {};
+  Timer? _roomCleanupTimer;
 
   Future<void> _openRoom({required String code, required String deviceId, required bool isHost}) async {
     final minimized = await Navigator.push<bool>(
@@ -63,6 +65,17 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   @override
   void initState() {
     super.initState();
+    _roomCleanupTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      final now = DateTime.now();
+      final expiredIds = _waitingRoomDeadlines.entries
+          .where((entry) => !now.isBefore(entry.value))
+          .map((entry) => entry.key)
+          .toList();
+      for (final roomId in expiredIds) {
+        _waitingRoomDeadlines.remove(roomId);
+        unawaited(_repo.expireWaitingRoom(roomId).catchError((_) => false));
+      }
+    });
     _deviceId().then((id) {
       if (!mounted) return;
       setState(() => _myDeviceId = id);
@@ -493,6 +506,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
 
   @override
   void dispose() {
+    _roomCleanupTimer?.cancel();
+    _waitingRoomDeadlines.clear();
     _codeController.dispose();
     _friendSub?.cancel();
     super.dispose();
@@ -764,6 +779,26 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     );
   }
 
+  void _updateWaitingRoomDeadlines(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final next = <String, DateTime>{};
+    for (final doc in docs) {
+      final data = doc.data();
+      final storedExpiry = data['expiresAt'];
+      final createdAt = data['createdAt'];
+      final deadline = storedExpiry is Timestamp
+          ? storedExpiry.toDate()
+          : createdAt is Timestamp
+              ? createdAt.toDate().add(const Duration(minutes: 5))
+              : null;
+      if (deadline != null) next[doc.id] = deadline;
+    }
+    _waitingRoomDeadlines
+      ..clear()
+      ..addAll(next);
+  }
+
   Widget _buildOpenTablesList() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: _repo.watchOpenTables(),
@@ -793,6 +828,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               }
               // Private friend invites and tournament match rooms must never
               // appear in the public table directory.
+              _updateWaitingRoomDeadlines(snapshot.data!.docs);
               final docs = snapshot.data!.docs.where((d) =>
                 d.data()['inviteToDeviceId'] == null &&
                 d.data()['tournamentMatchId'] == null).toList();
