@@ -271,6 +271,12 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Ты играешь как гость',
     'zh': '你正以访客身份游戏'
   },
+  'guest_data_warning': {
+    'tr': 'Misafir ilerlemen yalnızca bu cihazda saklanır. Uygulama verilerini silersen veya uygulamayı kaldırırsan ilerlemeni kaybedebilirsin.',
+    'en': 'Guest progress is stored only on this device. Clearing app data or uninstalling the app may permanently erase it.',
+    'ru': 'Прогресс гостя хранится только на этом устройстве. При очистке данных или удалении приложения он может быть потерян.',
+    'zh': '访客进度仅保存在此设备上。清除应用数据或卸载应用可能会导致进度永久丢失。'
+  },
   'display_name': {
     'tr': 'Görünen Ad',
     'en': 'Display Name',
