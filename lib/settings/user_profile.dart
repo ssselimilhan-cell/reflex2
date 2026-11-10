@@ -59,6 +59,7 @@ class UserProfile extends ChangeNotifier {
   }
 
   bool _loaded = false;
+  String? _activeUid;
 
   String _key(String name, [String? uid]) =>
       uid == null ? name : 'account_${uid}_$name';
@@ -83,7 +84,8 @@ class UserProfile extends ChangeNotifier {
   Future<void> load() async {
     if (_loaded) return;
     deviceId = await getPersistentDeviceId();
-    await _readLocal(uid: FirebaseAuth.instance.currentUser?.uid);
+    _activeUid = FirebaseAuth.instance.currentUser?.uid;
+    await _readLocal(uid: _activeUid);
     _loaded = true;
     notifyListeners();
   }
@@ -95,10 +97,11 @@ class UserProfile extends ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     deviceId ??= await getPersistentDeviceId();
-    final guestName = displayName;
-    final guestWins = onlineWins;
-    final guestLosses = onlineLosses;
-    await _readLocal(uid: user.uid, preserveCurrentIfMissing: true);
+    final cameFromGuest = _activeUid == null;
+    final guestName = cameFromGuest ? displayName : null;
+    final guestWins = cameFromGuest ? onlineWins : 0;
+    final guestLosses = cameFromGuest ? onlineLosses : 0;
+    await _readLocal(uid: user.uid, preserveCurrentIfMissing: cameFromGuest);
     try {
       final ref = FirebaseFirestore.instance
           .collection('users').doc(user.uid)
@@ -127,11 +130,13 @@ class UserProfile extends ChangeNotifier {
       // Oturum açma başarılı kalır; yerel hesap profili kullanılmaya devam eder.
       await _persistLocal();
     }
+    _activeUid = user.uid;
     notifyListeners();
   }
 
   /// Çıkışta hesaba ait profil cihazın misafir profilinin üzerine yazılmaz.
   Future<void> activateGuestProfile() async {
+    _activeUid = null;
     await _readLocal();
     try {
       await _syncPublicProfile();
