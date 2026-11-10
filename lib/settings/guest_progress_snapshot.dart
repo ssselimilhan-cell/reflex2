@@ -82,6 +82,29 @@ class GuestProgressSnapshot {
     );
   }
 
+  factory GuestProgressSnapshot.empty({DateTime? exportedAt}) {
+    return GuestProgressSnapshot(
+      exportedAtUtc: (exportedAt ?? DateTime.now()).toUtc().toIso8601String(),
+      displayName: null,
+      onlineWins: 0,
+      onlineLosses: 0,
+      avatarIconIndex: 0,
+      avatarColorValue: 0xFF0B6E4F,
+      photoBase64: null,
+      streakDays: 0,
+      lastPlayDay: '',
+      missionDay: '',
+      todayGames: 0,
+      todayWins: 0,
+      todayBonuses: 0,
+      stars: 0,
+      totalWins: 0,
+      reviewAsked: false,
+      claimedMissionIndexes: const [],
+      highestClearedLevel: 0,
+    );
+  }
+
   /// Combines guest and account progress without blindly adding counters:
   /// max values avoid duplicating progress when the same device signs in again.
   static GuestProgressSnapshot merge(

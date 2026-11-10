@@ -188,5 +188,13 @@ void main() {
       expect(merged.stars, 20);
       expect(merged.highestClearedLevel, 25);
     });
+
+    test('creates an empty snapshot for a different account', () {
+      final empty = GuestProgressSnapshot.empty();
+      expect(empty.onlineWins, 0);
+      expect(empty.stars, 0);
+      expect(empty.highestClearedLevel, 0);
+      expect(empty.displayName, isNull);
+    });
   });
 }

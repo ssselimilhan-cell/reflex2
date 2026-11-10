@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'guest_progress_snapshot.dart';
 
 /// Firebase Authentication girişlerini tek noktadan yönetir.
@@ -58,22 +59,29 @@ class AuthService {
         .doc(user.uid)
         .collection('private')
         .doc('progress');
+    final preferences = await SharedPreferences.getInstance();
+    final previousUid = preferences.getString('accountProgressUid');
+    final switchedAccount = previousUid != null && previousUid != user.uid;
     final local = GuestProgressSnapshot.capture();
     final remoteDocument = await document.get();
-    final combined = remoteDocument.exists
-        ? GuestProgressSnapshot.merge(
-            local,
-            GuestProgressSnapshot.fromMap(remoteDocument.data()!),
-          )
-        : local;
+    final remote = remoteDocument.exists
+        ? GuestProgressSnapshot.fromMap(remoteDocument.data()!)
+        : null;
+    final combined = remote != null
+        ? (switchedAccount
+            ? remote
+            : GuestProgressSnapshot.merge(local, remote))
+        : (switchedAccount ? GuestProgressSnapshot.empty() : local);
     await document.set({
       ...combined.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
     await combined.applyToLocal();
+    await preferences.setString('accountProgressUid', user.uid);
   }
 
   Future<void> signOut() async {
+    await syncProgressForCurrentUser();
     await FirebaseAuth.instance.signOut();
     try {
       await GoogleSignIn().signOut();
