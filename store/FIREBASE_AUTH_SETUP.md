@@ -33,7 +33,9 @@ Google sağlayıcısını etkinleştirdikten sonra Android uygulamasına ait gü
 
 Güvenlik kuralları kaynak dosyası `store/firestore.rules`; `firebase.json` bu dosyayı işaret eder. GitHub'a commit etmek canlı Firebase projesini değiştirmez.
 
-Firebase CLI ile yetkili oturum açtıktan sonra proje kökünde:
+GitHub Actions üzerinden yayımlamak için Firebase projesinde **Firebase Rules Admin** yetkisine sahip bir servis hesabı oluştur. JSON anahtarını GitHub deposunun Settings → Secrets and variables → Actions bölümüne `FIREBASE_SERVICE_ACCOUNT_STRES_CARD` adıyla ekle. Ardından Actions → **Firestore Kurallarını Canlı Projeye Yayımla** iş akışını çalıştır. İş akışı yalnızca `store/firestore.rules` dosyasını yayımlar.
+
+Alternatif olarak Firebase CLI ile yetkili oturum açıp proje kökünde şu komutu çalıştırabilirsin:
 
 ```bash
 firebase deploy --only firestore:rules --project stres-card
