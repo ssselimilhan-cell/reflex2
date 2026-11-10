@@ -63,7 +63,7 @@ class StarShopScreen extends StatelessWidget {
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots(),
                   builder: (context, snapshot) {
-                    if (snapshot.hasError) return const Padding(padding: EdgeInsets.all(18), child: Text('Mağaza şu anda yüklenemiyor. Daha sonra tekrar dene.', style: TextStyle(color: Colors.white70)));
+                    if (snapshot.hasError) return Padding(padding: const EdgeInsets.all(18), child: Text('Tema mağazası yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)));
                     if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
                     final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && (d.data()['visualStyleIndex'] is int || d.data()['themeIndex'] is int)).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
                     if (docs.isEmpty) return Container(
