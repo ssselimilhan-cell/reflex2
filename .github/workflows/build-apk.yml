@@ -49,3 +49,22 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 7
+
+  upload-key-fingerprints:
+    if: github.ref == 'refs/heads/redesign/modern-competitive'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yükleme anahtarı sertifika parmak izlerini güvenli biçimde çıkar
+        env:
+          P: ${{ secrets.KEYSTORE_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -f tools/upload-keystore.enc
+          test -n "$P"
+          mkdir -p android
+          trap 'rm -f android/upload-keystore.jks' EXIT
+          openssl enc -d -aes-256-cbc -pbkdf2 -in tools/upload-keystore.enc -out android/upload-keystore.jks -pass env:P
+          keytool -list -v -keystore android/upload-keystore.jks -storepass "$P" -alias upload \
+            | grep -E '^(Alias name:|SHA1:|SHA256:)'
