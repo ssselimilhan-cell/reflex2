@@ -343,10 +343,12 @@ class OnlineRoomRepository {
 
       if (isHost) {
         if (data['hostDeviceId'] != deviceId) return;
+        final gameFinished = (data['status'] as String? ?? 'playing') != 'playing';
         tx.update(ref, {
-          'roomStatus': 'cancelled',
-          'cancelledBy': deviceId,
-          'cancelledAt': FieldValue.serverTimestamp(),
+          'roomStatus': gameFinished ? 'finished' : 'cancelled',
+          if (gameFinished) 'hostLeftAt': FieldValue.serverTimestamp(),
+          if (!gameFinished) 'cancelledBy': deviceId,
+          if (!gameFinished) 'cancelledAt': FieldValue.serverTimestamp(),
           'startRequestedBy': null,
           'rematchRequestedBy': null,
           'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
