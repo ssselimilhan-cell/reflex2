@@ -52,6 +52,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     final name = TextEditingController(text: data['name'] as String? ?? '');
     final description = TextEditingController(text: data['description'] as String? ?? '');
     final price = TextEditingController(text: data['priceStars']?.toString() ?? '');
+    final sortOrder = TextEditingController(text: (data['sortOrder'] as int? ?? 0).toString());
     var published = data['isPublished'] == true;
     final saved = await showDialog<bool>(
       context: context,
@@ -64,6 +65,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
               TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tema adı', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: description, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Açıklama', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: price, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Yıldız fiyatı', hintText: 'Boş bırak: satışa kapalı', hintStyle: TextStyle(color: Colors.white38), labelStyle: TextStyle(color: Colors.white70))),
+              TextField(controller: sortOrder, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Mağaza sırası', helperText: 'Küçük sayı önce gösterilir', helperStyle: TextStyle(color: Colors.white54), labelStyle: TextStyle(color: Colors.white70))),
               SwitchListTile(
                 value: published,
                 onChanged: (v) => setDialogState(() => published = v),
@@ -87,6 +89,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
       'description': description.text.trim(),
       'priceStars': validPrice ? parsedPrice : null,
       'isPublished': published && validPrice && name.text.trim().isNotEmpty,
+      'sortOrder': int.tryParse(sortOrder.text.trim()) ?? (data['sortOrder'] as int? ?? 0),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
