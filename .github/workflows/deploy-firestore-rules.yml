@@ -1,6 +1,12 @@
 name: Firestore Kurallarını Canlı Projeye Yayımla
 
 on:
+  push:
+    branches:
+      - redesign/modern-competitive
+    paths:
+      - 'store/firestore.rules'
+      - '.github/workflows/deploy-firestore-rules.yml'
   workflow_dispatch:
 
 permissions:
