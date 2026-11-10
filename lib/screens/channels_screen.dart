@@ -85,16 +85,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
   }
 
-  void _showInviteCode(String code) {
-    showDialog<void>(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1B293D),
-      title: const Text('Kanal davet kodun', style: TextStyle(color: Colors.white)),
-      content: SelectableText(code, style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 3)),
-      actions: [TextButton(onPressed: () { Clipboard.setData(ClipboardData(text: code)); Navigator.pop(ctx); },
-        child: const Text('Kodu kopyala'))],
-    ));
-  }
-
   Future<void> _joinByInviteCode() async {
     final controller = TextEditingController();
     final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
