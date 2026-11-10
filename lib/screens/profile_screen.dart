@@ -389,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         Text(
           AuthService.instance.currentUser != null
-              ? 'Hesabın bağlı. Görünen oyuncu profilini oluşturmadığın için henüz misafir oyuncu adıyla görünüyorsun.'
+              ? 'Hesabın bağlı. Oyuncu adını belirlemek için aşağıdan profilini oluşturabilirsin.'
               : t('guest_playing'),
           style: const TextStyle(color: Colors.white70, fontSize: 13),
         ),
