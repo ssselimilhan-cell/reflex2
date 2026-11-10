@@ -818,11 +818,63 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final _repo = OnlineRoomRepository();
   bool _busy = false;
 
-  Future<void> _setWinner(String matchId, Map<String, dynamic> match) async {
+  Future<void> _startTournamentMatch(String matchId, Map<String, dynamic> match) async {
+    if (_busy || match['player1Uid'] != widget.deviceId ||
+        match['player2Uid'] == null || match['roomCode'] != null) return;
+    setState(() => _busy = true);
+    String? roomCode;
+    try {
+      final profile = UserProfile.instance;
+      final name = profile.hasProfile ? profile.displayName : 'Oyuncu';
+      roomCode = await _repo.createRoom(
+        widget.deviceId,
+        hostDisplayName: name,
+        hostWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+        hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
+        hostAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+        hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+        inviteToDeviceId: match['player2Uid'] as String,
+        tournamentChannelId: widget.channelId,
+        tournamentId: widget.tournamentId,
+        tournamentMatchId: matchId,
+      );
+      await _repo.linkTournamentMatchRoom(
+        channelId: widget.channelId,
+        tournamentId: widget.tournamentId,
+        matchId: matchId,
+        deviceId: widget.deviceId,
+        roomCode: roomCode,
+      );
+      await _repo.sendInvite(
+        toDeviceId: match['player2Uid'] as String,
+        fromDeviceId: widget.deviceId,
+        roomCode: roomCode,
+        fromDisplayName: name,
+        fromAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
+        fromAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+        fromPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+        fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+      );
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) =>
+        OnlineGameScreen(roomCode: roomCode!, deviceId: widget.deviceId, isHost: true)));
+    } catch (e) {
+      if (roomCode != null) {
+        try { await _repo.leaveRoom(roomCode, widget.deviceId, isHost: true); } catch (_) {}
+      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Turnuva maçı başlatılamadı: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _setWinner(String matchId, Map<String, dynamic> match, {String? forcedWinnerUid}) async {
     final player1 = match['player1Uid'] as String?;
     final player2 = match['player2Uid'] as String?;
     if (player1 == null || player2 == null) return;
-    final selected = await showDialog<String>(
+    final selected = forcedWinnerUid ?? await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
@@ -1046,14 +1098,43 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                             child: Text('VS', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w900)),
                           ),
                           _TournamentPlayerRow(name: p2, winner: p2Won, isBye: false),
-                          if (ready && isCreator)
+                          if (ready && data['roomCode'] == null &&
+                              data['player1Uid'] == widget.deviceId && !isBye)
                             Align(alignment: Alignment.centerRight, child: TextButton.icon(
-                              onPressed: _busy ? null : () => _setWinner(doc.id, data),
-                              icon: const Icon(Icons.check_circle_outline, size: 17),
-                              label: const Text('Sonucu işle'),
+                              onPressed: _busy ? null : () => _startTournamentMatch(doc.id, data),
+                              icon: const Icon(Icons.sports_esports_rounded, size: 17),
+                              label: const Text('Maçı başlat ve davet et'),
                             )),
-                          if (ready && !isCreator)
-                            const Align(alignment: Alignment.centerRight, child: Text('Maç bekliyor',
+                          if (ready && data['roomCode'] is String)
+                            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                              stream: _repo.watchRoom(data['roomCode'] as String),
+                              builder: (context, roomSnapshot) {
+                                final room = roomSnapshot.data?.data();
+                                final gameStatus = room?['status'] as String?;
+                                final winnerUid = gameStatus == 'player1Wins'
+                                    ? room?['hostDeviceId'] as String?
+                                    : gameStatus == 'player2Wins'
+                                        ? room?['guestDeviceId'] as String? : null;
+                                if (winnerUid != null && isCreator) {
+                                  return Align(alignment: Alignment.centerRight, child: TextButton.icon(
+                                    onPressed: _busy ? null : () => _setWinner(doc.id, data, forcedWinnerUid: winnerUid),
+                                    icon: const Icon(Icons.verified_rounded, size: 17),
+                                    label: const Text('Gerçek maç sonucunu işle'),
+                                  ));
+                                }
+                                return Align(alignment: Alignment.centerRight, child: Text(
+                                  winnerUid != null ? 'Maç bitti · Turnuva yöneticisi sonucu işleyecek'
+                                    : 'Oda ${data['roomCode']} · ${roomSnapshot.hasData ? 'Rakip bekleniyor / maç sürüyor' : 'Oda yükleniyor'}',
+                                  style: const TextStyle(color: Colors.white54, fontSize: 11)));
+                              },
+                            ),
+                          if (ready && data['roomCode'] == null &&
+                              data['player1Uid'] != widget.deviceId && !isCreator)
+                            const Align(alignment: Alignment.centerRight, child: Text('İlk oyuncunun maç odasını açması bekleniyor',
+                              style: TextStyle(color: Colors.white38, fontSize: 11))),
+                          if (ready && isCreator && data['roomCode'] == null &&
+                              data['player1Uid'] != widget.deviceId)
+                            const Align(alignment: Alignment.centerRight, child: Text('İlk oyuncu maçı başlatabilir',
                               style: TextStyle(color: Colors.white38, fontSize: 11))),
                           if (!ready)
                             Align(alignment: Alignment.centerRight, child: Text(isBye ? 'Bay geçti' : 'Tamamlandı',
