@@ -407,7 +407,82 @@ class OnlineRoomRepository {
       FirebaseFirestore.instance.collection('channels');
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
-      _channels.orderBy('updatedAt', descending: true).limit(50).snapshots();
+      _channels.where('visibility', isEqualTo: 'public')
+          .orderBy('updatedAt', descending: true).limit(50).snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
+      _channels.doc(channelId).collection('tournaments')
+          .orderBy('createdAt', descending: true).snapshots();
+
+  Future<String> createChannelTournament({
+    required String channelId,
+    required String creatorDeviceId,
+    required String title,
+    required String format,
+    required int maxPlayers,
+  }) async {
+    final channel = _channels.doc(channelId);
+    final snapshot = await channel.get();
+    if (!snapshot.exists || snapshot.data()?['ownerDeviceId'] != creatorDeviceId) {
+      throw StateError('Yalnızca kanal kurucusu turnuva oluşturabilir.');
+    }
+    final ref = channel.collection('tournaments').doc();
+    await ref.set({
+      'title': title.trim(),
+      'format': format,
+      'maxPlayers': maxPlayers,
+      'status': 'registration',
+      'creatorDeviceId': creatorDeviceId,
+      'participantIds': <String>[],
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return ref.id;
+  }
+
+  Future<bool> joinChannelTournament({
+    required String channelId,
+    required String tournamentId,
+    required String deviceId,
+  }) async {
+    final ref = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['status'] != 'registration') return false;
+      final ids = List<String>.from(data['participantIds'] ?? const <String>[]);
+      if (ids.contains(deviceId)) return true;
+      final max = (data['maxPlayers'] as num?)?.toInt() ?? 32;
+      if (ids.length >= max) return false;
+      tx.update(ref, {'participantIds': FieldValue.arrayUnion([deviceId])});
+      return true;
+    });
+  }
+
+  Future<void> startChannelTournament({
+    required String channelId,
+    required String tournamentId,
+    required String creatorDeviceId,
+  }) async {
+    final channel = _channels.doc(channelId);
+    final tournament = channel.collection('tournaments').doc(tournamentId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final channelSnap = await tx.get(channel);
+      final tournamentSnap = await tx.get(tournament);
+      if (!channelSnap.exists || !tournamentSnap.exists ||
+          channelSnap.data()?['ownerDeviceId'] != creatorDeviceId ||
+          tournamentSnap.data()?['status'] != 'registration') {
+        throw StateError('Turnuva başlatılamadı.');
+      }
+      tx.update(tournament, {'status': 'in_progress', 'startedAt': FieldValue.serverTimestamp()});
+    });
+  }
+
+  Future<String?> findChannelByInviteCode(String code) async {
+    final result = await _channels.where('inviteCode', isEqualTo: code.trim().toUpperCase())
+        .where('visibility', isEqualTo: 'invite_only').limit(1).get();
+    return result.docs.isEmpty ? null : result.docs.first.id;
+  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelMembers(String channelId) =>
       _channels.doc(channelId).collection('members').orderBy('joinedAt').snapshots();
@@ -421,8 +496,12 @@ class OnlineRoomRepository {
     required String ownerDisplayName,
     required String name,
     required String description,
+    bool inviteOnly = false,
   }) async {
     final ref = _channels.doc();
+    const inviteChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final inviteRandom = Random();
+    final inviteCode = List.generate(8, (_) => inviteChars[inviteRandom.nextInt(inviteChars.length)]).join();
     final now = FieldValue.serverTimestamp();
     final batch = FirebaseFirestore.instance.batch();
     batch.set(ref, {
@@ -434,6 +513,8 @@ class OnlineRoomRepository {
       'createdAt': now,
       'updatedAt': now,
       'status': 'open',
+      'visibility': inviteOnly ? 'invite_only' : 'public',
+      'inviteCode': inviteCode,
     });
     batch.set(ref.collection('members').doc(ownerDeviceId), {
       'deviceId': ownerDeviceId,
@@ -449,12 +530,16 @@ class OnlineRoomRepository {
     required String channelId,
     required String deviceId,
     required String displayName,
+    String? inviteCode,
   }) async {
     final channel = _channels.doc(channelId);
     final member = channel.collection('members').doc(deviceId);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final channelSnap = await tx.get(channel);
       if (!channelSnap.exists || channelSnap.data()?['status'] != 'open') return false;
+      final channelData = channelSnap.data()!;
+      if (channelData['visibility'] == 'invite_only' &&
+          (inviteCode == null || inviteCode.trim().toUpperCase() != channelData['inviteCode'])) return false;
       final memberSnap = await tx.get(member);
       if (memberSnap.exists) return true;
       final data = channelSnap.data()!;
@@ -475,6 +560,17 @@ class OnlineRoomRepository {
       });
       return true;
     });
+  }
+
+  Future<bool> joinPrivateChannelByCode({
+    required String code,
+    required String deviceId,
+    required String displayName,
+  }) async {
+    final channelId = await findChannelByInviteCode(code);
+    if (channelId == null) return false;
+    return joinChannel(channelId: channelId, deviceId: deviceId,
+        displayName: displayName, inviteCode: code);
   }
 
   Future<void> leaveChannel(String channelId, String deviceId) async {
