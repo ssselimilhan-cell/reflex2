@@ -192,6 +192,21 @@ service cloud.firestore {
         );
         allow delete: if false;
 
+        match /reward_claims/{uid} {
+          allow read: if request.auth != null && request.auth.uid == uid;
+          allow create: if request.auth != null
+            && request.auth.uid == uid
+            && request.resource.data.uid == uid
+            && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.status == 'completed'
+            && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.placements[uid].rank == request.resource.data.rank
+            && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.placements[uid].stars == request.resource.data.stars
+            && request.resource.data.rank in [1, 2, 3]
+            && request.resource.data.stars is int
+            && request.resource.data.stars > 0
+            && request.resource.data.claimedAt == request.time;
+          allow update, delete: if false;
+        }
+
         match /matches/{matchId} {
           allow read: if isChannelMember(channelId);
           allow create: if isChannelOwner(channelId)
