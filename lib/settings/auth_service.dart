@@ -19,7 +19,8 @@ class AuthService {
       isAvailable ? FirebaseAuth.instance.currentUser : null;
   Future<void> _activateAccountProfileSafely() async {
     try {
-      await _activateAccountProfileSafely();
+      await UserProfile.instance.activateAccountProfile()
+          .timeout(const Duration(seconds: 8));
     } catch (_) {
       // Kimlik doğrulama başarılıysa profil senkronizasyonu girişe engel olmaz.
     }
@@ -54,8 +55,7 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
       final result = await FirebaseAuth.instance.signInWithCredential(credential);
-      await UserProfile.instance.activateAccountProfile()
-          .timeout(const Duration(seconds: 8));
+      await _activateAccountProfileSafely();
       return result;
     } on FirebaseAuthException {
       rethrow;
@@ -95,8 +95,7 @@ class AuthService {
     } catch (_) {
       // Authentication hesabı oluşturuldu; kullanıcı yeniden gönderebilir.
     }
-    await UserProfile.instance.activateAccountProfile()
-        .timeout(const Duration(seconds: 8));
+    await _activateAccountProfileSafely();
     return credential;
   }
 
