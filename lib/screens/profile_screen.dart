@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../settings/app_settings.dart';
@@ -9,6 +10,7 @@ import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
 import '../settings/ranks.dart';
+import '../settings/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,6 +22,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   bool _saving = false;
+  bool _authBusy = false;
 
   @override
   void dispose() {
@@ -59,10 +62,236 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildAccountCard() {
+    if (!AuthService.isAvailable) {
+      return const SizedBox.shrink();
+    }
+    return StreamBuilder(
+      stream: AuthService.authStateChanges,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1B293D),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x553B82F6)),
+          ),
+          child: user != null
+              ? Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x223B82F6),
+                      child: Icon(Icons.verified_user, color: Color(0xFF60A5FA)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t('account_connected'),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                          Text(user.email ?? user.displayName ?? user.uid,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: t('sign_out'),
+                      onPressed: _authBusy ? null : _signOut,
+                      icon: const Icon(Icons.logout, color: Colors.white70),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(t('account_title'),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5),
+                    Text(t('account_guest_hint'),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12, height: 1.4)),
+                    const SizedBox(height: 14),
+                    OutlinedButton.icon(
+                      onPressed: _authBusy ? null : _signInWithGoogle,
+                      icon: const Icon(Icons.g_mobiledata, size: 25),
+                      label: Text(t('continue_google')),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.tonalIcon(
+                      onPressed: _authBusy ? null : _signInWithEmail,
+                      icon: const Icon(Icons.email_outlined),
+                      label: Text(t('continue_email')),
+                      style: FilledButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFF3B82F6),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                    if (_authBusy)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _authBusy = true);
+    try {
+      final credential = await AuthService.instance.signInWithGoogle();
+      if (!mounted) return;
+      if (credential != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('account_connected'))),
+        );
+      }
+    } catch (error) {
+      if (mounted) _showAuthError(error);
+    } finally {
+      if (mounted) setState(() => _authBusy = false);
+    }
+  }
+
+  Future<void> _signInWithEmail() async {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    var createAccount = false;
+    final choice = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1B293D),
+          title: Text(createAccount ? t('create_account') : t('sign_in'),
+              style: const TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: t('email'),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: t('password'),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    setDialogState(() => createAccount = !createAccount),
+                child: Text(
+                  createAccount ? t('already_have_account') : t('need_account'),
+                  style: const TextStyle(color: Color(0xFF60A5FA)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(t('cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, createAccount),
+              child: Text(createAccount ? t('create_account') : t('sign_in')),
+            ),
+          ],
+        ),
+      ),
+    );
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    emailController.dispose();
+    passwordController.dispose();
+    if (choice == null || email.isEmpty || password.isEmpty) return;
+
+    setState(() => _authBusy = true);
+    try {
+      if (choice) {
+        await AuthService.instance.createAccount(email, password);
+      } else {
+        await AuthService.instance.signInWithEmail(email, password);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('account_connected'))),
+        );
+      }
+    } catch (error) {
+      if (mounted) _showAuthError(error);
+    } finally {
+      if (mounted) setState(() => _authBusy = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _authBusy = true);
+    try {
+      await AuthService.instance.signOut();
+    } catch (error) {
+      if (mounted) _showAuthError(error);
+    } finally {
+      if (mounted) setState(() => _authBusy = false);
+    }
+  }
+
+  void _showAuthError(Object error) {
+    final message = error is FirebaseAuthException
+        ? switch (error.code) {
+            'email-already-in-use' => t('auth_email_exists'),
+            'invalid-email' => t('auth_invalid_email'),
+            'weak-password' => t('auth_weak_password'),
+            'user-not-found' || 'wrong-password' || 'invalid-credential' =>
+              t('auth_invalid_credentials'),
+            'network-request-failed' => t('auth_network_error'),
+            _ => error.message ?? t('auth_error'),
+          }
+        : error.toString();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Widget _buildCreateView() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildAccountCard(),
+        const SizedBox(height: 20),
         Text(t('create_profile'),
             style: const TextStyle(
                 color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
@@ -135,6 +364,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildAccountCard(),
+        const SizedBox(height: 20),
         Row(
           children: [
             GestureDetector(

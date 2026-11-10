@@ -1112,6 +1112,25 @@ const Map<String, Map<String, String>> _strings = {
     'zh': '每月'
   },
   'period_yearly': {'tr': 'Yıllık', 'en': 'Yearly', 'ru': 'Год', 'zh': '每年'},
+  'account_title': {'tr': 'Hesabını bağla', 'en': 'Connect your account', 'ru': 'Подключите аккаунт', 'zh': '连接账户'},
+  'account_connected': {'tr': 'Hesap başarıyla bağlandı', 'en': 'Account connected', 'ru': 'Аккаунт подключён', 'zh': '账户已连接'},
+  'account_guest_hint': {'tr': 'Hesabınla giriş yaparak farklı cihazlarda kullanabileceğin bir hesap oluştur.', 'en': 'Sign in to create an account you can use across devices.', 'ru': 'Войдите, чтобы использовать аккаунт на разных устройствах.', 'zh': '登录后即可在不同设备上使用账户。'},
+  'continue_google': {'tr': 'Google ile devam et', 'en': 'Continue with Google', 'ru': 'Продолжить с Google', 'zh': '使用 Google 继续'},
+  'continue_email': {'tr': 'E-posta ile devam et', 'en': 'Continue with email', 'ru': 'Продолжить с электронной почтой', 'zh': '使用电子邮件继续'},
+  'email': {'tr': 'E-posta', 'en': 'Email', 'ru': 'Электронная почта', 'zh': '电子邮件'},
+  'password': {'tr': 'Şifre', 'en': 'Password', 'ru': 'Пароль', 'zh': '密码'},
+  'sign_in': {'tr': 'Giriş yap', 'en': 'Sign in', 'ru': 'Войти', 'zh': '登录'},
+  'create_account': {'tr': 'Hesap oluştur', 'en': 'Create account', 'ru': 'Создать аккаунт', 'zh': '创建账户'},
+  'already_have_account': {'tr': 'Zaten hesabın var mı? Giriş yap', 'en': 'Already have an account? Sign in', 'ru': 'Уже есть аккаунт? Войти', 'zh': '已有账户？登录'},
+  'need_account': {'tr': 'Hesabın yok mu? Oluştur', 'en': 'Need an account? Create one', 'ru': 'Нет аккаунта? Создать', 'zh': '没有账户？创建一个'},
+  'sign_out': {'tr': 'Çıkış yap', 'en': 'Sign out', 'ru': 'Выйти', 'zh': '退出'},
+  'cancel': {'tr': 'Vazgeç', 'en': 'Cancel', 'ru': 'Отмена', 'zh': '取消'},
+  'auth_email_exists': {'tr': 'Bu e-posta zaten kayıtlı. Giriş yapmayı dene.', 'en': 'This email is already registered. Try signing in.', 'ru': 'Эта почта уже зарегистрирована. Попробуйте войти.', 'zh': '此邮箱已注册，请尝试登录。'},
+  'auth_invalid_email': {'tr': 'E-posta adresi geçerli değil.', 'en': 'The email address is invalid.', 'ru': 'Неверный адрес электронной почты.', 'zh': '电子邮件地址无效。'},
+  'auth_weak_password': {'tr': 'Şifre en az 6 karakter olmalı.', 'en': 'Password must be at least 6 characters.', 'ru': 'Пароль должен содержать не менее 6 символов.', 'zh': '密码至少需要 6 个字符。'},
+  'auth_invalid_credentials': {'tr': 'E-posta veya şifre hatalı.', 'en': 'Email or password is incorrect.', 'ru': 'Неверная почта или пароль.', 'zh': '邮箱或密码不正确。'},
+  'auth_network_error': {'tr': 'Bağlantı hatası. İnternetini kontrol et.', 'en': 'Network error. Check your connection.', 'ru': 'Ошибка сети. Проверьте подключение.', 'zh': '网络错误，请检查连接。'},
+  'auth_error': {'tr': 'Giriş yapılamadı. Tekrar dene.', 'en': 'Could not sign in. Try again.', 'ru': 'Не удалось войти. Попробуйте ещё раз.', 'zh': '登录失败，请重试。'},
 };
 
 String t(String key) {
