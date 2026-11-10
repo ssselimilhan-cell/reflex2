@@ -74,6 +74,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       stream: AuthService.authStateChanges,
       builder: (context, snapshot) {
         final user = snapshot.data;
+        final isGoogleAccount = user?.providerData.any((provider) => provider.providerId == 'google.com') ?? false;
+        final isVerifiedForApp = user != null && (user.emailVerified || isGoogleAccount);
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -87,11 +89,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(children: [
                       CircleAvatar(
-                        backgroundColor: user.emailVerified
+                        backgroundColor: isVerifiedForApp
                             ? const Color(0x2234D399) : const Color(0x33FBBF24),
                         child: Icon(
-                          user.emailVerified ? Icons.verified_user : Icons.mark_email_unread_rounded,
-                          color: user.emailVerified ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                          isVerifiedForApp ? Icons.verified_user : Icons.mark_email_unread_rounded,
+                          color: isVerifiedForApp ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -99,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(user.emailVerified ? t('account_connected') : 'E-posta doğrulaması bekleniyor',
+                            Text(isVerifiedForApp ? t('account_connected') : 'E-posta doğrulaması bekleniyor',
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             Text(user.email ?? user.displayName ?? user.uid,
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -113,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: const Icon(Icons.logout, color: Colors.white70),
                       ),
                     ]),
-                    if (user.email != null && !user.emailVerified) ...[
+                    if (user.email != null && !isVerifiedForApp) ...[
                       const SizedBox(height: 10),
                       const Text(
                         'Hesabını ve yönetici ayrıcalıklarını etkinleştirmek için e-posta bağlantısını onayla.',
