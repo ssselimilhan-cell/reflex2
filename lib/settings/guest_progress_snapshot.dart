@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'ladder.dart';
 import 'progress.dart';
 import 'user_profile.dart';
@@ -78,6 +80,16 @@ class GuestProgressSnapshot {
       claimedMissionIndexes: progress.claimed.toList()..sort(),
       highestClearedLevel: ladder.highestCleared,
     );
+  }
+
+  String toJson() => jsonEncode(toMap());
+
+  factory GuestProgressSnapshot.fromJson(String source) {
+    final decoded = jsonDecode(source);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Snapshot JSON must contain an object');
+    }
+    return GuestProgressSnapshot.fromMap(decoded);
   }
 
   Map<String, dynamic> toMap() => {
