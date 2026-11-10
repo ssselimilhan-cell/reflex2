@@ -746,7 +746,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   ),
                 );
               }
-              final docs = snapshot.data!.docs.toList();
+              // Private friend invites and tournament match rooms must never
+              // appear in the public table directory.
+              final docs = snapshot.data!.docs.where((d) =>
+                d.data()['inviteToDeviceId'] == null &&
+                d.data()['tournamentMatchId'] == null).toList();
               docs.removeWhere((d) => Moderation.instance
                   .isBlocked(d.data()['hostDeviceId'] as String?));
               // Kazanma oranına göre azalan sırala (misafirler/oranı
