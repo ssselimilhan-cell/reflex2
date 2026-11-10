@@ -90,7 +90,7 @@ class QuickMatchSession {
         if (!joined) continue;
         await _repo.requestStart(d.id, PlayerSide.player2);
         if (ownCode != null) {
-          try { await _repo.leaveRoom(ownCode); } catch (_) {}
+          try { await _repo.leaveRoom(ownCode, id, isHost: true); } catch (_) {}
           _roomCode = null;
         }
         _match = QuickMatchResult(d.id, id, false);
@@ -113,7 +113,7 @@ class QuickMatchSession {
       } catch (_) {}
     }
     if (_match == null && code != null) {
-      try { await _repo.leaveRoom(code); } catch (_) {}
+      try { await _repo.leaveRoom(code, _deviceId!, isHost: true); } catch (_) {}
     }
     return _match;
   }
