@@ -119,7 +119,7 @@ class UserProfile extends ChangeNotifier {
       final ref = FirebaseFirestore.instance
           .collection('users').doc(user.uid)
           .collection('private').doc('profile');
-      final snap = await ref.get();
+      final snap = await ref.get().timeout(const Duration(seconds: 6));
       if (snap.exists) {
         final data = snap.data()!;
         displayName = data['displayName'] as String?;
@@ -135,10 +135,10 @@ class UserProfile extends ChangeNotifier {
           onlineWins = guestWins;
           onlineLosses = guestLosses;
         }
-        await ref.set(_accountProfileMap());
+        await ref.set(_accountProfileMap()).timeout(const Duration(seconds: 6));
       }
       await _persistLocal();
-      await _syncPublicProfile();
+      await _syncPublicProfile().timeout(const Duration(seconds: 4));
     } catch (_) {
       // Oturum açma başarılı kalır; yerel hesap profili kullanılmaya devam eder.
       await _persistLocal();
@@ -152,7 +152,7 @@ class UserProfile extends ChangeNotifier {
     _activeUid = null;
     await _readLocal();
     try {
-      await _syncPublicProfile();
+      await _syncPublicProfile().timeout(const Duration(seconds: 2));
     } catch (_) {}
     notifyListeners();
   }
@@ -212,11 +212,12 @@ class UserProfile extends ChangeNotifier {
   Future<void> _syncToFirestore() async {
     if (!hasProfile || deviceId == null) return;
     try {
-      await _syncPublicProfile();
+      await _syncPublicProfile().timeout(const Duration(seconds: 5));
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         await FirebaseFirestore.instance.collection('users').doc(uid)
-            .collection('private').doc('profile').set(_accountProfileMap());
+            .collection('private').doc('profile').set(_accountProfileMap())
+            .timeout(const Duration(seconds: 5));
       }
     } catch (_) {
       // Yerel profil korunur; sonraki profil güncellemesinde tekrar denenir.
