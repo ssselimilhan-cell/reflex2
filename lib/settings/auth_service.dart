@@ -17,6 +17,14 @@ class AuthService {
       FirebaseAuth.instance.authStateChanges();
   User? get currentUser =>
       isAvailable ? FirebaseAuth.instance.currentUser : null;
+  Future<void> _activateAccountProfileSafely() async {
+    try {
+      await _activateAccountProfileSafely();
+    } catch (_) {
+      // Kimlik doğrulama başarılıysa profil senkronizasyonu girişe engel olmaz.
+    }
+  }
+
   bool get isAdmin {
     final user = currentUser;
     if (user?.email?.trim().toLowerCase() != 'ssselimilhan@gmail.com') return false;
@@ -64,8 +72,7 @@ class AuthService {
       email: email.trim().toLowerCase(),
       password: password,
     );
-    await UserProfile.instance.activateAccountProfile()
-        .timeout(const Duration(seconds: 8));
+    await _activateAccountProfileSafely();
     return result;
   }
 
@@ -144,8 +151,12 @@ class AuthService {
     // Firebase oturumunu Google SDK temizliğinden önce kapat. Böylece
     // GoogleSignIn.signOut() hata verse bile uygulama misafir durumuna geçer.
     await FirebaseAuth.instance.signOut();
-    await UserProfile.instance.activateGuestProfile()
-        .timeout(const Duration(seconds: 3));
+    try {
+      await UserProfile.instance.activateGuestProfile()
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Firebase oturumu kapandı; yerel misafir görünümünün gecikmesi çıkışı bozmaz.
+    }
     try {
       await GoogleSignIn().signOut().timeout(const Duration(seconds: 2));
     } catch (_) {
