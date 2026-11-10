@@ -672,7 +672,7 @@ class OnlineRoomRepository {
     final name = senderName.trim();
     await _channelMessages(channelId).add({
       'senderUid': uid,
-      'senderName': name.isEmpty ? 'Oyuncu' : name.substring(0, name.length.clamp(0, 32)),
+      'senderName': name.isEmpty ? 'Oyuncu' : name.substring(0, name.length > 32 ? 32 : name.length),
       'text': message,
       'isAnnouncement': announcement,
       'sentAt': FieldValue.serverTimestamp(),
