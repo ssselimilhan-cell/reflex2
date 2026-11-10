@@ -58,6 +58,14 @@
           }
         },
         {
+          "client_id": "820220592096-mthjhuvhcm6p76v3o9ijk7dsejkjh6jl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.selimilhan.stres",
+            "certificate_hash": "32695b883b67b3a248466c851f7722d43f70d971"
+          }
+        },
+        {
           "client_id": "820220592096-g86ak9g0te07k9hdeea9gut5b6uilv89.apps.googleusercontent.com",
           "client_type": 3
         }
