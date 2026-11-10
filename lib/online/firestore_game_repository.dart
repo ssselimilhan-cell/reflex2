@@ -729,6 +729,57 @@ class OnlineRoomRepository {
         'stars': (prizeStars['$rank'] as num?)?.toInt() ?? 0,
       };
 
+      // Store one immutable-in-practice contribution per completed tournament.
+      // The tournamentIds list is the idempotency key for each player's stats.
+      Future<void> publishFinalPlacements(
+        Map<String, dynamic> placements, {
+        String? winnerUid,
+        List<String> tiedWinnerUids = const [],
+      }) async {
+        final participantIds = List<String>.from(
+          latest.data()?['participantIds'] ?? const <String>[]);
+        final statsCollection = _channels.doc(channelId).collection('tournament_stats');
+        final refs = participantIds.map((playerUid) => statsCollection.doc(playerUid)).toList();
+        final existing = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (var i = 0; i < refs.length; i++) {
+          existing[participantIds[i]] = await tx.get(refs[i]);
+        }
+        for (var i = 0; i < refs.length; i++) {
+          final playerUid = participantIds[i];
+          final ref = refs[i];
+          final previous = existing[playerUid]?.data() ?? const <String, dynamic>{};
+          final tournamentIds = List<String>.from(previous['tournamentIds'] ?? const <String>[]);
+          if (tournamentIds.contains(tournamentId)) continue;
+          tournamentIds.add(tournamentId);
+          final placement = placements[playerUid] is Map
+              ? Map<String, dynamic>.from(placements[playerUid] as Map)
+              : const <String, dynamic>{};
+          final rank = (placement['rank'] as num?)?.toInt() ?? 0;
+          final stars = (placement['stars'] as num?)?.toInt() ?? 0;
+          tx.set(ref, {
+            'uid': playerUid,
+            'tournamentIds': tournamentIds,
+            'tournamentsPlayed': tournamentIds.length,
+            'championships': ((previous['championships'] as num?)?.toInt() ?? 0) + (rank == 1 ? 1 : 0),
+            'secondPlaces': ((previous['secondPlaces'] as num?)?.toInt() ?? 0) + (rank == 2 ? 1 : 0),
+            'thirdPlaces': ((previous['thirdPlaces'] as num?)?.toInt() ?? 0) + (rank == 3 ? 1 : 0),
+            'podiums': ((previous['podiums'] as num?)?.toInt() ?? 0) + (rank > 0 && rank <= 3 ? 1 : 0),
+            'starsEarned': ((previous['starsEarned'] as num?)?.toInt() ?? 0) + stars,
+            'lastTournamentId': tournamentId,
+            'lastRank': rank,
+            'lastStars': stars,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+        tx.update(tournament, {
+          'status': 'completed',
+          'winnerUid': winnerUid,
+          'tiedWinnerUids': tiedWinnerUids,
+          'placements': placements,
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
       if (format == 'round_robin') {
         final wins = <String, int>{};
         final headToHead = <String, int>{};
@@ -770,13 +821,11 @@ class OnlineRoomRepository {
         final leaders = placements.entries
             .where((entry) => (entry.value['rank'] as num?)?.toInt() == 1)
             .map((entry) => entry.key).toList();
-        tx.update(tournament, {
-          'status': 'completed',
-          'winnerUid': leaders.length == 1 ? leaders.first : null,
-          'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
-          'placements': placements,
-          'completedAt': FieldValue.serverTimestamp(),
-        });
+        await publishFinalPlacements(
+          placements,
+          winnerUid: leaders.length == 1 ? leaders.first : null,
+          tiedWinnerUids: leaders.length > 1 ? leaders : <String>[],
+        );
         return;
       }
 
@@ -794,12 +843,7 @@ class OnlineRoomRepository {
         if (champion != null) placements[champion] = prize(champion, 1);
         if (runnerUp != null) placements[runnerUp] = prize(runnerUp, 2);
         if (third != null) placements[third] = prize(third, 3);
-        tx.update(tournament, {
-          'status': 'completed',
-          'winnerUid': champion,
-          'placements': placements,
-          'completedAt': FieldValue.serverTimestamp(),
-        });
+        await publishFinalPlacements(placements, winnerUid: champion);
         return;
       }
 
@@ -827,12 +871,7 @@ class OnlineRoomRepository {
         if (earlierLosers.length == 1) {
           placements[earlierLosers.single] = prize(earlierLosers.single, 3);
         }
-        tx.update(tournament, {
-          'status': 'completed',
-          'winnerUid': champion,
-          'placements': placements,
-          'completedAt': FieldValue.serverTimestamp(),
-        });
+        await publishFinalPlacements(placements, winnerUid: champion);
         return;
       }
       var nextMatchIndex = 0;
