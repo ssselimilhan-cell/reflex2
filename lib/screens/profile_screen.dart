@@ -527,11 +527,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : Text(t('save')),
         ),
         const SizedBox(height: 12),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(t('play_as_guest'),
-              style: const TextStyle(color: Colors.white54)),
-        ),
+        if (AuthService.instance.currentUser == null)
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t('play_as_guest'),
+                style: const TextStyle(color: Colors.white54)),
+          ),
       ],
     );
   }
