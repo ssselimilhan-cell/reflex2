@@ -537,19 +537,41 @@ class OnlineRoomRepository {
           }
         }
       } else {
-        for (var i = 0; i < players.length; i += 2) {
+        // Draw a balanced power-of-two bracket. Randomized byes prevent an
+        // arbitrary registration-order advantage when the field is uneven.
+        var bracketSize = 1;
+        while (bracketSize < players.length) {
+          bracketSize *= 2;
+        }
+        players.shuffle(Random.secure());
+        final byeCount = bracketSize - players.length;
+        for (var i = 0; i < byeCount; i++) {
           matchIndex++;
-          final hasOpponent = i + 1 < players.length;
           tx.set(matches.doc('r1_m$matchIndex'), {
             'round': 1,
             'matchIndex': matchIndex,
             'player1Uid': players[i]['uid'],
             'player1Name': players[i]['name'],
-            'player2Uid': hasOpponent ? players[i + 1]['uid'] : null,
-            'player2Name': hasOpponent ? players[i + 1]['name'] : null,
-            'winnerUid': hasOpponent ? null : players[i]['uid'],
-            'status': hasOpponent ? 'ready' : 'completed',
-            'isBye': !hasOpponent,
+            'player2Uid': null,
+            'player2Name': null,
+            'winnerUid': players[i]['uid'],
+            'status': 'completed',
+            'isBye': true,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+        for (var i = byeCount; i < players.length; i += 2) {
+          matchIndex++;
+          tx.set(matches.doc('r1_m$matchIndex'), {
+            'round': 1,
+            'matchIndex': matchIndex,
+            'player1Uid': players[i]['uid'],
+            'player1Name': players[i]['name'],
+            'player2Uid': players[i + 1]['uid'],
+            'player2Name': players[i + 1]['name'],
+            'winnerUid': null,
+            'status': 'ready',
+            'isBye': false,
             'createdAt': FieldValue.serverTimestamp(),
           });
         }
@@ -607,6 +629,7 @@ class OnlineRoomRepository {
           .compareTo((b.data()['matchIndex'] as num?) ?? 0));
     final roundMatches = orderedRoundDocs.map((doc) => doc.data()).toList();
     if (roundMatches.isEmpty || roundMatches.any((item) => item['status'] != 'completed')) return;
+    final allMatchesSnapshot = await tournament.collection('matches').get();
 
     final tournamentSnapshot = await tournament.get();
     final format = tournamentSnapshot.data()?['format'] as String? ?? 'single_elimination';
@@ -697,6 +720,22 @@ class OnlineRoomRepository {
             : finalMatch['player1Uid'] as String?;
         final placements = <String, dynamic>{champion: prize(champion, 1)};
         if (runnerUp != null) placements[runnerUp] = prize(runnerUp, 2);
+        // In a three-player bracket the single first-round loser is third
+        // automatically; larger brackets get a dedicated bronze match.
+        final earlierLosers = <String>[];
+        for (final doc in allMatchesSnapshot.docs) {
+          final item = doc.data();
+          if (((item['round'] as num?)?.toInt() ?? 0) >= round ||
+              item['status'] != 'completed') continue;
+          final winner = item['winnerUid'] as String?;
+          final p1 = item['player1Uid'] as String?;
+          final p2 = item['player2Uid'] as String?;
+          final loser = winner == p1 ? p2 : (winner == p2 ? p1 : null);
+          if (loser != null) earlierLosers.add(loser);
+        }
+        if (earlierLosers.length == 1) {
+          placements[earlierLosers.single] = prize(earlierLosers.single, 3);
+        }
         tx.update(tournament, {
           'status': 'completed',
           'winnerUid': champion,
