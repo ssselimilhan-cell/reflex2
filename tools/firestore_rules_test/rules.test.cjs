@@ -85,7 +85,6 @@ test('account nicknames are globally unique and owned by one authenticated UID',
   }));
   await assertSucceeds(getDoc(doc(otherDb, 'nicknames/refleksustasi')));
   await assertFails(getDocs(collection(otherDb, 'nicknames')));
-  await assertFails(deleteField());
 });
 
 test('unauthenticated clients cannot discover or read channels', async () => {
