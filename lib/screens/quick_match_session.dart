@@ -123,7 +123,7 @@ class QuickMatchSession {
     try { await _running; } catch (_) {}
     final code = _roomCode;
     if (code != null && _match == null) {
-      try { await _repo.leaveRoom(code); } catch (_) {}
+      try { await _repo.leaveRoom(code, _deviceId!, isHost: true); } catch (_) {}
     }
   }
 }
