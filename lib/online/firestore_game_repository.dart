@@ -327,6 +327,114 @@ class OnlineRoomRepository {
     } catch (_) {}
   }
 
+
+  // ---- Kalıcı oyuncu kanalları (geçici maç odalarından bağımsız) ----
+
+  CollectionReference<Map<String, dynamic>> get _channels =>
+      FirebaseFirestore.instance.collection('channels');
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
+      _channels.orderBy('updatedAt', descending: true).limit(50).snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelMembers(String channelId) =>
+      _channels.doc(channelId).collection('members').orderBy('joinedAt').snapshots();
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchChannelMembership(
+      String channelId, String deviceId) =>
+      _channels.doc(channelId).collection('members').doc(deviceId).snapshots();
+
+  Future<String> createChannel({
+    required String ownerDeviceId,
+    required String ownerDisplayName,
+    required String name,
+    required String description,
+  }) async {
+    final ref = _channels.doc();
+    final now = FieldValue.serverTimestamp();
+    final batch = FirebaseFirestore.instance.batch();
+    batch.set(ref, {
+      'name': name.trim(),
+      'description': description.trim(),
+      'ownerDeviceId': ownerDeviceId,
+      'ownerDisplayName': ownerDisplayName,
+      'memberCount': 1,
+      'createdAt': now,
+      'updatedAt': now,
+      'status': 'open',
+    });
+    batch.set(ref.collection('members').doc(ownerDeviceId), {
+      'deviceId': ownerDeviceId,
+      'displayName': ownerDisplayName,
+      'joinedAt': now,
+      'role': 'owner',
+    });
+    await batch.commit();
+    return ref.id;
+  }
+
+  Future<bool> joinChannel({
+    required String channelId,
+    required String deviceId,
+    required String displayName,
+  }) async {
+    final channel = _channels.doc(channelId);
+    final member = channel.collection('members').doc(deviceId);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final channelSnap = await tx.get(channel);
+      if (!channelSnap.exists || channelSnap.data()?['status'] != 'open') return false;
+      final memberSnap = await tx.get(member);
+      if (memberSnap.exists) return true;
+      final data = channelSnap.data()!;
+      final becomesOwner = data['ownerDeviceId'] == null;
+      tx.set(member, {
+        'deviceId': deviceId,
+        'displayName': displayName,
+        'joinedAt': FieldValue.serverTimestamp(),
+        'role': becomesOwner ? 'owner' : 'member',
+      });
+      tx.update(channel, {
+        'memberCount': ((data['memberCount'] as num?) ?? 0).toInt() + 1,
+        if (becomesOwner) ...{
+          'ownerDeviceId': deviceId,
+          'ownerDisplayName': displayName,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
+  }
+
+  Future<void> leaveChannel(String channelId, String deviceId) async {
+    final channel = _channels.doc(channelId);
+    final member = channel.collection('members').doc(deviceId);
+    final memberDocs = await channel.collection('members').get();
+    final replacement = memberDocs.docs.where((d) => d.id != deviceId).toList();
+    final nextOwner = replacement.isEmpty ? null : replacement.first;
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final channelSnap = await tx.get(channel);
+      final memberSnap = await tx.get(member);
+      final nextOwnerRef = nextOwner == null
+          ? null
+          : channel.collection('members').doc(nextOwner.id);
+      final nextOwnerSnap = nextOwnerRef == null ? null : await tx.get(nextOwnerRef);
+      if (!channelSnap.exists || !memberSnap.exists) return;
+      final data = channelSnap.data()!;
+      final isOwner = data['ownerDeviceId'] == deviceId;
+      tx.delete(member);
+      if (isOwner && nextOwnerRef != null && nextOwnerSnap?.exists == true) {
+        tx.update(nextOwnerRef, {'role': 'owner'});
+      }
+      tx.update(channel, {
+        'memberCount': (((data['memberCount'] as num?) ?? 1).toInt() - 1).clamp(0, 999999),
+        if (isOwner) ...{
+          'ownerDeviceId': nextOwner?.id,
+          'ownerDisplayName': nextOwner?.data()['displayName'],
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   // ---- Liderlik tablosu ----
 
   CollectionReference<Map<String, dynamic>> get _gameResults =>

@@ -10,6 +10,7 @@ import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
 import '../settings/ranks.dart';
 import 'online_game_screen.dart';
+import 'channels_screen.dart';
 
 enum _PlayerSort { alphabetical, gamesPlayed, winRate }
 
@@ -117,15 +118,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
       );
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OnlineGameScreen(
-            roomCode: code,
-            deviceId: deviceId,
-            isHost: true,
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Davet gönderildi. Masan açık lobide kalıyor; davetli katıldığında kendi masandan oyuna geçebilirsin.')),
       );
     } catch (e) {
       setState(() => _error = 'Davet gönderilemedi: $e');
@@ -495,7 +489,20 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       builder: (context, _) {
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
-          appBar: AppBar(title: Text(t('lobby_title'))),
+          appBar: AppBar(
+            title: Text(t('lobby_title')),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: TextButton.icon(
+                  onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ChannelsScreen())),
+                  icon: const Icon(Icons.forum_rounded),
+                  label: const Text('Kanallar'),
+                ),
+              ),
+            ],
+          ),
           body: SafeArea(
             child: Column(
               children: [
@@ -695,7 +702,15 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _buildTwoSeatCard(
-                      onTap: _loading ? null : () => _joinRoomByCode(code),
+                      onTap: _loading ? null : () {
+                        if (data['hostDeviceId'] == _myDeviceId) {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => OnlineGameScreen(
+                            roomCode: code, deviceId: _myDeviceId!, isHost: true,
+                          )));
+                        } else {
+                          _joinRoomByCode(code);
+                        }
+                      },
                       seat1: ProfileAvatar.remote(
                         radius: 20,
                         photoBase64: photoBase64,
@@ -705,7 +720,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                             : Colors.white24,
                       ),
                       seat2: _seatEmpty(highlight: true),
-                      centerTitle: hostName,
+                      centerTitle: data['hostDeviceId'] == _myDeviceId ? 'SENİN MASAN · $hostName' : hostName,
                       centerSubtitle: winRate == null
                           ? t('no_games_yet')
                           : '${t('online_win_rate')}: ${winRate.round()}%',

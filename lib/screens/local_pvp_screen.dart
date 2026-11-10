@@ -188,6 +188,27 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
               IconButton(icon: const Icon(Icons.refresh), onPressed: _restart),
             ],
           ),
+          bottomNavigationBar: finished && _resultDismissed
+              ? SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _restart,
+                        icon: const Icon(Icons.replay_rounded),
+                        label: Text(t('play_again')),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFFD400),
+                          side: const BorderSide(color: Color(0x99FFD400)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
           body: SafeArea(
             child: Stack(
               children: [
@@ -273,16 +294,6 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
                           label: t('player1'),
                         ),
                       ),
-                      if (finished && _resultDismissed)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: TextButton.icon(
-                            onPressed: _restart,
-                            icon: const Icon(Icons.replay, color: Colors.white70),
-                            label: Text(t('play_again'),
-                                style: const TextStyle(color: Colors.white70)),
-                          ),
-                        ),
                     ],
                   ),
                 if (_celebrationBonus != null)

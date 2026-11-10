@@ -116,12 +116,9 @@ class _CardWidgetState extends State<CardWidget>
     );
 
     final highContrast = AppSettings.instance.highContrast;
-    // Yüksek kontrast varsayılan açık: aktif kartlar parlak sarı/turkuaz
-    // kalın kenarlık + belirgin parıltı ile öne çıkar.
-    // Modern table accent: bright cyan remains clearly visible without
-    // competing with the red/black suit colors.
-    const highlightColor = Color(0xFF22D3EE);
-    final borderWidth = widget.highlighted ? (highContrast ? 4.0 : 2.8) : 1.0;
+    // Aktif kartlar oyun masasından net biçimde ayrılan parlak altın sarısı ile vurgulanır.
+    const highlightColor = Color(0xFFFFD400);
+    final borderWidth = widget.highlighted ? (highContrast ? 4.8 : 3.6) : 1.0;
 
     final cardBody = GestureDetector(
       onTap: widget.onTap,
@@ -139,8 +136,8 @@ class _CardWidgetState extends State<CardWidget>
             if (widget.highlighted)
               BoxShadow(
                 color: highlightColor.withOpacity(highContrast ? 0.85 : 0.5),
-                blurRadius: highContrast ? 14 : 8,
-                spreadRadius: highContrast ? 2.5 : 1,
+                blurRadius: highContrast ? 22 : 14,
+                spreadRadius: highContrast ? 3.5 : 2,
               ),
             BoxShadow(
               color: Colors.black.withOpacity(0.3),

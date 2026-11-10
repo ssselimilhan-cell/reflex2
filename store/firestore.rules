@@ -24,6 +24,25 @@ service cloud.firestore {
       }
     }
 
+    match /channels/{channelId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() > 1
+                    && request.resource.data.name.size() <= 32
+                    && request.resource.data.ownerDeviceId is string;
+      allow update: if request.resource.data.ownerDeviceId == null
+                    || request.resource.data.ownerDeviceId == resource.data.ownerDeviceId
+                    || (request.resource.data.ownerDeviceId is string
+                        && exists(/databases/$(database)/documents/channels/$(channelId)/members/$(request.resource.data.ownerDeviceId)));
+      allow delete: if false;
+      match /members/{deviceId} {
+        allow read: if true;
+        allow create: if request.resource.data.deviceId == deviceId;
+        allow delete: if resource.data.deviceId == deviceId;
+        allow update: if false;
+      }
+    }
+
     match /profiles/{deviceId} {
       allow read: if true;
       allow write: if request.resource.data.displayName is string

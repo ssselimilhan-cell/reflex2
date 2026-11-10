@@ -33,20 +33,6 @@ class LadderScreen extends StatefulWidget {
 }
 
 class _LadderScreenState extends State<LadderScreen> {
-  final GlobalKey _currentRealmKey = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _currentRealmKey.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(ctx,
-            alignment: 0.05, duration: const Duration(milliseconds: 300));
-      }
-    });
-  }
-
   void _play(int level) {
     Navigator.push(
       context,
@@ -118,7 +104,6 @@ class _LadderScreenState extends State<LadderScreen> {
                     const SizedBox(height: 24),
                     for (var r = 0; r < 10; r++)
                       _RealmSection(
-                        key: r == currentRealm ? _currentRealmKey : null,
                         realm: r,
                         cleared: cleared,
                         next: next,
