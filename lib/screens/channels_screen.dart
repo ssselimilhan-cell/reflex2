@@ -288,12 +288,15 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
               DropdownMenuItem(value: 'single_elimination', child: Text('Eleme usulü', style: TextStyle(color: Colors.white))),
               DropdownMenuItem(value: 'round_robin', child: Text('Herkes birbiriyle', style: TextStyle(color: Colors.white))),
             ],
-            onChanged: (v) => setDialogState(() => format = v ?? format),
+            onChanged: (v) => setDialogState(() {
+              format = v ?? format;
+              if (format == 'round_robin' && maxPlayers > 16) maxPlayers = 16;
+            }),
           ),
           DropdownButtonFormField<int>(
             value: maxPlayers, dropdownColor: const Color(0xFF1B293D),
             decoration: const InputDecoration(labelText: 'Oyuncu sınırı', labelStyle: TextStyle(color: Colors.white70)),
-            items: [8, 16, 32, 64].map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
+            items: (format == 'round_robin' ? [8, 16] : [8, 16, 32, 64]).map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
             onChanged: (v) => setDialogState(() => maxPlayers = v ?? maxPlayers),
           ),
         ]),
