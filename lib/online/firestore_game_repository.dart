@@ -425,6 +425,7 @@ class OnlineRoomRepository {
       'fromWinRate': fromWinRate,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
+      'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
     });
   }
 
@@ -434,7 +435,17 @@ class OnlineRoomRepository {
     return _invites
         .where('toDeviceId', isEqualTo: myDeviceId)
         .where('status', isEqualTo: 'pending')
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+          for (final doc in snapshot.docs) {
+            final createdAt = doc.data()['createdAt'];
+            if (createdAt is Timestamp &&
+                DateTime.now().difference(createdAt.toDate()) >= const Duration(minutes: 5)) {
+              unawaited(closeInvite(doc.id));
+            }
+          }
+          return snapshot;
+        });
   }
 
   /// Davet kabul edilsin ya da reddedilsin/kapatılsın, listeden kalkması
