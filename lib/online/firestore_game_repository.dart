@@ -463,6 +463,45 @@ class OnlineRoomRepository {
     });
   }
 
+  /// Oda iptal edilmişse aynı fikstür maçı için yeni oda açılmasına izin verir.
+  /// Yalnızca eşleşmenin ilk oyuncusu, eşleşmeye bağlı mevcut oda gerçekten
+  /// cancelled durumundaysa bağlantıyı kaldırabilir.
+  Future<void> resetCancelledTournamentMatchRoom({
+    required String channelId,
+    required String tournamentId,
+    required String matchId,
+    required String deviceId,
+    required String roomCode,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final match = tournament.collection('matches').doc(matchId);
+    final room = _rooms.doc(roomCode);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final matchSnap = await tx.get(match);
+      final roomSnap = await tx.get(room);
+      if (!matchSnap.exists || !roomSnap.exists) {
+        throw StateError('Maç odası bulunamadı.');
+      }
+      final matchData = matchSnap.data()!;
+      final roomData = roomSnap.data()!;
+      if (matchData['status'] != 'ready' ||
+          matchData['player1Uid'] != uid ||
+          matchData['roomCode'] != roomCode ||
+          roomData['roomStatus'] != 'cancelled' ||
+          roomData['tournamentChannelId'] != channelId ||
+          roomData['tournamentId'] != tournamentId ||
+          roomData['tournamentMatchId'] != matchId) {
+        throw StateError('Yalnızca iptal edilmiş bu maçın odası yeniden açılabilir.');
+      }
+      tx.update(match, {
+        'roomCode': FieldValue.delete(),
+        'roomCreatedBy': FieldValue.delete(),
+        'roomLinkedAt': FieldValue.delete(),
+      });
+    });
+  }
+
   Future<String> createChannelTournament({
     required String channelId,
     required String creatorDeviceId,
