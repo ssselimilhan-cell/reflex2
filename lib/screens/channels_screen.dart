@@ -125,7 +125,12 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     if (_deviceId == null || _busy) return;
     setState(() { _busy = true; _error = null; });
     try {
-      await _repo.requestChannelJoin(channelId: channelId, uid: _deviceId!, displayName: displayName);
+      await _repo.requestChannelJoin(
+        channelId: channelId,
+        uid: _deviceId!,
+        playerDeviceId: UserProfile.instance.deviceId ?? _deviceId!,
+        displayName: displayName,
+      );
       if (mounted) setState(() => _error = 'Katılma talebin kurucuya gönderildi. Kabul edilirse kanala katılabileceksin.');
     } catch (e) {
       if (mounted) setState(() => _error = 'Katılma talebi gönderilemedi: $e');
