@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
 import '../online/persistent_device_id.dart';
@@ -17,6 +18,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   final _repo = OnlineRoomRepository();
   String? _deviceId;
   bool _busy = false;
+  bool _inviteOnly = false;
   String? _error;
 
   @override
@@ -31,6 +33,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
   Future<void> _createChannel() async {
     final name = TextEditingController();
     final description = TextEditingController();
+    _inviteOnly = false;
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -41,6 +44,14 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             decoration: const InputDecoration(labelText: 'Kanal adı', labelStyle: TextStyle(color: Colors.white70))),
           TextField(controller: description, maxLength: 100, maxLines: 2, style: const TextStyle(color: Colors.white),
             decoration: const InputDecoration(labelText: 'Kısa açıklama', labelStyle: TextStyle(color: Colors.white70))),
+          StatefulBuilder(builder: (context, setDialogState) => SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Yalnızca davetliler katılabilsin', style: TextStyle(color: Colors.white, fontSize: 13)),
+            subtitle: const Text('Davet kodu olmayan oyuncular kanala katılamaz.', style: TextStyle(color: Colors.white60, fontSize: 11)),
+            value: _inviteOnly,
+            activeColor: const Color(0xFFFBBF24),
+            onChanged: (value) => setDialogState(() => _inviteOnly = value),
+          )),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Vazgeç')),
@@ -64,10 +75,61 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         ownerDisplayName: p.hasProfile ? p.displayName! : t('you'),
         name: cleanName,
         description: cleanDescription,
+        inviteOnly: _inviteOnly,
       );
-      if (mounted) await _openChannel(id, joinIfNeeded: false);
+      if (mounted) {
+        await _openChannel(id, joinIfNeeded: false);
+        if (_inviteOnly && mounted) {
+          final doc = await FirebaseFirestore.instance.collection('channels').doc(id).get();
+          final code = doc.data()?['inviteCode'] as String?;
+          if (code != null && mounted) _showInviteCode(code);
+        }
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Kanal oluşturulamadı: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _showInviteCode(String code) {
+    showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1B293D),
+      title: const Text('Kanal davet kodun', style: TextStyle(color: Colors.white)),
+      content: SelectableText(code, style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 3)),
+      actions: [TextButton(onPressed: () { Clipboard.setData(ClipboardData(text: code)); Navigator.pop(ctx); },
+        child: const Text('Kodu kopyala'))],
+    ));
+  }
+
+  Future<void> _joinByInviteCode() async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1B293D),
+      title: const Text('Davet koduyla katıl', style: TextStyle(color: Colors.white)),
+      content: TextField(controller: controller, textCapitalization: TextCapitalization.characters,
+        maxLength: 8, style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(hintText: '8 haneli kod')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Vazgeç')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Katıl')),
+      ],
+    ));
+    final code = value?.trim().toUpperCase();
+    controller.dispose();
+    if (code == null || code.isEmpty || _deviceId == null) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      final p = UserProfile.instance;
+      final joined = await _repo.joinPrivateChannelByCode(
+        code: code, deviceId: _deviceId!,
+        displayName: p.hasProfile ? p.displayName! : t('you'),
+      );
+      if (!joined) throw StateError('Davet kodu geçersiz veya kanal kapalı.');
+      final id = await _repo.findChannelByInviteCode(code);
+      if (id != null && mounted) await _openChannel(id, joinIfNeeded: false);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Kanala katılınamadı: ' + e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -118,6 +180,11 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           ])),
         ]),
       ),
+      Align(alignment: Alignment.centerRight, child: TextButton.icon(
+        onPressed: _busy ? null : _joinByInviteCode,
+        icon: const Icon(Icons.key_rounded, color: Color(0xFFFBBF24), size: 17),
+        label: const Text('Davet koduyla katıl', style: TextStyle(color: Color(0xFFFBBF24))),
+      )),
       if (_error != null) Padding(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         child: Text(_error!, style: const TextStyle(color: Colors.redAccent))),
       Expanded(child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
