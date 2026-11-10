@@ -193,6 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final credential = await AuthService.instance.signInWithGoogle();
       if (!mounted) return;
       if (credential != null) {
+        if (mounted) setState(() {});
         try {
           await AuthService.instance.syncProgressForCurrentUser();
           if (mounted) {
@@ -302,6 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         await AuthService.instance.signInWithEmail(email, password);
       }
+      if (mounted) setState(() {});
       try {
         await AuthService.instance.syncProgressForCurrentUser();
         if (mounted) {
