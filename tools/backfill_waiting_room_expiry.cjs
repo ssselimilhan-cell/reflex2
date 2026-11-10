@@ -51,7 +51,10 @@ async function main() {
       const createdAt = data.createdAt;
       const base = createdAt instanceof Timestamp ? createdAt.toMillis() : now;
       expiresAt = Timestamp.fromMillis(base + 5 * 60 * 1000);
-    } else if (status === 'cancelled' || status === 'finished') {
+    } else if (status === 'finished') {
+      const retentionDays = typeof data.tournamentMatchId === 'string' ? 30 : 1;
+      expiresAt = Timestamp.fromMillis(now + retentionDays * 24 * 60 * 60 * 1000);
+    } else if (status === 'cancelled') {
       expiresAt = Timestamp.fromMillis(now + 24 * 60 * 60 * 1000);
     } else {
       // Occupied and active rooms must never inherit an old waiting-room TTL.
