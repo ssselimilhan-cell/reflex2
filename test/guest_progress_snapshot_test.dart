@@ -24,6 +24,7 @@ GuestProgressSnapshot sampleSnapshot() => const GuestProgressSnapshot(
       reviewAsked: true,
       claimedMissionIndexes: [0, 1],
       highestClearedLevel: 18,
+      unlockedCardThemeIds: ['theme_ottoman_2026', 'theme_egypt_alt'],
     );
 
 void main() {
@@ -187,6 +188,7 @@ void main() {
       expect(merged.onlineWins, 8);
       expect(merged.stars, 20);
       expect(merged.highestClearedLevel, 25);
+      expect(merged.unlockedCardThemeIds, containsAll(['theme_ottoman_2026', 'theme_egypt_alt']));
     });
 
     test('creates an empty snapshot for a different account', () {
