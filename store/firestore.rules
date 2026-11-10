@@ -196,6 +196,7 @@ service cloud.firestore {
           allow read: if request.auth != null && request.auth.uid == uid;
           allow create: if request.auth != null
             && request.auth.uid == uid
+            && isChannelMember(channelId)
             && request.resource.data.uid == uid
             && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.status == 'completed'
             && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.placements[uid].rank == request.resource.data.rank
