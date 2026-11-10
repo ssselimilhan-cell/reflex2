@@ -38,7 +38,8 @@ class Progress extends ChangeNotifier {
   int totalWins = 0;
   bool reviewAsked = false;
   final Set<int> claimed = {};
-  final Set<int> unlockedCardThemes = {};
+  final Set<int> unlockedCardThemes = {}; // eski sürümlerle uyumluluk
+  final Set<String> unlockedCardThemeIds = {}; // dinamik katalog temaları
 
   static String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -85,6 +86,9 @@ class Progress extends ChangeNotifier {
         ..clear()
         ..addAll((prefs.getStringList('pg_unlockedCardThemes') ?? const <String>[])
             .map(int.tryParse).whereType<int>().where((i) => i >= 3 && i < 16));
+      unlockedCardThemeIds
+        ..clear()
+        ..addAll(prefs.getStringList('pg_unlockedCardThemeIds') ?? const <String>[]);
       claimed
         ..clear()
         ..addAll((prefs.getStringList('pg_claimed') ?? const <String>[])
@@ -108,6 +112,7 @@ class Progress extends ChangeNotifier {
     required bool reviewAsked,
     required List<int> claimedMissionIndexes,
     List<int> unlockedCardThemeIndexes = const [],
+    List<String> unlockedCardThemeIds = const [],
   }) async {
     this.streakDays = streakDays;
     this.lastPlayDay = lastPlayDay;
@@ -127,11 +132,28 @@ class Progress extends ChangeNotifier {
     unlockedCardThemes
       ..clear()
       ..addAll(unlockedCardThemeIndexes.where((i) => i >= 3 && i < 16));
+    this.unlockedCardThemeIds
+      ..clear()
+      ..addAll(unlockedCardThemeIds);
     await _persist();
     notifyListeners();
   }
 
   bool isCardThemeUnlocked(int index) => index < 3 || unlockedCardThemes.contains(index);
+
+  bool isCatalogThemeUnlocked(String id, int legacyStyleIndex) =>
+      isCardThemeUnlocked(legacyStyleIndex) || unlockedCardThemeIds.contains(id);
+
+  bool purchaseCatalogTheme(String id, int legacyStyleIndex, int price) {
+    if (id.isEmpty || price <= 0 || isCatalogThemeUnlocked(id, legacyStyleIndex) || stars < price) return false;
+    starsSpent += price;
+    stars = starsEarned > starsSpent ? starsEarned - starsSpent : 0;
+    unlockedCardThemeIds.add(id);
+    _persist();
+    notifyListeners();
+    Telemetry.log('star_shop_purchase', {'item': id, 'price': price});
+    return true;
+  }
 
   bool purchaseCardTheme(int index, int price) {
     if (price <= 0 || index < 3 || index >= 16 || isCardThemeUnlocked(index) || stars < price) return false;
@@ -169,6 +191,7 @@ class Progress extends ChangeNotifier {
       await prefs.setBool('pg_reviewAsked', reviewAsked);
       await prefs.setStringList('pg_unlockedCardThemes',
           unlockedCardThemes.map((e) => '$e').toList()..sort());
+      await prefs.setStringList('pg_unlockedCardThemeIds', unlockedCardThemeIds.toList()..sort());
       await prefs.setStringList(
           'pg_claimed', claimed.map((e) => '$e').toList());
     } catch (_) {}
