@@ -318,6 +318,15 @@ test('private tournament data is member-only and members can only register thems
     tournamentId: 't1',
     tournamentMatchId: 'r1_m1',
   }));
+
+  await assertFails(updateDoc(doc(outsiderDb, 'rooms/TOUR1'), {
+    guestDeviceId: 'device-outsider',
+    roomStatus: 'active',
+  }));
+  await assertSucceeds(updateDoc(doc(playerDb, 'rooms/TOUR1'), {
+    guestDeviceId: 'device-player-b',
+    roomStatus: 'active',
+  }));
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     roomCode: 'TOUR1',
     roomCreatedBy: 'player-b',
