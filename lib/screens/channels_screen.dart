@@ -200,7 +200,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         margin: const EdgeInsets.fromLTRB(16, 14, 16, 12), padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [Color(0xFF203A5B), Color(0xFF142238)]),
-          borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0x553B82F6))),
+          borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0x55FBBF24))),
         child: const Row(children: [
           Icon(Icons.hub_rounded, color: Color(0xFFFBBF24), size: 34), SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -226,7 +226,28 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           final docs = snapshot.data!.docs.where((d) =>
             (d.data()['visibility'] == 'public' || d.data()['visibility'] == 'invite_only') &&
             d.data()['status'] == 'open').toList();
-          if (docs.isEmpty) return const Center(child: Text('Henüz kanal yok. İlk kanalı sen oluştur!', style: TextStyle(color: Colors.white60)));
+          if (docs.isEmpty) return Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B293D),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0x66FBBF24)),
+              ),
+              child: const Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.groups_rounded, color: Color(0xFFFBBF24), size: 60),
+                SizedBox(height: 18),
+                Text('TOPLULUĞUNU KUR', textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+                SizedBox(height: 10),
+                Text('Henüz açık bir oyuncu kanalı yok. Kendi kanalını oluştur, arkadaşlarını topla ve turnuvalar düzenle.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.45)),
+              ]),
+            ),
+          ));
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 100), itemCount: docs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -234,10 +255,10 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
               final doc = docs[index]; final data = doc.data();
               return Container(
                 decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0x223B82F6))),
+                  border: Border.all(color: const Color(0x33FBBF24))),
                 child: Padding(padding: const EdgeInsets.all(14), child: Row(children: [
-                  Container(width: 48, height: 48, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0x223B82F6)),
-                    child: const Icon(Icons.forum_rounded, color: Color(0xFF60A5FA), size: 25)),
+                  Container(width: 48, height: 48, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0x22FBBF24)),
+                    child: const Icon(Icons.forum_rounded, color: Color(0xFFFBBF24), size: 25)),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(data['name'] as String? ?? 'Kanal', maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -259,7 +280,9 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       if (!inviteOnly) {
                         return FilledButton(
                           onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
-                          style: FilledButton.styleFrom(backgroundColor: isMember ? const Color(0xFF263B55) : const Color(0xFF2563EB), foregroundColor: Colors.white),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: isMember ? const Color(0xFF263B55) : const Color(0xFFFBBF24),
+                            foregroundColor: isMember ? Colors.white : const Color(0xFF101827)),
                           child: Text(isMember ? 'Aç' : 'Katıl', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)));
                       }
                       if (isMember) return FilledButton(
@@ -278,12 +301,12 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                                   ? UserProfile.instance.displayName! : 'Oyuncu',
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: pending ? const Color(0xFF263B55) : const Color(0xFFB7791F),
-                              foregroundColor: Colors.white,
+                              backgroundColor: pending ? const Color(0xFF263B55) : const Color(0xFFFBBF24),
+                              foregroundColor: pending ? Colors.white : const Color(0xFF101827),
                             ),
                             child: Text(pending ? 'Talep gönderildi' : requestStatus == 'rejected'
                                 ? 'Talep reddedildi' : alreadyRequested ? 'Talep tamamlandı' : 'Katılma talebi',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
                           );
                         },
                       );
@@ -1041,7 +1064,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               Align(alignment: Alignment.bottomRight, child: Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: Text('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                                  style: const TextStyle(color: Colors.white38, fontSize: 9)),
+                                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
                               )),
                           ]),
                         ),
