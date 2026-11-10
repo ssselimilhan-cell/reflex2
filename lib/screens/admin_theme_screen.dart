@@ -31,15 +31,18 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     final batch = _db.batch();
     for (final entry in _themes.entries) {
       final ref = _db.collection('cosmetic_catalog').doc('card_theme_${entry.key}');
-      batch.set(ref, {
-        'themeIndex': entry.key,
-        'name': entry.value,
-        'description': 'Kültürel motiflerle hazırlanmış özel kart tasarımı.',
-        'priceStars': null,
-        'isPublished': false,
-        'sortOrder': entry.key,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final existing = await ref.get();
+      if (!existing.exists) {
+        batch.set(ref, {
+          'themeIndex': entry.key,
+          'name': entry.value,
+          'description': 'Kültürel motiflerle hazırlanmış özel kart tasarımı.',
+          'priceStars': null,
+          'isPublished': false,
+          'sortOrder': entry.key,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     }
     await batch.commit();
   }
