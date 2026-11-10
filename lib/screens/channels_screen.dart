@@ -263,6 +263,8 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   final _repo = OnlineRoomRepository();
   bool _busy = false;
   bool _openingMatch = false;
+  final Set<String> _startingTournamentIds = <String>{};
+  final Set<String> _minimumPlayerWarningsShown = <String>{};
   String? _pendingRoomCode;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _roomSub;
 
@@ -350,18 +352,68 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   }
 
   Future<void> _startTournament(String id) async {
+    if (!_startingTournamentIds.add(id)) return;
     try {
       await _repo.startChannelTournament(
         channelId: widget.channelId, tournamentId: id, creatorDeviceId: widget.deviceId,
       );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      final message = e.toString();
+      final isMinimumPlayersWarning =
+          message.contains('en az 2 oyuncu') ||
+          message.contains('en az iki kanal üyesi');
+      // A missing-player warning is shown once per tournament while this
+      // channel screen remains open, not on every repeated tap.
+      final shouldShow = !isMinimumPlayersWarning ||
+          _minimumPlayerWarningsShown.add(id);
+      if (mounted && shouldShow) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      }
+    } finally {
+      _startingTournamentIds.remove(id);
     }
   }
 
   Future<void> _leave() async {
-    await _repo.leaveChannel(widget.channelId, widget.deviceId);
-    if (mounted) Navigator.pop(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Kanaldan ayrıl?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Bu kanaldaki üyeliğin sona erecek. Kanal sahibiysen sahiplik başka bir üyeye devredilir; son üye sensen kanal kapatılır.',
+          style: TextStyle(color: Colors.white70, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB45309),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Evet, ayrıl'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await _repo.leaveChannel(widget.channelId, widget.deviceId);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kanaldan ayrılamadın: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _startMatch(String targetDeviceId) async {
@@ -543,9 +595,20 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             if (status == 'registration' && !isParticipant)
                               TextButton(onPressed: () => _joinTournament(doc.id), child: const Text('Katıl')),
                             if (status == 'registration' && isCreator)
-                              IconButton(onPressed: () => _startTournament(doc.id),
+                              IconButton(
+                                onPressed: _startingTournamentIds.contains(doc.id)
+                                    ? null : () => _startTournament(doc.id),
                                 tooltip: 'Turnuvayı başlat',
-                                icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFFBBF24))),
+                                icon: _startingTournamentIds.contains(doc.id)
+                                    ? const SizedBox(
+                                        width: 20, height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFFFBBF24),
+                                        ),
+                                      )
+                                    : const Icon(Icons.play_arrow_rounded, color: Color(0xFFFBBF24)),
+                              ),
                             if (status == 'in_progress' || status == 'completed')
                               TextButton(
                                 onPressed: () => Navigator.push(context, MaterialPageRoute(
