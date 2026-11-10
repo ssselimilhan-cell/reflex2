@@ -9,6 +9,10 @@ on:
       - 'firebase.json'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   firestore-rules:
     runs-on: ubuntu-latest
