@@ -175,7 +175,7 @@ service cloud.firestore {
           (isChannelOwner(channelId)
             && resource.data.creatorDeviceId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['status', 'startedAt', 'currentRound', 'matchCount', 'winnerUid', 'completedAt', 'tiedWinnerUids'])
+              .hasOnly(['status', 'startedAt', 'currentRound', 'matchCount', 'winnerUid', 'completedAt', 'tiedWinnerUids', 'placements'])
             && request.resource.data.status in ['in_progress', 'completed'])
           ||
           // A channel member may add only their own UID while registration is open.
