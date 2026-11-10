@@ -118,9 +118,10 @@ class _CardWidgetState extends State<CardWidget>
     final highContrast = AppSettings.instance.highContrast;
     // Yüksek kontrast varsayılan açık: aktif kartlar parlak sarı/turkuaz
     // kalın kenarlık + belirgin parıltı ile öne çıkar.
-    final highlightColor =
-        highContrast ? const Color(0xFFFFEA00) : Colors.amber;
-    final borderWidth = widget.highlighted ? (highContrast ? 5.0 : 3.0) : 1.0;
+    // Modern table accent: bright cyan remains clearly visible without
+    // competing with the red/black suit colors.
+    const highlightColor = Color(0xFF22D3EE);
+    final borderWidth = widget.highlighted ? (highContrast ? 4.0 : 2.8) : 1.0;
 
     final cardBody = GestureDetector(
       onTap: widget.onTap,
