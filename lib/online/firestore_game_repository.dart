@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -57,6 +58,7 @@ class OnlineRoomRepository {
       if (tournamentId != null) 'tournamentId': tournamentId,
       if (tournamentMatchId != null) 'tournamentMatchId': tournamentMatchId,
       'createdAt': FieldValue.serverTimestamp(),
+      'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
       ...engine.toMap(),
     });
 
@@ -96,7 +98,40 @@ class OnlineRoomRepository {
         .where('roomStatus', isEqualTo: 'waiting')
         // Avoid a composite-index dependency; lobby sorts the returned docs locally.
         .limit(100)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+          for (final doc in snapshot.docs) {
+            final createdAt = doc.data()['createdAt'];
+            if (createdAt is Timestamp &&
+                DateTime.now().difference(createdAt.toDate()) >= const Duration(minutes: 5)) {
+              unawaited(expireWaitingRoom(doc.id));
+            }
+          }
+          return snapshot;
+        });
+  }
+
+  /// Five minutes without an opponent closes a waiting table. Safe to call
+  /// repeatedly from the lobby and the room screen; the transaction is idempotent.
+  Future<bool> expireWaitingRoom(String code) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      final createdAt = data['createdAt'];
+      if (data['roomStatus'] != 'waiting' || createdAt is! Timestamp ||
+          DateTime.now().difference(createdAt.toDate()) < const Duration(minutes: 5)) {
+        return false;
+      }
+      tx.update(ref, {
+        'roomStatus': 'cancelled',
+        'cancelledBy': 'system_timeout',
+        'cancelledReason': 'waiting_timeout',
+        'cancelledAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
   }
 
   Future<bool> joinRoom(
@@ -593,6 +628,7 @@ class OnlineRoomRepository {
         if (memberSnap.exists) {
           players.add({
             'uid': playerUid,
+            'deviceId': memberSnap.data()?['playerDeviceId'] as String? ?? playerUid,
             'name': memberSnap.data()?['displayName'] as String? ?? 'Oyuncu',
           });
         }
@@ -611,8 +647,10 @@ class OnlineRoomRepository {
               'round': 1,
               'matchIndex': matchIndex,
               'player1Uid': players[i]['uid'],
+              'player1DeviceId': players[i]['deviceId'],
               'player1Name': players[i]['name'],
               'player2Uid': players[j]['uid'],
+              'player2DeviceId': players[j]['deviceId'],
               'player2Name': players[j]['name'],
               'winnerUid': null,
               'status': 'ready',
@@ -635,8 +673,10 @@ class OnlineRoomRepository {
             'round': 1,
             'matchIndex': matchIndex,
             'player1Uid': players[i]['uid'],
+            'player1DeviceId': players[i]['deviceId'],
             'player1Name': players[i]['name'],
             'player2Uid': null,
+            'player2DeviceId': null,
             'player2Name': null,
             'winnerUid': players[i]['uid'],
             'status': 'completed',
@@ -650,8 +690,10 @@ class OnlineRoomRepository {
             'round': 1,
             'matchIndex': matchIndex,
             'player1Uid': players[i]['uid'],
+            'player1DeviceId': players[i]['deviceId'],
             'player1Name': players[i]['name'],
             'player2Uid': players[i + 1]['uid'],
+            'player2DeviceId': players[i + 1]['deviceId'],
             'player2Name': players[i + 1]['name'],
             'winnerUid': null,
             'status': 'ready',
