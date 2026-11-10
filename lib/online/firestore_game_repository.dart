@@ -1173,7 +1173,10 @@ class OnlineRoomRepository {
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }
-      tx.delete(request);
+      tx.update(request, {
+        'status': accept ? 'accepted' : 'rejected',
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 
