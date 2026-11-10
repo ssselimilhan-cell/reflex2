@@ -182,7 +182,7 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (widget.icon != null) ...[
-                          Icon(widget.icon, color: Colors.white, size: 28),
+                          Icon(widget.icon, color: GameUi.ink, size: 28),
                           const SizedBox(width: 10),
                         ],
                         Column(
