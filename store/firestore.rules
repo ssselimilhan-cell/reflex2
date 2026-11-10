@@ -168,8 +168,8 @@ service cloud.firestore {
           (isChannelOwner(channelId)
             && resource.data.creatorDeviceId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['status', 'startedAt'])
-            && request.resource.data.status == 'in_progress')
+              .hasOnly(['status', 'startedAt', 'currentRound', 'matchCount', 'winnerUid', 'completedAt', 'tiedWinnerUids'])
+            && request.resource.data.status in ['in_progress', 'completed'])
           ||
           // A channel member may add only their own UID while registration is open.
           (isChannelMember(channelId)
@@ -183,6 +183,31 @@ service cloud.firestore {
             && !(request.auth.uid in resource.data.participantIds))
         );
         allow delete: if false;
+
+        match /matches/{matchId} {
+          allow read: if isChannelMember(channelId);
+          allow create: if isChannelOwner(channelId)
+            && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.status == 'in_progress'
+            && request.resource.data.round is int
+            && request.resource.data.matchIndex is int
+            && request.resource.data.player1Uid is string
+            && (request.resource.data.player2Uid == null || request.resource.data.player2Uid is string)
+            && request.resource.data.status in ['ready', 'completed']
+            && (
+              (request.resource.data.status == 'ready' && request.resource.data.winnerUid == null)
+              ||
+              (request.resource.data.status == 'completed'
+                && request.resource.data.isBye == true
+                && request.resource.data.winnerUid == request.resource.data.player1Uid)
+            );
+          allow update: if isChannelOwner(channelId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['winnerUid', 'status', 'resultAt'])
+            && request.resource.data.status == 'completed'
+            && request.resource.data.winnerUid in
+              [resource.data.player1Uid, resource.data.player2Uid];
+          allow delete: if false;
+        }
       }
     }
 
