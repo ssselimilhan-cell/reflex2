@@ -347,6 +347,8 @@ class _CardWidgetState extends State<CardWidget>
         return '';
       case CardFaceTheme.fruit:
         return _fruitForSuit(s);
+      case CardFaceTheme.figure:
+        return '✦';
       case CardFaceTheme.ottoman:
         return switch (s) {
           Suit.spades => '⚔️',
