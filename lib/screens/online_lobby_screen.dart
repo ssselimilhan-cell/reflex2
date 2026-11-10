@@ -51,7 +51,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     );
     if (!mounted) return;
     setState(() {
-      _minimizedRoomCode = minimized == true ? code : null;
+      final nextMinimizedCode = minimized == true ? code : null;
+      if (nextMinimizedCode != _minimizedRoomCode) {
+        _lastMinimizedRoomGuestId = null;
+      }
+      _minimizedRoomCode = nextMinimizedCode;
       _minimizedRoomIsHost = isHost;
     });
   }
