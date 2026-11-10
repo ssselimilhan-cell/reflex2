@@ -408,6 +408,13 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           builder: (context, snapshot) => Text(snapshot.data?.data()?['name'] as String? ?? 'Kanal'),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Kanal sohbeti',
+            icon: const Icon(Icons.forum_rounded, color: Color(0xFFFBBF24)),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => ChannelChatScreen(channelId: widget.channelId, deviceId: widget.deviceId),
+            )),
+          ),
           StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
             builder: (context, snapshot) {
@@ -581,6 +588,192 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                 onPressed: _busy ? null : _leave, icon: const Icon(Icons.logout_rounded),
                 label: const Text('Kanaldan ayrıl'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, padding: const EdgeInsets.symmetric(vertical: 14)))))),
+          ]);
+        },
+      ),
+    );
+  }
+}
+
+
+class ChannelChatScreen extends StatefulWidget {
+  final String channelId;
+  final String deviceId;
+  const ChannelChatScreen({super.key, required this.channelId, required this.deviceId});
+
+  @override
+  State<ChannelChatScreen> createState() => _ChannelChatScreenState();
+}
+
+class _ChannelChatScreenState extends State<ChannelChatScreen> {
+  final _repo = OnlineRoomRepository();
+  final _controller = TextEditingController();
+  bool _sending = false;
+  bool _announcement = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send({required bool isOwner}) async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final profile = UserProfile.instance;
+      await _repo.sendChannelMessage(
+        channelId: widget.channelId,
+        senderUid: widget.deviceId,
+        senderName: profile.hasProfile ? profile.displayName! : 'Oyuncu',
+        text: text,
+        announcement: _announcement && isOwner,
+      );
+      _controller.clear();
+      if (mounted) setState(() => _announcement = false);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Mesaj gönderilemedi: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final channel = FirebaseFirestore.instance.collection('channels').doc(widget.channelId);
+    return Scaffold(
+      backgroundColor: const Color(0xFF101827),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF142238),
+        foregroundColor: Colors.white,
+        title: const Text('Kanal sohbeti'),
+      ),
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: channel.snapshots(),
+        builder: (context, channelSnapshot) {
+          final isOwner = channelSnapshot.data?.data()?['ownerDeviceId'] == widget.deviceId;
+          return Column(children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _repo.watchChannelMessages(widget.channelId),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text('Sohbet yüklenemedi: ${snapshot.error}',
+                        textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54)),
+                    ));
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
+                  }
+                  final docs = snapshot.data!.docs;
+                  if (docs.isEmpty) {
+                    return const Center(child: Text('Henüz mesaj yok. İlk mesajı sen gönder.',
+                      style: TextStyle(color: Colors.white54)));
+                  }
+                  return ListView.builder(
+                    reverse: true,
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final data = docs[index].data();
+                      final mine = data['senderUid'] == widget.deviceId;
+                      final announcement = data['isAnnouncement'] == true;
+                      final sentAt = data['sentAt'];
+                      final time = sentAt is Timestamp ? sentAt.toDate() : null;
+                      return Align(
+                        alignment: announcement ? Alignment.center : (mine ? Alignment.centerRight : Alignment.centerLeft),
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .86),
+                          margin: const EdgeInsets.only(bottom: 9),
+                          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: announcement ? const Color(0xFF473A19) : (mine ? const Color(0xFF263B55) : const Color(0xFF1B293D)),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: announcement ? const Color(0x99FBBF24) : Colors.white10),
+                          ),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            if (announcement)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 5),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  Icon(Icons.campaign_rounded, color: Color(0xFFFBBF24), size: 15),
+                                  SizedBox(width: 5),
+                                  Text('KANAL DUYURUSU', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10, fontWeight: FontWeight.w900)),
+                                ]),
+                              ),
+                            if (!mine)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(data['senderName'] as String? ?? 'Oyuncu',
+                                  style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w800)),
+                              ),
+                            Text(data['text'] as String? ?? '', style: const TextStyle(color: Colors.white, height: 1.35)),
+                            if (time != null)
+                              Align(alignment: Alignment.bottomRight, child: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(color: Colors.white38, fontSize: 9)),
+                              )),
+                          ]),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF142238),
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                if (_announcement && isOwner)
+                  const Align(alignment: Alignment.centerLeft, child: Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 5),
+                    child: Text('Duyuru olarak gönderilecek', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w700)),
+                  )),
+                Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  if (isOwner)
+                    IconButton(
+                      tooltip: 'Duyuru modu',
+                      onPressed: () => setState(() => _announcement = !_announcement),
+                      icon: Icon(Icons.campaign_rounded, color: _announcement ? const Color(0xFFFBBF24) : Colors.white54),
+                    ),
+                  Expanded(child: TextField(
+                    controller: _controller,
+                    minLines: 1,
+                    maxLines: 4,
+                    maxLength: 500,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: 'Kanala mesaj yaz...',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      filled: true,
+                      fillColor: const Color(0xFF0E1929),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                    ),
+                    onSubmitted: (_) => _send(isOwner: isOwner),
+                  )),
+                  const SizedBox(width: 7),
+                  IconButton.filled(
+                    onPressed: _sending ? null : () => _send(isOwner: isOwner),
+                    style: IconButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827)),
+                    icon: _sending
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF101827)))
+                      : const Icon(Icons.send_rounded),
+                  ),
+                ]),
+              ]),
+            ),
           ]);
         },
       ),
