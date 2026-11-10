@@ -506,29 +506,48 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               const SizedBox(width: 9),
               Text(t('lobby_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
             ]),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ChannelsScreen())),
-                  icon: const Icon(Icons.forum_rounded, size: 17),
-                  label: const Text('Kanallar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFFBBF24),
-                    side: const BorderSide(color: Color(0x88FBBF24)),
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ),
-            ],
+            actions: const [],
           ),
           body: SafeArea(
             child: Column(
               children: [
                 _buildIncomingInvites(),
                 _buildIncomingFriendRequests(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                  child: Material(
+                    color: const Color(0xFF33280F),
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ChannelsScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFBBF24), width: 1.4),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.groups_rounded, color: Color(0xFFFBBF24), size: 30),
+                          const SizedBox(width: 13),
+                          const Expanded(child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('OYUNCU KANALLARI', style: TextStyle(
+                                color: Color(0xFFFBBF24), fontSize: 17,
+                                fontWeight: FontWeight.w900, letterSpacing: .4)),
+                              SizedBox(height: 3),
+                              Text('Topluluğunu kur, oyuncuları davet et, turnuva düzenle',
+                                style: TextStyle(color: Colors.white, fontSize: 13, height: 1.3)),
+                            ],
+                          )),
+                          const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFFBBF24), size: 18),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
                 if (_minimizedRoomCode != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
