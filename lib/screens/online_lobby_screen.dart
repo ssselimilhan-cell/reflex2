@@ -558,8 +558,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       final room = roomSnapshot.data?.data();
                       final guestId = room?['guestDeviceId'] as String?;
                       final guestName = room?['guestDisplayName'] as String? ?? 'Rakibin';
-                      final hasOpponent = guestId != null;
-                      final roomStarted = room?['roomStatus'] == 'active';
+                      final status = room?['roomStatus'] as String?;
+                      final roomClosed = roomSnapshot.data?.exists != true || status == 'cancelled';
+                      final hasOpponent = guestId != null && !roomClosed;
+                      final roomStarted = status == 'active';
                       if (guestId != null && guestId != _lastMinimizedRoomGuestId) {
                         _lastMinimizedRoomGuestId = guestId;
                         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -574,13 +576,15 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       } else if (guestId == null) {
                         _lastMinimizedRoomGuestId = null;
                       }
-                      final label = roomSnapshot.data?.exists != true
+                      final label = roomClosed
                           ? 'MASA KAPANDI · ${_minimizedRoomCode!}'
-                          : roomStarted
-                              ? 'MAÇ BAŞLADI · $guestName'
-                              : hasOpponent
-                                  ? 'RAKİP MASADA · $guestName'
-                                  : 'BEKLEYEN MASAN · ${_minimizedRoomCode!}';
+                          : status == 'finished'
+                              ? 'MAÇ TAMAMLANDI · $guestName'
+                              : roomStarted
+                                  ? 'MAÇ BAŞLADI · $guestName'
+                                  : hasOpponent
+                                      ? 'RAKİP MASADA · $guestName'
+                                      : 'BEKLEYEN MASAN · ${_minimizedRoomCode!}';
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                         child: Material(
