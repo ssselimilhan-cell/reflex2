@@ -362,7 +362,8 @@ service cloud.firestore {
       allow create: if request.auth != null
         && inviteCode.matches('^[A-HJ-NP-Z2-9]{8}$')
         && getAfter(/databases/$(database)/documents/channels/$(request.resource.data.channelId)).data.ownerDeviceId == request.auth.uid
-        && getAfter(/databases/$(database)/documents/channels/$(request.resource.data.channelId)).data.inviteCode == inviteCode;
+        && getAfter(/databases/$(database)/documents/channels/$(request.resource.data.channelId)).data.visibility == 'invite_only'
+        && request.resource.data.ownerUid == request.auth.uid;
       allow update: if false;
       allow delete: if request.auth != null
         && get(/databases/$(database)/documents/channels/$(resource.data.channelId)).data.ownerDeviceId == request.auth.uid;
@@ -371,7 +372,7 @@ service cloud.firestore {
     // Globally unique account nicknames. Clients may only reserve or release
     // their own UID's name; reads are point lookups so names cannot be enumerated.
     match /nicknames/{nicknameKey} {
-      allow get: if request.auth != null;
+      allow get: if true;
       allow list: if false;
       allow create: if request.auth != null
         && request.resource.data.uid == request.auth.uid
