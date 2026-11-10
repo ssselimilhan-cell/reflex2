@@ -17,6 +17,7 @@ const {
   setDoc,
   updateDoc,
   arrayUnion,
+  deleteField,
 } = require('firebase/firestore');
 const { before, after, beforeEach, test } = require('node:test');
 
@@ -250,6 +251,30 @@ test('private tournament data is member-only and members can only register thems
     roomCode: 'TOUR1',
     roomCreatedBy: 'owner-a',
     roomLinkedAt: serverTimestamp(),
+  }));
+
+  await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR-CANCELLED'), {
+    hostDeviceId: 'owner-a',
+    inviteToDeviceId: 'player-b',
+    roomStatus: 'cancelled',
+    tournamentChannelId: 'private-one',
+    tournamentId: 't1',
+    tournamentMatchId: 'r1_m1',
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    roomCode: 'TOUR-CANCELLED',
+    roomCreatedBy: 'owner-a',
+    roomLinkedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    roomCode: null,
+    roomCreatedBy: null,
+    roomLinkedAt: null,
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    roomCode: deleteField(),
+    roomCreatedBy: deleteField(),
+    roomLinkedAt: deleteField(),
   }));
 
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
