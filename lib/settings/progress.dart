@@ -84,7 +84,7 @@ class Progress extends ChangeNotifier {
       unlockedCardThemes
         ..clear()
         ..addAll((prefs.getStringList('pg_unlockedCardThemes') ?? const <String>[])
-            .map(int.tryParse).whereType<int>().where((i) => i >= 3 && i < 10));
+            .map(int.tryParse).whereType<int>().where((i) => i >= 3 && i < 16));
       claimed
         ..clear()
         ..addAll((prefs.getStringList('pg_claimed') ?? const <String>[])
@@ -133,13 +133,8 @@ class Progress extends ChangeNotifier {
 
   bool isCardThemeUnlocked(int index) => index < 3 || unlockedCardThemes.contains(index);
 
-  static const Map<int, int> cardThemePrices = {
-    3: 45, 4: 55, 5: 55, 6: 65, 7: 70, 8: 70, 9: 80,
-  };
-
-  bool purchaseCardTheme(int index) {
-    final price = cardThemePrices[index];
-    if (price == null || isCardThemeUnlocked(index) || stars < price) return false;
+  bool purchaseCardTheme(int index, int price) {
+    if (price <= 0 || index < 3 || index >= 16 || isCardThemeUnlocked(index) || stars < price) return false;
     starsSpent += price;
     stars = starsEarned > starsSpent ? starsEarned - starsSpent : 0;
     unlockedCardThemes.add(index);
