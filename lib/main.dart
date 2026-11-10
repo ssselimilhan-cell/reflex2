@@ -42,6 +42,9 @@ void main() async {
   await Moderation.instance.load();
   await Progress.instance.load();
   await LadderProgress.instance.load();
+  if (AuthService.instance.currentUser != null) {
+    AuthService.instance.syncProgressForCurrentUser().catchError((_) {});
+  }
   Telemetry.log('app_open');
   runApp(const StresApp());
 }
