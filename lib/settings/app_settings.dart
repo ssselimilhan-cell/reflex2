@@ -38,7 +38,8 @@ class AppSettings extends ChangeNotifier {
   double animationSpeed = 1.0; // 0.5 hızlı, 1.0 normal, 1.6 yavaş
   bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
-  CardFaceTheme cardTheme = CardFaceTheme.classic; // varsayılan iskambil
+  CardFaceTheme cardTheme = CardFaceTheme.classic; // seçili temanın yerel görsel şablonu
+  String selectedThemeId = 'builtin_classic'; // katalog kimliği; tema sayısından bağımsız
   /// "Yardımlı mod" — açıkken aktif (eşleşen) kolonlar parlak çerçeyle
   /// vurgulanır; kapalıyken hamle mantığı aynı kalır ama vurgu
   /// gösterilmez (oyuncu eşleşmeyi kendi bulmalıdır). İki taraf için de
@@ -100,6 +101,7 @@ class AppSettings extends ChangeNotifier {
           break;
         // null ya da bilinmeyen değer: varsayılan (tr) kalır.
       }
+      selectedThemeId = prefs.getString('selectedThemeId') ?? 'builtin_classic';
       final themeIndex = prefs.getInt('cardTheme');
       if (themeIndex != null &&
           themeIndex >= 0 &&
@@ -134,6 +136,7 @@ class AppSettings extends ChangeNotifier {
         AppLanguage.tr => 'tr',
       });
       await prefs.setInt('cardTheme', cardTheme.index);
+      await prefs.setString('selectedThemeId', selectedThemeId);
       await prefs.setBool('assistedMode', assistedMode);
       await prefs.setBool('soundEnabled', soundEnabled);
       await prefs.setBool('hapticsEnabled', hapticsEnabled);
@@ -174,6 +177,14 @@ class AppSettings extends ChangeNotifier {
 
   void setCardFaceTheme(CardFaceTheme t) {
     cardTheme = t;
+    selectedThemeId = 'builtin_${t.name}';
+    notifyListeners();
+    _persist();
+  }
+
+  void setCatalogTheme({required String id, required CardFaceTheme visualStyle}) {
+    selectedThemeId = id;
+    cardTheme = visualStyle;
     notifyListeners();
     _persist();
   }
