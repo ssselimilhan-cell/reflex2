@@ -1111,10 +1111,12 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                               builder: (context, roomSnapshot) {
                                 final room = roomSnapshot.data?.data();
                                 final gameStatus = room?['status'] as String?;
-                                final winnerUid = gameStatus == 'player1Wins'
-                                    ? room?['hostDeviceId'] as String?
-                                    : gameStatus == 'player2Wins'
-                                        ? room?['guestDeviceId'] as String? : null;
+                                String? winnerUid;
+                                if (gameStatus == 'player1Wins') {
+                                  winnerUid = room?['hostDeviceId'] as String?;
+                                } else if (gameStatus == 'player2Wins') {
+                                  winnerUid = room?['guestDeviceId'] as String?;
+                                }
                                 if (winnerUid != null && isCreator) {
                                   return Align(alignment: Alignment.centerRight, child: TextButton.icon(
                                     onPressed: _busy ? null : () => _setWinner(doc.id, data, forcedWinnerUid: winnerUid),
