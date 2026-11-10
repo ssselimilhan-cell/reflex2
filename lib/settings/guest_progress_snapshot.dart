@@ -146,8 +146,15 @@ class GuestProgressSnapshot {
       throw const FormatException('Invalid snapshot display name');
     }
     final photo = map['photoBase64'];
-    if (photo != null && (photo is! String || photo.length > 500000)) {
-      throw const FormatException('Invalid snapshot avatar data');
+    if (photo != null) {
+      if (photo is! String || photo.length > 500000) {
+        throw const FormatException('Invalid snapshot avatar data');
+      }
+      try {
+        base64Decode(photo);
+      } on FormatException {
+        throw const FormatException('Invalid snapshot avatar encoding');
+      }
     }
 
     String day(String key) {
@@ -171,17 +178,20 @@ class GuestProgressSnapshot {
 
     final wins = integer('todayWins');
     final games = integer('todayGames');
-    final bonuses = integer('todayBonuses');
-    if (wins > games) {
-      throw const FormatException('Daily wins cannot exceed daily games');
+    integer('todayBonuses');
+    final onlineWins = integer('onlineWins');
+    final onlineLosses = integer('onlineLosses');
+    final totalWins = integer('totalWins');
+    if (wins > games || totalWins < wins || onlineWins + onlineLosses < 0) {
+      throw const FormatException('Inconsistent snapshot counters');
     }
 
     return GuestProgressSnapshot(
       schemaVersion: version,
       exportedAtUtc: exportedAt,
       displayName: name as String?,
-      onlineWins: integer('onlineWins'),
-      onlineLosses: integer('onlineLosses'),
+      onlineWins: onlineWins,
+      onlineLosses: onlineLosses,
       avatarIconIndex: integer('avatarIconIndex', max: 11),
       avatarColorValue: integer('avatarColorValue', max: 0xFFFFFFFF),
       photoBase64: photo as String?,
@@ -192,7 +202,7 @@ class GuestProgressSnapshot {
       todayWins: wins,
       todayBonuses: bonuses,
       stars: integer('stars'),
-      totalWins: integer('totalWins'),
+      totalWins: totalWins,
       reviewAsked: map['reviewAsked'] is bool
           ? map['reviewAsked'] as bool
           : throw const FormatException('Invalid snapshot field: reviewAsked'),
