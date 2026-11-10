@@ -428,7 +428,7 @@ class OnlineRoomRepository {
   // an arbitrary first-50 document window. Keep the query aligned with the
   // public-only Firestore rule and stream the complete discoverable set.
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
-      _channels.where('visibility', isEqualTo: 'public').snapshots();
+      _channels.snapshots();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
       _channels.doc(channelId).collection('tournaments')
@@ -1047,7 +1047,6 @@ class OnlineRoomRepository {
       'updatedAt': now,
       'status': 'open',
       'visibility': inviteOnly ? 'invite_only' : 'public',
-      if (inviteOnly) 'inviteCode': inviteCode,
     });
     batch.set(ref.collection('members').doc(uid), {
       'deviceId': uid,
@@ -1057,8 +1056,13 @@ class OnlineRoomRepository {
       'role': 'owner',
     });
     if (inviteOnly) {
+      batch.set(ref.collection('private').doc('invite'), {
+        'inviteCode': inviteCode,
+        'updatedAt': now,
+      });
       batch.set(_channelInvites.doc(inviteCode), {
         'channelId': ref.id,
+        'ownerUid': uid,
         'createdAt': now,
       });
     }
@@ -1096,6 +1100,86 @@ class OnlineRoomRepository {
       });
       return true;
     });
+  }
+
+  CollectionReference<Map<String, dynamic>> _channelJoinRequests(String channelId) =>
+      _channels.doc(channelId).collection('join_requests');
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelJoinRequests(String channelId) =>
+      _channelJoinRequests(channelId).orderBy('requestedAt').snapshots();
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchMyChannelJoinRequest(
+      String channelId, String uid) =>
+      _channelJoinRequests(channelId).doc(uid).snapshots();
+
+  Future<void> requestChannelJoin({
+    required String channelId,
+    required String uid,
+    required String displayName,
+  }) async {
+    _requireChannelUid(uid);
+    final channel = _channels.doc(channelId);
+    final request = _channelJoinRequests(channelId).doc(uid);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final channelSnap = await tx.get(channel);
+      final memberSnap = await tx.get(channel.collection('members').doc(uid));
+      final requestSnap = await tx.get(request);
+      if (!channelSnap.exists || channelSnap.data()?['status'] != 'open' ||
+          channelSnap.data()?['visibility'] != 'invite_only') {
+        throw StateError('Bu kanal şu anda katılma talebi kabul etmiyor.');
+      }
+      if (memberSnap.exists) throw StateError('Zaten bu kanalın üyesisin.');
+      if (requestSnap.exists) return; // One active request per user.
+      tx.set(request, {
+        'uid': uid,
+        'displayName': displayName.trim().isEmpty ? 'Oyuncu' : displayName.trim(),
+        'status': 'pending',
+        'requestedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> respondToChannelJoinRequest({
+    required String channelId,
+    required String requesterUid,
+    required bool accept,
+  }) async {
+    final ownerUid = _requireChannelUid(FirebaseAuth.instance.currentUser?.uid ?? '');
+    final channel = _channels.doc(channelId);
+    final request = _channelJoinRequests(channelId).doc(requesterUid);
+    final member = channel.collection('members').doc(requesterUid);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final channelSnap = await tx.get(channel);
+      final requestSnap = await tx.get(request);
+      final memberSnap = await tx.get(member);
+      if (!channelSnap.exists || channelSnap.data()?['ownerDeviceId'] != ownerUid) {
+        throw StateError('Bu talebi yalnızca kanal kurucusu yanıtlayabilir.');
+      }
+      if (!requestSnap.exists || requestSnap.data()?['status'] != 'pending') return;
+      if (accept && !memberSnap.exists) {
+        final data = requestSnap.data()!;
+        tx.set(member, {
+          'deviceId': requesterUid,
+          'playerDeviceId': '',
+          'displayName': data['displayName'] ?? 'Oyuncu',
+          'joinedAt': FieldValue.serverTimestamp(),
+          'role': 'member',
+        });
+        tx.update(channel, {
+          'memberCount': ((channelSnap.data()?['memberCount'] as num?) ?? 0).toInt() + 1,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      tx.delete(request);
+    });
+  }
+
+  Future<String?> getChannelInviteCode(String channelId, String uid) async {
+    _requireChannelUid(uid);
+    final channel = _channels.doc(channelId);
+    final snap = await channel.collection('private').doc('invite').get();
+    if (snap.data()?['inviteCode'] is String) return snap.data()!['inviteCode'] as String;
+    return null;
   }
 
   Future<bool> joinPrivateChannelByCode({
