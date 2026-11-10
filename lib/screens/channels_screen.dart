@@ -542,6 +542,67 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                 );
               },
             ),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _repo.watchChannelTournamentStats(widget.channelId),
+              builder: (context, statsSnapshot) {
+                final stats = [...(statsSnapshot.data?.docs ?? const [])]
+                  ..sort((a, b) {
+                    final aData = a.data();
+                    final bData = b.data();
+                    final championCompare = ((bData['championships'] as num?) ?? 0)
+                        .compareTo((aData['championships'] as num?) ?? 0);
+                    if (championCompare != 0) return championCompare;
+                    final podiumCompare = ((bData['podiums'] as num?) ?? 0)
+                        .compareTo((aData['podiums'] as num?) ?? 0);
+                    if (podiumCompare != 0) return podiumCompare;
+                    return ((bData['starsEarned'] as num?) ?? 0)
+                        .compareTo((aData['starsEarned'] as num?) ?? 0);
+                  });
+                if (stats.isEmpty) return const SizedBox.shrink();
+                final memberNames = {
+                  for (final member in members)
+                    member.id: member.data()['displayName'] as String? ?? 'Oyuncu',
+                };
+                return Container(
+                  margin: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF17263A),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0x55FBBF24)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Row(children: [
+                      Icon(Icons.leaderboard_rounded, color: Color(0xFFFBBF24), size: 19),
+                      SizedBox(width: 8),
+                      Text('KANALIN TURNUVA SIRALAMASI',
+                        style: TextStyle(color: Colors.white, fontSize: 11,
+                          fontWeight: FontWeight.w900, letterSpacing: .5)),
+                    ]),
+                    const SizedBox(height: 8),
+                    for (var i = 0; i < stats.length && i < 5; i++)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(children: [
+                          SizedBox(width: 24, child: Text(
+                            '${i + 1}.',
+                            style: TextStyle(
+                              color: i == 0 ? const Color(0xFFFBBF24) : Colors.white60,
+                              fontWeight: FontWeight.w900),
+                          )),
+                          Expanded(child: Text(
+                            memberNames[stats[i].id] ?? 'Oyuncu',
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                          Text('${stats[i].data()['championships'] ?? 0} şamp.  ·  '
+                            '${stats[i].data()['podiums'] ?? 0} podyum',
+                            style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                        ]),
+                      ),
+                  ]),
+                );
+              },
+            ),
             if (_pendingRoomCode != null)
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
