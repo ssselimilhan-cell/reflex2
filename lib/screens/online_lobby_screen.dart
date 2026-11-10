@@ -35,6 +35,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   bool _friendsOnly = false;
   bool _showPlayers = false;
   String? _minimizedRoomCode;
+  String? _lastMinimizedRoomGuestId;
   bool _minimizedRoomIsHost = true;
 
   Future<void> _openRoom({required String code, required String deviceId, required bool isHost}) async {
@@ -551,32 +552,65 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   ),
                 ),
                 if (_minimizedRoomCode != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    child: Material(
-                      color: const Color(0xFF26364B),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: _myDeviceId == null ? null : () => _openRoom(
-                          code: _minimizedRoomCode!,
-                          deviceId: _myDeviceId!,
-                          isHost: _minimizedRoomIsHost,
+                  StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: _repo.watchRoom(_minimizedRoomCode!),
+                    builder: (context, roomSnapshot) {
+                      final room = roomSnapshot.data?.data();
+                      final guestId = room?['guestDeviceId'] as String?;
+                      final guestName = room?['guestDisplayName'] as String? ?? 'Rakibin';
+                      final hasOpponent = guestId != null;
+                      final roomStarted = room?['roomStatus'] == 'active';
+                      if (guestId != null && guestId != _lastMinimizedRoomGuestId) {
+                        _lastMinimizedRoomGuestId = guestId;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            duration: const Duration(seconds: 7),
+                            backgroundColor: const Color(0xFF176B45),
+                            content: Text('$guestName masaya oturdu! Masana dön.',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                          ));
+                        });
+                      } else if (guestId == null) {
+                        _lastMinimizedRoomGuestId = null;
+                      }
+                      final label = roomSnapshot.data?.exists != true
+                          ? 'MASA KAPANDI · ${_minimizedRoomCode!}'
+                          : roomStarted
+                              ? 'MAÇ BAŞLADI · $guestName'
+                              : hasOpponent
+                                  ? 'RAKİP MASADA · $guestName'
+                                  : 'BEKLEYEN MASAN · ${_minimizedRoomCode!}';
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                        child: Material(
+                          color: hasOpponent ? const Color(0xFF174B38) : const Color(0xFF26364B),
+                          borderRadius: BorderRadius.circular(14),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: _myDeviceId == null ? null : () => _openRoom(
+                              code: _minimizedRoomCode!,
+                              deviceId: _myDeviceId!,
+                              isHost: _minimizedRoomIsHost,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              child: Row(children: [
+                                Icon(hasOpponent ? Icons.notifications_active_rounded : Icons.sports_esports_rounded,
+                                  color: const Color(0xFFFBBF24), size: 26),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(label,
+                                  style: TextStyle(color: Colors.white, fontSize: 16,
+                                    fontWeight: FontWeight.w900))),
+                                Text('MASAYA DÖN', style: const TextStyle(color: Color(0xFFFFD76A), fontSize: 15, fontWeight: FontWeight.w900)),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.chevron_right, color: Color(0xFFFFD76A)),
+                              ]),
+                            ),
+                          ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                          child: Row(children: [
-                            const Icon(Icons.sports_esports_rounded, color: Color(0xFFFBBF24)),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text('BEKLEYEN MASAN · ${_minimizedRoomCode!}',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
-                            const Text('MASAYA DÖN', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w900)),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.chevron_right, color: Color(0xFFFBBF24)),
-                          ]),
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
