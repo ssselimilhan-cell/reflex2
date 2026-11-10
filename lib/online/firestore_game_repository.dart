@@ -471,6 +471,11 @@ class OnlineRoomRepository {
     });
   }
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchTournamentMatches(
+      String channelId, String tournamentId) =>
+      _channels.doc(channelId).collection('tournaments').doc(tournamentId)
+          .collection('matches').orderBy('round').orderBy('matchIndex').snapshots();
+
   Future<void> startChannelTournament({
     required String channelId,
     required String tournamentId,
@@ -485,7 +490,177 @@ class OnlineRoomRepository {
           tournamentSnap.data()?['status'] != 'registration') {
         throw StateError('Turnuva başlatılamadı.');
       }
-      tx.update(tournament, {'status': 'in_progress', 'startedAt': FieldValue.serverTimestamp()});
+      final data = tournamentSnap.data()!;
+      final participantIds = List<String>.from(data['participantIds'] ?? const <String>[]);
+      if (participantIds.length < 2) {
+        throw StateError('Turnuvayı başlatmak için en az 2 oyuncu kayıt olmalı.');
+      }
+      final players = <Map<String, String>>[];
+      for (final playerUid in participantIds) {
+        final memberRef = _channels.doc(channelId).collection('members').doc(playerUid);
+        final memberSnap = await tx.get(memberRef);
+        if (memberSnap.exists) {
+          players.add({
+            'uid': playerUid,
+            'name': memberSnap.data()?['displayName'] as String? ?? 'Oyuncu',
+          });
+        }
+      }
+      if (players.length < 2) {
+        throw StateError('Turnuvaya kayıtlı en az iki kanal üyesi bulunmalı.');
+      }
+      final matches = tournament.collection('matches');
+      final format = data['format'] as String? ?? 'single_elimination';
+      var matchIndex = 0;
+      if (format == 'round_robin') {
+        for (var i = 0; i < players.length; i++) {
+          for (var j = i + 1; j < players.length; j++) {
+            matchIndex++;
+            tx.set(matches.doc('r1_m$matchIndex'), {
+              'round': 1,
+              'matchIndex': matchIndex,
+              'player1Uid': players[i]['uid'],
+              'player1Name': players[i]['name'],
+              'player2Uid': players[j]['uid'],
+              'player2Name': players[j]['name'],
+              'winnerUid': null,
+              'status': 'ready',
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      } else {
+        for (var i = 0; i < players.length; i += 2) {
+          matchIndex++;
+          final hasOpponent = i + 1 < players.length;
+          tx.set(matches.doc('r1_m$matchIndex'), {
+            'round': 1,
+            'matchIndex': matchIndex,
+            'player1Uid': players[i]['uid'],
+            'player1Name': players[i]['name'],
+            'player2Uid': hasOpponent ? players[i + 1]['uid'] : null,
+            'player2Name': hasOpponent ? players[i + 1]['name'] : null,
+            'winnerUid': hasOpponent ? null : players[i]['uid'],
+            'status': hasOpponent ? 'ready' : 'completed',
+            'isBye': !hasOpponent,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      tx.update(tournament, {
+        'status': 'in_progress',
+        'startedAt': FieldValue.serverTimestamp(),
+        'currentRound': 1,
+        'matchCount': matchIndex,
+      });
+    });
+  }
+
+  Future<void> recordTournamentMatchWinner({
+    required String channelId,
+    required String tournamentId,
+    required String matchId,
+    required String creatorDeviceId,
+    required String winnerUid,
+  }) async {
+    final uid = _requireChannelUid(creatorDeviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final match = tournament.collection('matches').doc(matchId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final tournamentSnap = await tx.get(tournament);
+      final matchSnap = await tx.get(match);
+      if (!tournamentSnap.exists || !matchSnap.exists ||
+          tournamentSnap.data()?['creatorDeviceId'] != uid ||
+          tournamentSnap.data()?['status'] != 'in_progress' ||
+          matchSnap.data()?['status'] != 'ready') {
+        throw StateError('Bu maçın sonucu şu anda işlenemiyor.');
+      }
+      final matchData = matchSnap.data()!;
+      final player1 = matchData['player1Uid'] as String?;
+      final player2 = matchData['player2Uid'] as String?;
+      if (winnerUid != player1 && winnerUid != player2) {
+        throw StateError('Kazanan bu maçın oyuncularından biri olmalı.');
+      }
+      final round = (matchData['round'] as num).toInt();
+      final format = tournamentSnap.data()?['format'] as String? ?? 'single_elimination';
+      final currentRoundQuery = tournament.collection('matches')
+          .where('round', isEqualTo: round).orderBy('matchIndex');
+      final roundSnapshot = await tx.get(currentRoundQuery);
+      final roundMatches = roundSnapshot.docs.map((doc) {
+        if (doc.id == matchId) {
+          return {...doc.data(), 'winnerUid': winnerUid, 'status': 'completed'};
+        }
+        return doc.data();
+      }).toList();
+      tx.update(match, {
+        'winnerUid': winnerUid,
+        'status': 'completed',
+        'resultAt': FieldValue.serverTimestamp(),
+      });
+
+      if (format == 'round_robin') {
+        if (roundMatches.every((item) => item['status'] == 'completed')) {
+          final wins = <String, int>{};
+          for (final item in roundMatches) {
+            final winner = item['winnerUid'] as String?;
+            if (winner != null) wins[winner] = (wins[winner] ?? 0) + 1;
+          }
+          final ordered = wins.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
+          final topScore = ordered.isEmpty ? 0 : ordered.first.value;
+          final leaders = ordered.where((entry) => entry.value == topScore).map((entry) => entry.key).toList();
+          tx.update(tournament, {
+            'status': 'completed',
+            'winnerUid': leaders.length == 1 ? leaders.first : null,
+            'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
+            'completedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        return;
+      }
+
+      if (roundMatches.every((item) => item['status'] == 'completed')) {
+        final winners = roundMatches
+            .map((item) => item['winnerUid'] as String?)
+            .whereType<String>()
+            .toList();
+        if (winners.length == 1) {
+          tx.update(tournament, {
+            'status': 'completed',
+            'winnerUid': winners.first,
+            'completedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          final nextRound = round + 1;
+          var nextMatchIndex = 0;
+          for (var i = 0; i < winners.length; i += 2) {
+            nextMatchIndex++;
+            final p1 = winners[i];
+            final p2 = i + 1 < winners.length ? winners[i + 1] : null;
+            String? name1;
+            String? name2;
+            for (final item in roundMatches) {
+              if (item['player1Uid'] == p1) name1 = item['player1Name'] as String?;
+              if (item['player2Uid'] == p1) name1 = item['player2Name'] as String?;
+              if (p2 != null && item['player1Uid'] == p2) name2 = item['player1Name'] as String?;
+              if (p2 != null && item['player2Uid'] == p2) name2 = item['player2Name'] as String?;
+            }
+            tx.set(tournament.collection('matches').doc('r${nextRound}_m$nextMatchIndex'), {
+              'round': nextRound,
+              'matchIndex': nextMatchIndex,
+              'player1Uid': p1,
+              'player1Name': name1 ?? 'Oyuncu',
+              'player2Uid': p2,
+              'player2Name': p2 == null ? null : (name2 ?? 'Oyuncu'),
+              'winnerUid': p2 == null ? p1 : null,
+              'status': p2 == null ? 'completed' : 'ready',
+              'isBye': p2 == null,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+          tx.update(tournament, {'currentRound': nextRound});
+        }
+      }
     });
   }
 
