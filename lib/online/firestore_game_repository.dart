@@ -407,8 +407,7 @@ class OnlineRoomRepository {
       FirebaseFirestore.instance.collection('channels');
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannels() =>
-      _channels.where('visibility', isEqualTo: 'public')
-          .orderBy('updatedAt', descending: true).limit(50).snapshots();
+      _channels.orderBy('updatedAt', descending: true).limit(50).snapshots();
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournaments(String channelId) =>
       _channels.doc(channelId).collection('tournaments')
