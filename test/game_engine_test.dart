@@ -46,6 +46,44 @@ void main() {
       expect(restored.streakEventId, original.streakEventId);
     });
 
+
+    test('rejects malformed state without changing the current game', () {
+      final engine = GameEngine(seed: 42)..startNewGame();
+      final before = engine.toMap();
+      final malformed = Map<String, dynamic>.from(before)
+        ..['columns'] = <String>['invalid'];
+
+      expect(
+        () => engine.loadFromMap(malformed),
+        throwsA(isA<FormatException>()),
+      );
+      expect(engine.toMap(), before);
+    });
+
+    test('rejects duplicate cards in a restored game', () {
+      final engine = GameEngine(seed: 42)..startNewGame();
+      final malformed = Map<String, dynamic>.from(engine.toMap());
+      final stocks = List<String>.from(malformed['player1Stock'] as List);
+      stocks[0] = (malformed['player2Stock'] as List<String>)[0];
+      malformed['player1Stock'] = stocks;
+
+      expect(
+        () => GameEngine().loadFromMap(malformed),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('rejects out-of-range active column indexes', () {
+      final engine = GameEngine(seed: 42)..startNewGame();
+      final malformed = Map<String, dynamic>.from(engine.toMap())
+        ..['unlocked'] = <int>[GameEngine.columnCount];
+
+      expect(
+        () => GameEngine().loadFromMap(malformed),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('standard deck contains every suit and rank exactly once', () {
       final deck = buildStandardDeck();
 
