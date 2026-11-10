@@ -186,8 +186,9 @@ class AppSettings extends ChangeNotifier {
     _persist();
   }
 
-  void setCatalogTheme({required String id, required CardFaceTheme visualStyle}) {
+  void setCatalogTheme({required String id, required String name, required CardFaceTheme visualStyle}) {
     selectedThemeId = id;
+    selectedThemeName = name;
     cardTheme = visualStyle;
     notifyListeners();
     _persist();
