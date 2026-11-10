@@ -57,6 +57,13 @@ service cloud.firestore {
         allow delete: if resource.data.deviceId == deviceId;
         allow update: if false;
       }
+      match /tournaments/{tournamentId} {
+        allow read: if true;
+        allow create: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId;
+        allow update: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId
+                      || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantIds']);
+        allow delete: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId;
+      }
     }
 
     match /profiles/{deviceId} {
