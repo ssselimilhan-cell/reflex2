@@ -879,7 +879,7 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                                       if (_pendingId.startsWith('builtin_')) {
                                         settings.setCardFaceTheme(_pendingStyle);
                                       } else {
-                                        final selectedDoc = snapshot.data!.docs.where((d) => d.id == _pendingId).firstOrNull;\n                                        settings.setCatalogTheme(id: _pendingId, name: (selectedDoc?.data()['name'] as String?) ?? 'Tema', visualStyle: _pendingStyle);
+                                        final selectedDocs = snapshot.data!.docs.where((d) => d.id == _pendingId);\n                                        final selectedDoc = selectedDocs.isEmpty ? null : selectedDocs.first;\n                                        settings.setCatalogTheme(id: _pendingId, name: (selectedDoc?.data()['name'] as String?) ?? 'Tema', visualStyle: _pendingStyle);
                                       }
                                       setState(() => _expanded = false);
                                     }
