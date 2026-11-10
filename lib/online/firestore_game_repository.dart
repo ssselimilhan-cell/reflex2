@@ -823,8 +823,8 @@ class OnlineRoomRepository {
   }
 
   /// A participant can claim only their own published podium reward.
-  /// Existing claim documents are returned so a client interrupted between
-  /// claim creation and local credit can safely finish the credit once.
+  /// Existing claims return zero: the same account must never be credited
+  /// again from another device. The winner syncs the local balance immediately.
   Future<int> claimTournamentReward({
     required String channelId,
     required String tournamentId,
