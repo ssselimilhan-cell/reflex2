@@ -70,6 +70,24 @@ async function createChannel({ id, ownerUid, visibility, inviteCode }) {
   await assertSucceeds(batch.commit());
 }
 
+test('account nicknames are globally unique and owned by one authenticated UID', async () => {
+  const ownerDb = env.authenticatedContext('nickname-owner').firestore();
+  const otherDb = env.authenticatedContext('nickname-other').firestore();
+  await assertSucceeds(setDoc(doc(ownerDb, 'nicknames/refleksustasi'), {
+    uid: 'nickname-owner',
+    displayName: 'RefleksUstasi',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(otherDb, 'nicknames/refleksustasi'), {
+    uid: 'nickname-other',
+    displayName: 'RefleksUstasi',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(getDoc(doc(otherDb, 'nicknames/refleksustasi')));
+  await assertFails(getDocs(collection(otherDb, 'nicknames')));
+  await assertFails(deleteField());
+});
+
 test('unauthenticated clients cannot discover or read channels', async () => {
   await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
   const db = env.unauthenticatedContext().firestore();
