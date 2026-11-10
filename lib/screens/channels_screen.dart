@@ -558,7 +558,9 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     return ((bData['starsEarned'] as num?) ?? 0)
                         .compareTo((aData['starsEarned'] as num?) ?? 0);
                   });
-                if (stats.isEmpty) return const SizedBox.shrink();
+                final myStats = stats.where((item) => item.id == widget.deviceId)
+                    .map((item) => item.data()).firstOrNull;
+                if (stats.isEmpty && myStats == null) return const SizedBox.shrink();
                 final memberNames = {
                   for (final member in members)
                     member.id: member.data()['displayName'] as String? ?? 'Oyuncu',
@@ -572,6 +574,22 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     border: Border.all(color: const Color(0x55FBBF24)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (myStats != null) ...[
+                      const Text('SENİN TURNUVA PERFORMANSIN',
+                        style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10,
+                          fontWeight: FontWeight.w900, letterSpacing: .5)),
+                      const SizedBox(height: 7),
+                      Row(children: [
+                        _TournamentStatPill(label: 'Turnuva', value: '${myStats['tournamentsPlayed'] ?? 0}'),
+                        const SizedBox(width: 6),
+                        _TournamentStatPill(label: 'Şampiyonluk', value: '${myStats['championships'] ?? 0}'),
+                        const SizedBox(width: 6),
+                        _TournamentStatPill(label: 'Podyum', value: '${myStats['podiums'] ?? 0}'),
+                        const SizedBox(width: 6),
+                        _TournamentStatPill(label: 'Yıldız', value: '${myStats['starsEarned'] ?? 0}'),
+                      ]),
+                      const SizedBox(height: 12),
+                    ],
                     const Row(children: [
                       Icon(Icons.leaderboard_rounded, color: Color(0xFFFBBF24), size: 19),
                       SizedBox(width: 8),
@@ -1270,3 +1288,29 @@ class _TournamentPlayerRow extends StatelessWidget {
     if (winner) const Icon(Icons.check_rounded, color: Color(0xFFFBBF24), size: 17),
   ]);
 }
+
+class _TournamentStatPill extends StatelessWidget {
+  const _TournamentStatPill({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF25364C),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Column(children: [
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 14,
+          fontWeight: FontWeight.w900)),
+        const SizedBox(height: 2),
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white60, fontSize: 8,
+            fontWeight: FontWeight.w700)),
+      ]),
+    ),
+  );
+}
+
