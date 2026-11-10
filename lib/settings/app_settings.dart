@@ -15,6 +15,12 @@ enum CardFaceTheme {
   chineseZodiac,
   matryoshka,
   soviet,
+  india,
+  germany,
+  france,
+  japan,
+  persia,
+  russia,
 }
 
 /// Tüm uygulamada paylaşılan, kalıcı (SharedPreferences ile diske
@@ -98,7 +104,7 @@ class AppSettings extends ChangeNotifier {
       if (themeIndex != null &&
           themeIndex >= 0 &&
           themeIndex < CardFaceTheme.values.length) {
-        cardTheme = CardFaceTheme.values[themeIndex];
+        cardTheme = themeIndex == CardFaceTheme.figure.index || themeIndex == CardFaceTheme.animals.index || themeIndex == CardFaceTheme.chineseZodiac.index || themeIndex == CardFaceTheme.matryoshka.index || themeIndex == CardFaceTheme.soviet.index ? CardFaceTheme.classic : CardFaceTheme.values[themeIndex];
       }
       assistedMode = prefs.getBool('assistedMode') ?? true;
       soundEnabled = prefs.getBool('soundEnabled') ?? true;
