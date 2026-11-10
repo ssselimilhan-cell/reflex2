@@ -707,6 +707,8 @@ class _CardDesignRowState extends State<_CardDesignRow> {
         return t('theme_classic');
       case CardFaceTheme.fruit:
         return t('theme_fruit');
+      case CardFaceTheme.figure:
+        return t('theme_classic');
       case CardFaceTheme.ottoman:
         return t('theme_ottoman');
       case CardFaceTheme.egypt:
