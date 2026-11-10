@@ -1165,7 +1165,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         roomCode: roomCode,
       );
       await _repo.sendInvite(
-        toDeviceId: match['player2Uid'] as String,
+        toDeviceId: opponentDeviceId,
         fromDeviceId: widget.deviceId,
         roomCode: roomCode,
         fromDisplayName: name,
