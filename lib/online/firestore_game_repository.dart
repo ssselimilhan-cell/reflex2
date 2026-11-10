@@ -370,7 +370,7 @@ class OnlineRoomRepository {
   // ---- Sohbet ----
 
   CollectionReference<Map<String, dynamic>> _messagesRef(String code) =>
-      _rooms.doc(code).collection('messages');
+      _rooms.doc(code).collection('room_messages');
 
   Future<void> sendMessage(String code, PlayerSide side, String text) async {
     final trimmed = text.trim();
