@@ -43,7 +43,8 @@ void main() {
         ..avatarIconIndex = 4
         ..avatarColor = const Color(0xFF3B82F6)
         ..photoBase64 = 'YWJj';
-      final progress = Progress.instance
+      final progress = Progress.instance;
+      progress
         ..streakDays = 6
         ..lastPlayDay = '2026-11-10'
         ..missionDay = '2026-11-10'
@@ -52,10 +53,10 @@ void main() {
         ..todayBonuses = 1
         ..stars = 31
         ..totalWins = 50
-        ..reviewAsked = true
-        ..claimed
-          ..clear()
-          ..addAll([0, 2]);
+        ..reviewAsked = true;
+      progress.claimed
+        ..clear()
+        ..addAll([0, 2]);
       LadderProgress.instance.highestCleared = 21;
 
       final snapshot = GuestProgressSnapshot.capture(
