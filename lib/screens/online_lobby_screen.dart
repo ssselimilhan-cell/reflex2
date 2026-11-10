@@ -120,7 +120,19 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Davet gönderildi. Masan açık lobide kalıyor; davetli katıldığında kendi masandan oyuna geçebilirsin.')),
+        const SnackBar(content: Text('Davet gönderildi. Masan açık; arkadaşın gelene kadar bekleyebilirsin.')),
+      );
+      // Davet gönderen de kendi bekleme masasına oturur. Oda, davetli
+      // katılana kadar waiting durumunda kalır ve aynı ekrandan ready olur.
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OnlineGameScreen(
+            roomCode: code,
+            deviceId: deviceId,
+            isHost: true,
+          ),
+        ),
       );
     } catch (e) {
       setState(() => _error = 'Davet gönderilemedi: $e');
