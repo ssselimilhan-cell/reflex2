@@ -158,6 +158,7 @@ class OnlineRoomRepository {
       // ("start_requested" -> "active") başlar.
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
+        'expiresAt': null,
         // A tournament invitation is already the players' consent to play:
         // once the invited player takes the seat, start the match immediately.
         'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
@@ -336,6 +337,7 @@ class OnlineRoomRepository {
           'cancelledAt': FieldValue.serverTimestamp(),
           'startRequestedBy': null,
           'rematchRequestedBy': null,
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
         });
         return;
       }
@@ -346,6 +348,7 @@ class OnlineRoomRepository {
         tx.update(ref, {
           'roomStatus': 'finished',
           'guestLeftAt': FieldValue.serverTimestamp(),
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
         });
       } else {
         tx.update(ref, {
@@ -358,6 +361,7 @@ class OnlineRoomRepository {
           'roomStatus': 'waiting',
           'startRequestedBy': null,
           'rematchRequestedBy': null,
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
         });
       }
     });
