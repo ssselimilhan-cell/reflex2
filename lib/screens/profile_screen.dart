@@ -73,7 +73,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return StreamBuilder(
       stream: AuthService.authStateChanges,
       builder: (context, snapshot) {
-        final user = snapshot.data;
+        // StreamBuilder ilk frame'de henüz event almamış olabilir. Firebase'in
+        // mevcut oturumunu kullan; çıkıştan sonra currentUser da null olur.
+        final user = snapshot.data ?? AuthService.instance.currentUser;
         final isGoogleAccount = user?.providerData.any((provider) => provider.providerId == 'google.com') ?? false;
         final isVerifiedForApp = user != null && (user.emailVerified || isGoogleAccount);
         return Container(
@@ -383,10 +385,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: const TextStyle(
                 color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(t('guest_playing'),
-            style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          AuthService.instance.currentUser != null
+              ? 'Hesabın bağlı. Görünen oyuncu profilini oluşturmadığın için henüz misafir oyuncu adıyla görünüyorsun.'
+              : t('guest_playing'),
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 12),
-        Container(
+        if (AuthService.instance.currentUser == null) Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: const Color(0x22FBBF24),
