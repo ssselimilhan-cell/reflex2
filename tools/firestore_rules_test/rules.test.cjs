@@ -131,6 +131,41 @@ test('private channel requires a valid invite code before membership and is hidd
   await assertSucceeds(getDocs(collection(playerDb, 'channels/private-one/members')));
 });
 
+test('channel chat is member-only and only channel owner can post announcements', async () => {
+  await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const outsiderDb = env.authenticatedContext('outsider').firestore();
+  const memberDb = env.authenticatedContext('member-b').firestore();
+
+  await assertSucceeds(setDoc(doc(ownerDb, 'channels/public-one/messages/owner-message'), {
+    senderUid: 'owner-a', senderName: 'Owner', text: 'Welcome',
+    isAnnouncement: true, sentAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(memberDb, 'channels/public-one/messages/fake-announcement'), {
+    senderUid: 'member-b', senderName: 'Member', text: 'Fake',
+    isAnnouncement: true, sentAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(memberDb, 'channels/public-one/messages/normal-message'), {
+    senderUid: 'member-b', senderName: 'Member', text: 'Hello',
+    isAnnouncement: false, sentAt: serverTimestamp(),
+  }));
+
+  const join = writeBatch(memberDb);
+  join.set(doc(memberDb, 'channels/public-one/members/member-b'), {
+    deviceId: 'member-b', playerDeviceId: 'device-member-b',
+    displayName: 'Member', role: 'member', joinedAt: serverTimestamp(),
+  });
+  join.update(doc(memberDb, 'channels/public-one'), {
+    memberCount: increment(1), updatedAt: serverTimestamp(),
+  });
+  await assertSucceeds(join.commit());
+  await assertSucceeds(setDoc(doc(memberDb, 'channels/public-one/messages/normal-message'), {
+    senderUid: 'member-b', senderName: 'Member', text: 'Hello',
+    isAnnouncement: false, sentAt: serverTimestamp(),
+  }));
+  await assertFails(getDoc(doc(outsiderDb, 'channels/public-one/messages/owner-message')));
+});
+
 test('private tournament data is member-only and members can only register themselves', async () => {
   await createChannel({ id: 'private-one', ownerUid: 'owner-a', visibility: 'invite_only', inviteCode: 'AB234567' });
   const ownerDb = env.authenticatedContext('owner-a').firestore();
