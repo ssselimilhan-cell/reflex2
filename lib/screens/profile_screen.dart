@@ -291,6 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       return;
     }
+    setState(() => _authBusy = true);
     try {
       if (choice) {
         await AuthService.instance.createAccount(email, password);
