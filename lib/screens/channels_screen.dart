@@ -1511,9 +1511,11 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 final gameStatus = room?['status'] as String?;
                                 String? winnerUid;
                                 if (gameStatus == 'player1Wins') {
-                                  winnerUid = room?['hostDeviceId'] as String?;
+                                  winnerUid = data['player1Uid'] as String?;
                                 } else if (gameStatus == 'player2Wins') {
-                                  winnerUid = room?['guestDeviceId'] as String?;
+                                  // Tournament winner IDs are Firebase Auth UIDs;
+                                  // guestDeviceId is only the persistent device key.
+                                  winnerUid = data['player2Uid'] as String?;
                                 }
                                 if (winnerUid != null && isCreator) {
                                   return Align(alignment: Alignment.centerRight, child: TextButton.icon(
