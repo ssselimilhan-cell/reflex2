@@ -101,9 +101,15 @@ class OnlineRoomRepository {
         .snapshots()
         .map((snapshot) {
           for (final doc in snapshot.docs) {
-            final createdAt = doc.data()['createdAt'];
-            if (createdAt is Timestamp &&
-                DateTime.now().difference(createdAt.toDate()) >= const Duration(minutes: 5)) {
+            final data = doc.data();
+            final storedExpiry = data['expiresAt'];
+            final createdAt = data['createdAt'];
+            final deadline = storedExpiry is Timestamp
+                ? storedExpiry.toDate()
+                : createdAt is Timestamp
+                    ? createdAt.toDate().add(const Duration(minutes: 5))
+                    : null;
+            if (deadline != null && !DateTime.now().isBefore(deadline)) {
               unawaited(expireWaitingRoom(doc.id));
             }
           }
@@ -119,9 +125,15 @@ class OnlineRoomRepository {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
+      final storedExpiry = data['expiresAt'];
       final createdAt = data['createdAt'];
-      if (data['roomStatus'] != 'waiting' || createdAt is! Timestamp ||
-          DateTime.now().difference(createdAt.toDate()) < const Duration(minutes: 5)) {
+      final deadline = storedExpiry is Timestamp
+          ? storedExpiry.toDate()
+          : createdAt is Timestamp
+              ? createdAt.toDate().add(const Duration(minutes: 5))
+              : null;
+      if (data['roomStatus'] != 'waiting' || deadline == null ||
+          DateTime.now().isBefore(deadline)) {
         return false;
       }
       tx.update(ref, {
