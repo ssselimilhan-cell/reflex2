@@ -595,7 +595,10 @@ class OnlineRoomRepository {
     // tournament currentRound field below is the atomic advancement guard.
     final roundSnapshot = await tournament.collection('matches')
         .where('round', isEqualTo: round).get();
-    final roundMatches = roundSnapshot.docs.map((doc) => doc.data()).toList();
+    final orderedRoundDocs = [...roundSnapshot.docs]
+      ..sort((a, b) => ((a.data()['matchIndex'] as num?) ?? 0)
+          .compareTo((b.data()['matchIndex'] as num?) ?? 0));
+    final roundMatches = orderedRoundDocs.map((doc) => doc.data()).toList();
     if (roundMatches.isEmpty || roundMatches.any((item) => item['status'] != 'completed')) return;
 
     final tournamentSnapshot = await tournament.get();
