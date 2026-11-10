@@ -121,6 +121,19 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
   }
 
+  Future<void> _requestJoin(String channelId, String displayName) async {
+    if (_deviceId == null || _busy) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      await _repo.requestChannelJoin(channelId: channelId, uid: _deviceId!, displayName: displayName);
+      if (mounted) setState(() => _error = 'Katılma talebin kurucuya gönderildi. Kabul edilirse kanala katılabileceksin.');
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Katılma talebi gönderilemedi: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _openChannel(String id, {bool joinIfNeeded = true}) async {
     if (_deviceId == null) return;
     if (joinIfNeeded) {
@@ -206,7 +219,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           if (snapshot.hasError) return Center(child: Text('Kanallar yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.white70)));
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
           final docs = snapshot.data!.docs.where((d) =>
-            d.data()['visibility'] == 'public' && d.data()['status'] == 'open').toList();
+            (d.data()['visibility'] == 'public' || d.data()['visibility'] == 'invite_only') &&
+            d.data()['status'] == 'open').toList();
           if (docs.isEmpty) return const Center(child: Text('Henüz kanal yok. İlk kanalı sen oluştur!', style: TextStyle(color: Colors.white60)));
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 100), itemCount: docs.length,
@@ -236,10 +250,35 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     stream: _deviceId == null ? null : _repo.watchChannelMembership(doc.id, _deviceId!),
                     builder: (context, memberSnapshot) {
                       final isMember = memberSnapshot.data?.exists == true;
-                      return FilledButton(
-                        onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
-                        style: FilledButton.styleFrom(backgroundColor: isMember ? const Color(0xFF263B55) : const Color(0xFF2563EB), foregroundColor: Colors.white),
-                        child: Text(isMember ? 'Aç' : 'Katıl', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)));
+                      final inviteOnly = data['visibility'] == 'invite_only';
+                      if (!inviteOnly) {
+                        return FilledButton(
+                          onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
+                          style: FilledButton.styleFrom(backgroundColor: isMember ? const Color(0xFF263B55) : const Color(0xFF2563EB), foregroundColor: Colors.white),
+                          child: Text(isMember ? 'Aç' : 'Katıl', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)));
+                      }
+                      if (isMember) return FilledButton(
+                        onPressed: () => _openChannel(doc.id, joinIfNeeded: false),
+                        child: const Text('Aç'),
+                      );
+                      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream: _repo.watchMyChannelJoinRequest(doc.id, _deviceId!),
+                        builder: (context, requestSnapshot) {
+                          final pending = requestSnapshot.data?.exists == true;
+                          return FilledButton(
+                            onPressed: _busy || pending ? null : () => _requestJoin(
+                              doc.id, UserProfile.instance.hasProfile
+                                  ? UserProfile.instance.displayName! : 'Oyuncu',
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: pending ? const Color(0xFF263B55) : const Color(0xFFB7791F),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(pending ? 'Talep gönderildi' : 'Katılma talebi',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+                          );
+                        },
+                      );
                     }),
                 ])),
               );
@@ -545,6 +584,56 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   ],
                 )),
               ]),
+            ),
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: channel.snapshots(),
+              builder: (context, ownerSnapshot) {
+                if (ownerSnapshot.data?.data()?['ownerDeviceId'] != widget.deviceId) return const SizedBox.shrink();
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _repo.watchChannelJoinRequests(widget.channelId),
+                  builder: (context, requestSnapshot) {
+                    final requests = requestSnapshot.data?.docs ?? const [];
+                    if (requests.isEmpty) return const SizedBox.shrink();
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF302719),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0x88FBBF24)),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('KATILMA TALEPLERİ (${requests.length})',
+                          style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 6),
+                        ...requests.map((request) => Row(children: [
+                          Expanded(child: Text(request.data()['displayName'] as String? ?? 'Oyuncu',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                          IconButton(
+                            tooltip: 'Reddet',
+                            onPressed: _busy ? null : () => _repo.respondToChannelJoinRequest(
+                              channelId: widget.channelId, requesterUid: request.id, accept: false),
+                            icon: const Icon(Icons.close_rounded, color: Colors.redAccent),
+                          ),
+                          IconButton(
+                            tooltip: 'Kabul et',
+                            onPressed: _busy ? null : () async {
+                              try {
+                                await _repo.respondToChannelJoinRequest(
+                                  channelId: widget.channelId, requesterUid: request.id, accept: true);
+                              } catch (e) {
+                                if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Talep kabul edilemedi: $e')));
+                              }
+                            },
+                            icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399)),
+                          ),
+                        ])),
+                      ]),
+                    );
+                  },
+                );
+              },
             ),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _repo.watchChannelTournaments(widget.channelId),
@@ -925,12 +1014,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   Text('KANAL DUYURUSU', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.w900)),
                                 ]),
                               ),
-                            if (!mine)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Text(data['senderName'] as String? ?? 'Oyuncu',
-                                  style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w800)),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                mine ? 'Sen · ${data['senderName'] as String? ?? 'Oyuncu'}'
+                                    : (data['senderName'] as String? ?? 'Oyuncu'),
+                                style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w800),
                               ),
+                            ),
                             Text(data['text'] as String? ?? '', style: const TextStyle(color: Colors.white, height: 1.35)),
                             if (time != null)
                               Align(alignment: Alignment.bottomRight, child: Padding(
