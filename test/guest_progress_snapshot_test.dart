@@ -25,6 +25,7 @@ GuestProgressSnapshot sampleSnapshot() => const GuestProgressSnapshot(
       claimedMissionIndexes: [0, 1],
       highestClearedLevel: 18,
       unlockedCardThemeIds: ['theme_ottoman_2026', 'theme_egypt_alt'],
+      claimedTournamentRewardIds: ['cup-autumn-2026'],
     );
 
 void main() {
@@ -195,6 +196,17 @@ void main() {
       expect(merged.starsSpent, 10);
       expect(merged.highestClearedLevel, 25);
       expect(merged.unlockedCardThemeIds, containsAll(['theme_ottoman_2026', 'theme_egypt_alt', 'theme_persia']));
+      expect(merged.claimedTournamentRewardIds, contains('cup-autumn-2026'));
+    });
+
+
+    test('rejects duplicate tournament reward claim identifiers', () {
+      final duplicate = sampleSnapshot().toMap()
+        ..['claimedTournamentRewardIds'] = ['cup-one', 'cup-one'];
+      expect(
+        () => GuestProgressSnapshot.fromMap(duplicate),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('creates an empty snapshot for a different account', () {
