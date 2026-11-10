@@ -1,4 +1,5 @@
 import 'dart:ui' show PlatformDispatcher;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -28,12 +29,19 @@ void main() async {
   };
   await AppSettings.instance.load();
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // Android'de google-services.json, build varyantına ait paket kimliğine
+    // göre doğru Firebase App ID'yi seçer (debug ve mağaza paketi farklı).
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await Firebase.initializeApp();
+    } else {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
     firebaseAvailable = true;
     Telemetry.ready = true;
   } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
     firebaseAvailable = false;
   }
   // Profil yüklemesi Firebase'den bağımsız çalışır (yerel veriler her
