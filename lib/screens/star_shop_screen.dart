@@ -13,10 +13,12 @@ class StarShopScreen extends StatelessWidget {
     CardFaceTheme.ottoman,
     CardFaceTheme.egypt,
     CardFaceTheme.rome,
-    CardFaceTheme.animals,
-    CardFaceTheme.chineseZodiac,
-    CardFaceTheme.matryoshka,
-    CardFaceTheme.soviet,
+    CardFaceTheme.india,
+    CardFaceTheme.germany,
+    CardFaceTheme.france,
+    CardFaceTheme.japan,
+    CardFaceTheme.persia,
+    CardFaceTheme.russia,
   ];
 
   String _name(CardFaceTheme theme) => t(switch (theme) {
@@ -27,6 +29,12 @@ class StarShopScreen extends StatelessWidget {
     CardFaceTheme.chineseZodiac => 'theme_chinese_zodiac',
     CardFaceTheme.matryoshka => 'theme_matryoshka',
     CardFaceTheme.soviet => 'theme_soviet',
+    CardFaceTheme.india => 'Hindistan',
+    CardFaceTheme.germany => 'Almanya',
+    CardFaceTheme.france => 'Fransa',
+    CardFaceTheme.japan => 'Japonya',
+    CardFaceTheme.persia => 'Pers',
+    CardFaceTheme.russia => 'Rusya',
     _ => 'theme_classic',
   });
 
@@ -90,7 +98,7 @@ class StarShopScreen extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final theme = _items[index];
-                    final price = Progress.cardThemePrices[theme.index]!;
+                    final price = 0;
                     final owned = progress.isCardThemeUnlocked(theme.index);
                     final equipped = AppSettings.instance.cardTheme == theme;
                     return Container(
@@ -119,17 +127,14 @@ class StarShopScreen extends StatelessWidget {
                                   child: Text(equipped ? t('star_shop_owned') : t('star_shop_equip'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
                                 )
                               : FilledButton(
-                                  onPressed: progress.stars >= price ? () {
-                                    final ok = progress.purchaseCardTheme(theme.index);
+                                  onPressed: null,
                                     if (!ok) {
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('star_shop_not_enough'))));
                                     }
-                                  } : null,
+                                  
                                   style: FilledButton.styleFrom(backgroundColor: GameUi.gold, foregroundColor: const Color(0xFF201707), disabledBackgroundColor: Colors.white12, disabledForegroundColor: Colors.white38),
                                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                    const Icon(Icons.star_rounded, size: 15),
-                                    const SizedBox(width: 4),
-                                    Text('$price', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+                                    const Text('Yönetici fiyat belirleyecek', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10)),
                                   ]),
                                 ),
                           ),
