@@ -188,6 +188,54 @@ test('channel chat is member-only and only channel owner can post announcements'
   await assertFails(getDoc(doc(outsiderDb, 'channels/public-one/messages/owner-message')));
 });
 
+test('invite-only channel join requests require owner approval before membership', async () => {
+  await createChannel({ id: 'request-channel', ownerUid: 'owner-a', visibility: 'invite_only', inviteCode: 'CD234567' });
+  const playerDb = env.authenticatedContext('player-c').firestore();
+  const requestRef = doc(playerDb, 'channels/request-channel/join_requests/player-c');
+  await assertSucceeds(setDoc(requestRef, {
+    uid: 'player-c',
+    displayName: 'Player C',
+    status: 'pending',
+    requestedAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(requestRef, {
+    uid: 'player-c',
+    displayName: 'Player C',
+    status: 'pending',
+    requestedAt: serverTimestamp(),
+  }));
+  await assertFails(getDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
+
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const approval = writeBatch(ownerDb);
+  approval.set(doc(ownerDb, 'channels/request-channel/members/player-c'), {
+    deviceId: 'player-c',
+    playerDeviceId: '',
+    displayName: 'Player C',
+    role: 'member',
+    joinedAt: serverTimestamp(),
+  });
+  approval.update(doc(ownerDb, 'channels/request-channel'), {
+    memberCount: increment(1),
+    updatedAt: serverTimestamp(),
+  });
+  approval.delete(doc(ownerDb, 'channels/request-channel/join_requests/player-c'));
+  await assertSucceeds(approval.commit());
+  await assertSucceeds(getDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
+});
+
+test('guest clients may check an exact nickname but cannot enumerate account names', async () => {
+  const ownerDb = env.authenticatedContext('nickname-owner').firestore();
+  await assertSucceeds(setDoc(doc(ownerDb, 'nicknames/takmaad'), {
+    uid: 'nickname-owner',
+    displayName: 'TakmaAd',
+    updatedAt: serverTimestamp(),
+  }));
+  const guestDb = env.unauthenticatedContext().firestore();
+  await assertSucceeds(getDoc(doc(guestDb, 'nicknames/takmaad')));
+  await assertFails(getDocs(collection(guestDb, 'nicknames')));
+});
+
 test('private tournament data is member-only and members can only register themselves', async () => {
   await createChannel({ id: 'private-one', ownerUid: 'owner-a', visibility: 'invite_only', inviteCode: 'AB234567' });
   const ownerDb = env.authenticatedContext('owner-a').firestore();
