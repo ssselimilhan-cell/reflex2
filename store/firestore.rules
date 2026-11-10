@@ -209,6 +209,7 @@ service cloud.firestore {
                 && request.resource.data.winnerUid == request.resource.data.player1Uid)
             );
           allow update: if isChannelOwner(channelId)
+            && resource.data.status == 'ready'
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['winnerUid', 'status', 'resultAt'])
             && request.resource.data.status == 'completed'
