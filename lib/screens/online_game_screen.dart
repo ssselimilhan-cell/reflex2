@@ -89,6 +89,13 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
   bool _leaveDialogOpen = false;
   bool _allowRoutePop = false;
+  String? _currentRoomStatus;
+
+  void _minimizeRoom() {
+    if (!mounted) return;
+    setState(() => _allowRoutePop = true);
+    Navigator.of(context).pop(true);
+  }
 
   Future<void> _confirmLeaveRoom() async {
     if (_leaveDialogOpen || !mounted) return;
@@ -437,6 +444,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 ],
               ),
               IconButton(
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                tooltip: 'Masayı küçült',
+                onPressed: _minimizeRoom,
+              ),
+              IconButton(
                 icon: Icon(AppSettings.instance.soundEnabled
                     ? Icons.volume_up
                     : Icons.volume_off),
@@ -456,7 +468,13 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
           body: PopScope<void>(
             canPop: _allowRoutePop,
             onPopInvoked: (didPop) {
-              if (!didPop) _confirmLeaveRoom();
+              if (!didPop) {
+                if (_currentRoomStatus == 'waiting') {
+                  _minimizeRoom();
+                } else {
+                  _confirmLeaveRoom();
+                }
+              }
             },
             child: GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -473,6 +491,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 }
                 final data = snapshot.data!.data()!;
                 final roomStatus = data['roomStatus'] as String;
+                _currentRoomStatus = roomStatus;
                 if (widget.isHost &&
                     data['guestDeviceId'] != null &&
                     data['inviteJoinRewarded'] != true &&
@@ -542,8 +561,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
                         onPressed: _confirmLeaveRoom,
-                        icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
-                        label: const Text('Odadan ayrıl', style: TextStyle(color: Colors.redAccent)),
+                        icon: const Icon(Icons.close_rounded, color: Colors.redAccent),
+                        label: Text(widget.isHost ? 'Masayı kapat' : 'Masadan ayrıl', style: const TextStyle(color: Colors.redAccent)),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.redAccent),
                         ),
