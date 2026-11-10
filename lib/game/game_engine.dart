@@ -269,7 +269,94 @@ class GameEngine {
       }
       return raw.map((value) {
         if (value is! String ||
-            !RegExp(r'^[SHDC](?:[1-9]|1[0-3])
+            !RegExp(r'^[SHDC](?:[1-9]|1[0-3])) {
+          throw FormatException('Geçersiz kart kodu: $value');
+        }
+        return PlayingCard.fromCode(value);
+      }).toList();
+    }
+
+    List<PlayingCard> decodeColumn(dynamic raw, int index) {
+      if (raw is! String) {
+        throw FormatException('Geçersiz kolon verisi: $index');
+      }
+      if (raw.isEmpty) return <PlayingCard>[];
+      return decodeCards(raw.split(','), 'columns[$index]');
+    }
+
+    final nextPlayer1Stock = decodeCards(map['player1Stock'], 'player1Stock');
+    final nextPlayer2Stock = decodeCards(map['player2Stock'], 'player2Stock');
+    final rawColumns = map['columns'];
+    if (rawColumns is! List || rawColumns.length != columnCount) {
+      throw FormatException('Oyun tam olarak $columnCount kolon içermeli.');
+    }
+    final nextColumns = List<List<PlayingCard>>.generate(
+      columnCount,
+      (index) => decodeColumn(rawColumns[index], index),
+    );
+
+    final rawUnlocked = map['unlocked'] ?? const <dynamic>[];
+    if (rawUnlocked is! List ||
+        rawUnlocked.any((value) => value is! int || value < 0 || value >= columnCount)) {
+      throw const FormatException('Geçersiz aktif kolon listesi.');
+    }
+    final nextUnlocked = rawUnlocked.cast<int>().toSet();
+    if (nextUnlocked.length != rawUnlocked.length) {
+      throw const FormatException('Aktif kolon listesinde tekrar var.');
+    }
+
+    final nextStatusName = map['status'];
+    final nextStatus = GameStatus.values.where(
+      (value) => value.name == nextStatusName,
+    );
+    if (nextStatus.length != 1) {
+      throw const FormatException('Geçersiz oyun durumu.');
+    }
+
+    final nextStreakEventId = (map['streakEventId'] as num?)?.toInt() ?? 0;
+    final nextBonusAmount =
+        (map['lastStreakBonusAmount'] as num?)?.toInt();
+    final nextBonusSide = map['lastStreakBonusSide'] as String?;
+    if (nextStreakEventId < 0 ||
+        (nextBonusAmount != null && (nextBonusAmount < 1 || nextBonusAmount > 3)) ||
+        (nextBonusSide != null &&
+            nextBonusSide != 'player1' &&
+            nextBonusSide != 'player2')) {
+      throw const FormatException('Geçersiz oyun ilerleme verisi.');
+    }
+
+    final allCards = <PlayingCard>[
+      ...nextPlayer1Stock,
+      ...nextPlayer2Stock,
+      for (final column in nextColumns) ...column,
+    ];
+    if (allCards.length != 52 || allCards.toSet().length != 52) {
+      throw const FormatException(
+        'Oyun kaydı 52 farklı kartın tamamını içermeli.',
+      );
+    }
+
+    // Tüm kontroller geçti: artık mevcut durumu atomik biçimde değiştir.
+    player1Stock
+      ..clear()
+      ..addAll(nextPlayer1Stock);
+    player2Stock
+      ..clear()
+      ..addAll(nextPlayer2Stock);
+    for (var i = 0; i < columnCount; i++) {
+      columns[i]
+        ..clear()
+        ..addAll(nextColumns[i]);
+    }
+    _unlocked
+      ..clear()
+      ..addAll(nextUnlocked);
+    status = nextStatus.single;
+    streakEventId = nextStreakEventId;
+    lastStreakBonusAmount = nextBonusAmount;
+    lastStreakBonusSide = nextBonusSide;
+    locked = false;
+  }
 }
 ).hasMatch(value)) {
           throw FormatException('Geçersiz kart kodu: $value');
