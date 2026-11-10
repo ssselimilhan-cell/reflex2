@@ -158,7 +158,10 @@ service cloud.firestore {
       }
 
       match /tournaments/{tournamentId} {
-        allow read: if isChannelMember(channelId);
+        allow read: if isChannelMember(channelId) || (request.auth != null
+          && resource.data.status == 'completed'
+          && resource.data.placements is map
+          && request.auth.uid in resource.data.placements.keys());
         allow create: if isChannelOwner(channelId)
           && request.resource.data.creatorDeviceId == request.auth.uid
           && request.resource.data.status == 'registration'
@@ -196,7 +199,6 @@ service cloud.firestore {
           allow read: if request.auth != null && request.auth.uid == uid;
           allow create: if request.auth != null
             && request.auth.uid == uid
-            && isChannelMember(channelId)
             && request.resource.data.uid == uid
             && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.status == 'completed'
             && get(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(tournamentId)).data.placements[uid].rank == request.resource.data.rank
