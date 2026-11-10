@@ -559,9 +559,12 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                         .compareTo((aData['starsEarned'] as num?) ?? 0);
                   });
                 Map<String, dynamic>? myStats;
-                for (final item in stats) {
+                int? myRank;
+                for (var index = 0; index < stats.length; index++) {
+                  final item = stats[index];
                   if (item.id == widget.deviceId) {
                     myStats = item.data();
+                    myRank = index + 1;
                     break;
                   }
                 }
@@ -593,6 +596,17 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                         const SizedBox(width: 6),
                         _TournamentStatPill(label: 'Yıldız', value: '${myStats['starsEarned'] ?? 0}'),
                       ]),
+                      if (myRank != null) ...[
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          const Icon(Icons.military_tech_rounded,
+                            color: Color(0xFFFBBF24), size: 16),
+                          const SizedBox(width: 6),
+                          Text('Kanal sıralamasında $myRank. sıradasın',
+                            style: const TextStyle(color: Color(0xFFFFE7A3),
+                              fontSize: 11, fontWeight: FontWeight.w800)),
+                        ]),
+                      ],
                       const SizedBox(height: 12),
                     ],
                     const Row(children: [
