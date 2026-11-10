@@ -1140,7 +1140,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
         hostAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
         hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
-        inviteToDeviceId: match['player2Uid'] as String,
+        inviteToDeviceId: match['player2DeviceId'] as String? ?? match['player2Uid'] as String,
         tournamentChannelId: widget.channelId,
         tournamentId: widget.tournamentId,
         tournamentMatchId: matchId,
@@ -1397,7 +1397,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text('TUR $round · MAÇ ${data['matchIndex'] ?? index + 1}',
-                            style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: .7)),
+                            style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: .7)),
                           const SizedBox(height: 8),
                           _TournamentPlayerRow(name: p1, winner: p1Won, isBye: isBye),
                           const Padding(
@@ -1410,7 +1410,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                             Align(alignment: Alignment.centerRight, child: TextButton.icon(
                               onPressed: _busy ? null : () => _startTournamentMatch(doc.id, data),
                               icon: const Icon(Icons.sports_esports_rounded, size: 17),
-                              label: const Text('Maçı başlat ve davet et'),
+                              label: const Text('MAÇ ODASINI AÇ · RAKİBİ ÇAĞIR', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
                             )),
                           if (ready && data['roomCode'] is String)
                             StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -1469,8 +1469,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 }
                                 return Align(alignment: Alignment.centerRight, child: Text(
                                   winnerUid != null ? 'Maç bitti · Turnuva yöneticisi sonucu işleyecek'
-                                    : 'Oda ${data['roomCode']} · ${roomSnapshot.hasData ? 'Rakip bekleniyor / maç sürüyor' : 'Oda yükleniyor'}',
-                                  style: const TextStyle(color: Colors.white54, fontSize: 15)));
+                                    : '${room?['guestDeviceId'] != null ? 'RAKİP MASADA · ' : 'RAKİP BEKLENİYOR · '}Oda ${data['roomCode']}',
+                                  style: const TextStyle(color: Color(0xFFFFE7A3), fontSize: 16, fontWeight: FontWeight.w800)));
                               },
                             ),
                           if (ready && data['roomCode'] == null &&
