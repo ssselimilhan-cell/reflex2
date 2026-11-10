@@ -94,6 +94,18 @@ service cloud.firestore {
           && resource.data.visibility in ['public', 'invite_only']
           && request.resource.data.memberCount == resource.data.memberCount + 1)
         ||
+        // The owner approves a pending invite-only join request in one transaction.
+        (resource.data.ownerDeviceId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['memberCount', 'lastApprovedUid', 'updatedAt'])
+          && request.resource.data.memberCount == resource.data.memberCount + 1
+          && request.resource.data.lastApprovedUid is string
+          && existsAfter(channelMemberPath(channelId, request.resource.data.lastApprovedUid))
+          && !exists(channelMemberPath(channelId, request.resource.data.lastApprovedUid))
+          && exists(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid))
+          && !existsAfter(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid))
+          && get(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid)).data.status == 'pending')
+        ||
         // Member leaves: their membership is deleted in the same transaction.
         (exists(channelMemberPath(channelId, request.auth.uid))
           && !existsAfter(channelMemberPath(channelId, request.auth.uid))
@@ -150,38 +162,36 @@ service cloud.firestore {
           && (uid == request.auth.uid || isChannelMember(channelId));
         allow list: if isChannelMember(channelId);
 
-        allow create: if request.auth != null
-          && uid == request.auth.uid
-          && request.resource.data.deviceId == request.auth.uid
-          && (
-            // Initial owner membership in the channel creation batch.
-            (existsAfter(/databases/$(database)/documents/channels/$(channelId))
-              && getAfter(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId == request.auth.uid)
-            ||
-            // Public channel join.
-            (get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'public'
-              && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
-            ||
-            // Owner-approved invite-only join request consumed in the same transaction.
-            (get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'invite_only'
-              && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open'
-              && exists(channelJoinRequestPath(channelId, request.auth.uid))
-              && !existsAfter(channelJoinRequestPath(channelId, request.auth.uid))
-              && get(channelJoinRequestPath(channelId, request.auth.uid)).data.status == 'pending')
-            ||
-            // Private channel join: the supplied code must resolve to this channel.
-            (request.resource.data.inviteCode is string
-              && exists(channelInvitePath(request.resource.data.inviteCode))
-              && get(channelInvitePath(request.resource.data.inviteCode)).data.channelId == channelId
-              && get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'invite_only'
-              && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
-          );
+        allow create: if request.auth != null && (
+          // A player joins a public channel or uses a valid invite code.
+          (uid == request.auth.uid
+            && request.resource.data.deviceId == request.auth.uid
+            && (
+              (existsAfter(/databases/$(database)/documents/channels/$(channelId))
+                && getAfter(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId == request.auth.uid)
+              ||
+              (get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'public'
+                && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
+              ||
+              (request.resource.data.inviteCode is string
+                && exists(channelInvitePath(request.resource.data.inviteCode))
+                && get(channelInvitePath(request.resource.data.inviteCode)).data.channelId == channelId
+                && get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'invite_only'
+                && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
+            ))
+          ||
+          // Channel owner creates the member record only while consuming that user's pending request.
+          (isChannelOwner(channelId)
+            && request.resource.data.deviceId == uid
+            && exists(channelJoinRequestPath(channelId, uid))
+            && !existsAfter(channelJoinRequestPath(channelId, uid))
+            && get(channelJoinRequestPath(channelId, uid)).data.status == 'pending')
+        );
 
         allow update: if isChannelOwner(channelId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
         allow delete: if request.auth != null && uid == request.auth.uid;
       }
-
       match /messages/{messageId} {
         allow read: if isChannelMember(channelId);
         allow create: if isChannelMember(channelId)
