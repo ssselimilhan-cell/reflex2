@@ -27,41 +27,83 @@ class ScoreBarWidget extends StatelessWidget {
       builder: (context, _) {
         final hasProfile = UserProfile.instance.hasProfile;
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          margin: const EdgeInsets.fromLTRB(12, 7, 12, 5),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
-            color: GameUi.surface.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: GameUi.hairline),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xE6223B59), Color(0xE6111D30)],
+            ),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: GameUi.cyan.withOpacity(0.20)),
+            boxShadow: const [
+              BoxShadow(color: Color(0x30000000), blurRadius: 14, offset: Offset(0, 5)),
+            ],
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               if (hasProfile) ...[
-                const ProfileAvatar(radius: 12),
-                const SizedBox(width: 8),
+                const ProfileAvatar(radius: 13),
+                const SizedBox(width: 7),
               ],
-              Text('${t('score')}: ',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              Text('$leftLabel $leftScore',
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-              const Text('  -  ', style: TextStyle(color: Colors.white54)),
-              Text('$rightScore $rightLabel',
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: _ScoreSide(label: leftLabel, score: leftScore, alignEnd: true),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 13),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(t('score').toUpperCase(),
+                        style: const TextStyle(color: Colors.white38, fontSize: 8, letterSpacing: 1.5, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 1),
+                    Text('VS', style: GameUi.display(13, color: GameUi.cyan, spacing: 1.8)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _ScoreSide(label: rightLabel, score: rightScore),
+              ),
               if (onReset != null) ...[
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: onReset,
-                  child: const Icon(Icons.refresh,
-                      color: Colors.white54, size: 16),
+                const SizedBox(width: 5),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(width: 30, height: 30),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Sıfırla',
+                  onPressed: onReset,
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white54, size: 17),
                 ),
               ],
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _ScoreSide extends StatelessWidget {
+  final String label;
+  final int score;
+  final bool alignEnd;
+  const _ScoreSide({required this.label, required this.score, this.alignEnd = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white60, fontSize: 9, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 1),
+        Text('$score',
+            style: GameUi.display(22, color: Colors.white, spacing: 0.2)),
+      ],
     );
   }
 }
