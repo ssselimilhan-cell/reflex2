@@ -103,8 +103,9 @@ service cloud.firestore {
           && existsAfter(channelMemberPath(channelId, request.resource.data.lastApprovedUid))
           && !exists(channelMemberPath(channelId, request.resource.data.lastApprovedUid))
           && exists(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid))
-          && !existsAfter(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid))
-          && get(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid)).data.status == 'pending')
+          && existsAfter(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid))
+          && get(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid)).data.status == 'pending'
+          && getAfter(channelJoinRequestPath(channelId, request.resource.data.lastApprovedUid)).data.status == 'accepted')
         ||
         // Member leaves: their membership is deleted in the same transaction.
         (exists(channelMemberPath(channelId, request.auth.uid))
@@ -155,8 +156,12 @@ service cloud.firestore {
           && request.resource.data.playerDeviceId is string
           && request.resource.data.playerDeviceId.size() <= 128
           && request.resource.data.status == 'pending';
-        allow delete: if isChannelOwner(channelId) && resource.data.status == 'pending';
-        allow update: if false;
+        allow delete: if false;
+        allow update: if isChannelOwner(channelId)
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['accepted', 'rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt'])
+          && request.resource.data.respondedAt == request.time;
       }
 
       match /members/{uid} {
@@ -186,8 +191,9 @@ service cloud.firestore {
           (isChannelOwner(channelId)
             && request.resource.data.deviceId == uid
             && exists(channelJoinRequestPath(channelId, uid))
-            && !existsAfter(channelJoinRequestPath(channelId, uid))
-            && get(channelJoinRequestPath(channelId, uid)).data.status == 'pending')
+            && existsAfter(channelJoinRequestPath(channelId, uid))
+            && get(channelJoinRequestPath(channelId, uid)).data.status == 'pending'
+            && getAfter(channelJoinRequestPath(channelId, uid)).data.status == 'accepted')
         );
 
         allow update: if isChannelOwner(channelId)
