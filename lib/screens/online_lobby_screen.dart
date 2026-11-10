@@ -678,10 +678,6 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   }
 
   Widget _buildOpenTablesList() {
-    // "Boş Masa" kartı bilerek StreamBuilder'ın DIŞINDA — Firestore akışı
-    // yüklenirken, hata verirken ya da hiç kayıt yokken bile HER ZAMAN
-    // görünsün diye. Önceki tasarımda bu kart akışın içindeydi ve akış
-    // (ör. eksik bir Firestore dizini yüzünden) takılırsa hiç görünmüyordu.
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: _repo.watchOpenTables(),
             builder: (context, snapshot) {
@@ -768,9 +764,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 },
               );
             },
-          ),
-  );
+    );
   }
+
   /// Karşılıklı iki koltuklu masa görünümü: solda 1. koltuk, sağda 2.
   /// koltuk, ortada masa bilgisi. Dolu koltuk avatar gösterir, boş
   /// koltuk "+" ile oturulabilir olduğunu belli eder.
