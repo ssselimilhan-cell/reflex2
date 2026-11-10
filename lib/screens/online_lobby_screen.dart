@@ -742,7 +742,15 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                     ]),
                   ),
                 ),
-                Expanded(child: _showPlayers ? _buildPlayersPanel() : _buildOpenTablesList()),
+                Expanded(
+                  child: IndexedStack(
+                    index: _showPlayers ? 1 : 0,
+                    children: [
+                      _buildOpenTablesList(),
+                      _buildPlayersPanel(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
