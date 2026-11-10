@@ -221,7 +221,10 @@ test('invite-only channel join requests require owner approval before membership
     lastApprovedUid: 'player-c',
     updatedAt: serverTimestamp(),
   });
-  approval.delete(doc(ownerDb, 'channels/request-channel/join_requests/player-c'));
+  approval.update(doc(ownerDb, 'channels/request-channel/join_requests/player-c'), {
+    status: 'accepted',
+    respondedAt: serverTimestamp(),
+  });
   await assertSucceeds(approval.commit());
   await assertSucceeds(getDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
 });
