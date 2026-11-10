@@ -176,10 +176,14 @@ void main() {
       final local = sampleSnapshot().toMap()
         ..['onlineWins'] = 8
         ..['stars'] = 12
+        ..['starsEarned'] = 20
+        ..['starsSpent'] = 8
         ..['highestClearedLevel'] = 18;
       final remote = sampleSnapshot().toMap()
         ..['onlineWins'] = 5
         ..['stars'] = 20
+        ..['starsEarned'] = 30
+        ..['starsSpent'] = 10
         ..['highestClearedLevel'] = 25
         ..['unlockedCardThemeIds'] = ['theme_persia'];
       final merged = GuestProgressSnapshot.merge(
