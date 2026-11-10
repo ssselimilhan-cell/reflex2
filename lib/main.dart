@@ -73,6 +73,14 @@ class StresApp extends StatelessWidget {
           theme: ThemeData(
             colorSchemeSeed: AppSettings.instance.themeColor,
             useMaterial3: true,
+            textTheme: const TextTheme(
+              bodyLarge: TextStyle(fontSize: 16, height: 1.35),
+              bodyMedium: TextStyle(fontSize: 15, height: 1.35),
+              bodySmall: TextStyle(fontSize: 13, height: 1.3),
+              labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
             // Üst çubuk her temada koyu zemin + beyaz yazı: açık zeminde
             // açık renkli yazı (ör. liderlik sekmeleri) okunmaz hale
             // geliyordu.
