@@ -171,6 +171,7 @@ test('private tournament data is member-only and members can only register thems
   const ownerDb = env.authenticatedContext('owner-a').firestore();
   await assertSucceeds(setDoc(doc(ownerDb, 'channels/private-one/tournaments/t1'), {
     title: 'Test Cup',
+    format: 'single_elimination',
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,
