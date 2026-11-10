@@ -888,11 +888,15 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _repo.watchChannelMembers(widget.channelId),
                 builder: (context, memberSnapshot) {
-                  final winnerMembers = memberSnapshot.data?.docs
-                    .where((member) => member.id == winnerUid).toList() ?? [];
-                  final winnerName = winnerMembers.isEmpty
-                    ? null
-                    : winnerMembers.first.data()['displayName'] as String? ?? 'Oyuncu';
+                  final membersById = {
+                    for (final member in memberSnapshot.data?.docs ?? [])
+                      member.id: member.data()['displayName'] as String? ?? 'Oyuncu',
+                  };
+                  final placements = Map<String, dynamic>.from(
+                    tournament['placements'] as Map? ?? const {});
+                  final podium = placements.entries.toList()
+                    ..sort((a, b) => ((a.value['rank'] as num?) ?? 99)
+                        .compareTo((b.value['rank'] as num?) ?? 99));
                   return Container(
                     margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                     padding: const EdgeInsets.all(14),
@@ -901,14 +905,33 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: const Color(0x99FBBF24)),
                     ),
-                    child: Row(children: [
-                      const Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 26),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text(
-                        winnerUid == null ? 'Turnuva tamamlandı · Beraberlik' :
-                          'Turnuva şampiyonu: ${winnerName ?? 'Oyuncu'}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-                      )),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Row(children: [
+                        Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 26),
+                        SizedBox(width: 10),
+                        Text('TURNUVA PODYUMU',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: .6)),
+                      ]),
+                      if (podium.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text('Turnuva tamamlandı · Sıralama eşitlikle sonuçlandı',
+                            style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ),
+                      for (final entry in podium)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Row(children: [
+                            SizedBox(width: 30, child: Text(
+                              entry.value['rank'] == 1 ? '🥇' : entry.value['rank'] == 2 ? '🥈' : '🥉',
+                              style: const TextStyle(fontSize: 20))),
+                            Expanded(child: Text(
+                              membersById[entry.key] ?? 'Oyuncu',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                            Text('+${entry.value['stars'] ?? 0} ⭐',
+                              style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900)),
+                          ]),
+                        ),
                     ]),
                   );
                 },
@@ -956,7 +979,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                         }
                       },
                       style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF241B08)),
-                      child: const Text('ÖDÜLÜ AL'),
+                      child: Text(Progress.instance.claimedTournamentRewards.contains(widget.tournamentId)
+                        ? 'ALINDI' : 'ÖDÜLÜ AL'),
                     ),
                   ]),
                 );
