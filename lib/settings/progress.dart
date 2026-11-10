@@ -40,6 +40,7 @@ class Progress extends ChangeNotifier {
   final Set<int> claimed = {};
   final Set<int> unlockedCardThemes = {}; // eski sürümlerle uyumluluk
   final Set<String> unlockedCardThemeIds = {}; // dinamik katalog temaları
+  final Set<String> claimedTournamentRewards = {}; // turnuva ödülleri tek seferlik
 
   static String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -89,6 +90,9 @@ class Progress extends ChangeNotifier {
       unlockedCardThemeIds
         ..clear()
         ..addAll(prefs.getStringList('pg_unlockedCardThemeIds') ?? const <String>[]);
+      claimedTournamentRewards
+        ..clear()
+        ..addAll(prefs.getStringList('pg_claimedTournamentRewards') ?? const <String>[]);
       claimed
         ..clear()
         ..addAll((prefs.getStringList('pg_claimed') ?? const <String>[])
@@ -113,6 +117,7 @@ class Progress extends ChangeNotifier {
     required List<int> claimedMissionIndexes,
     List<int> unlockedCardThemeIndexes = const [],
     List<String> unlockedCardThemeIds = const [],
+    List<String> claimedTournamentRewardIds = const [],
   }) async {
     this.streakDays = streakDays;
     this.lastPlayDay = lastPlayDay;
@@ -135,6 +140,9 @@ class Progress extends ChangeNotifier {
     this.unlockedCardThemeIds
       ..clear()
       ..addAll(unlockedCardThemeIds);
+    claimedTournamentRewards
+      ..clear()
+      ..addAll(claimedTournamentRewardIds);
     await _persist();
     notifyListeners();
   }
@@ -167,6 +175,18 @@ class Progress extends ChangeNotifier {
     return true;
   }
 
+  /// Turnuva ödülünü aynı cihaz/hesapta yalnızca bir kez bakiyeye ekler.
+  bool awardTournamentReward(String tournamentId, int amount) {
+    if (tournamentId.isEmpty || amount <= 0 || claimedTournamentRewards.contains(tournamentId)) return false;
+    claimedTournamentRewards.add(tournamentId);
+    stars += amount;
+    starsEarned += amount;
+    _persist();
+    notifyListeners();
+    Telemetry.log('tournament_reward_claimed', {'tournamentId': tournamentId, 'stars': amount});
+    return true;
+  }
+
   /// Dışarıdan (ör. Bot Yolu) yıldız eklemek için.
   void addStars(int n) {
     if (n <= 0) return;
@@ -193,6 +213,7 @@ class Progress extends ChangeNotifier {
       await prefs.setStringList('pg_unlockedCardThemes',
           unlockedCardThemes.map((e) => '$e').toList()..sort());
       await prefs.setStringList('pg_unlockedCardThemeIds', unlockedCardThemeIds.toList()..sort());
+      await prefs.setStringList('pg_claimedTournamentRewards', claimedTournamentRewards.toList()..sort());
       await prefs.setStringList(
           'pg_claimed', claimed.map((e) => '$e').toList());
     } catch (_) {}
