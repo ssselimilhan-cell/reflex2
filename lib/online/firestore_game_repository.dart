@@ -94,8 +94,8 @@ class OnlineRoomRepository {
   Stream<QuerySnapshot<Map<String, dynamic>>> watchOpenTables() {
     return _rooms
         .where('roomStatus', isEqualTo: 'waiting')
-        .orderBy('createdAt', descending: true)
-        .limit(30)
+        // Avoid a composite-index dependency; lobby sorts the returned docs locally.
+        .limit(100)
         .snapshots();
   }
 
