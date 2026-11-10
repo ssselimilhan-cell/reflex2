@@ -136,7 +136,7 @@ class AuthService {
     // GoogleSignIn.signOut() hata verse bile uygulama misafir durumuna geçer.
     await FirebaseAuth.instance.signOut();
     try {
-      await GoogleSignIn().signOut();
+      await GoogleSignIn().signOut().timeout(const Duration(seconds: 2));
     } catch (_) {
       // Firebase oturumu zaten kapatıldı; yerel Google oturumu sonraki
       // Google girişinde yeniden yetkilendirilebilir.
