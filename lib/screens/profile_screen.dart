@@ -189,10 +189,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        tooltip: t('sign_out'),
+                      TextButton.icon(
                         onPressed: _authBusy ? null : _signOut,
-                        icon: const Icon(Icons.logout, color: Colors.white70),
+                        icon: const Icon(Icons.logout_rounded, size: 17),
+                        label: const Text('Çıkış yap'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
                     ]),
                     if (user.email != null && !isVerifiedForApp) ...[
