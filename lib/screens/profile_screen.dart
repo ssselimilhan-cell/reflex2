@@ -272,7 +272,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     emailController.dispose();
     passwordController.dispose();
     if (choice == null) return;
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+
+    final emailLooksValid = email.contains('@') &&
+        email.substring(email.indexOf('@') + 1).contains('.') &&
+        !email.contains(' ');
+    if (!emailLooksValid) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('auth_invalid_email'))),
+        );
+      }
+      return;
+    }
+    if (password.isEmpty || (choice && password.length < 6)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(choice ? 'Şifre en az 6 karakter olmalı.' : t('auth_invalid_credentials'))),
+        );
+      }
+      return;
+    }
     try {
       if (choice) {
         await AuthService.instance.createAccount(email, password);
