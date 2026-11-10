@@ -961,6 +961,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                       onPressed: _busy ? null : () async {
                         setState(() => _busy = true);
                         try {
+                          await AuthService.instance.syncProgressForCurrentUser();
                           final amount = await _repo.claimTournamentReward(
                             channelId: widget.channelId,
                             tournamentId: widget.tournamentId,
