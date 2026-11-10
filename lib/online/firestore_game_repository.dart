@@ -836,7 +836,7 @@ class OnlineRoomRepository {
     return FirebaseFirestore.instance.runTransaction<int>((tx) async {
       final tournamentSnap = await tx.get(tournament);
       final claimSnap = await tx.get(claim);
-      if (claimSnap.exists) return (claimSnap.data()?['stars'] as num?)?.toInt() ?? 0;
+      if (claimSnap.exists) return 0; // Claimed on this or another device; never credit twice.
       final data = tournamentSnap.data();
       if (!tournamentSnap.exists || data?['status'] != 'completed') return 0;
       final placements = Map<String, dynamic>.from(data?['placements'] as Map? ?? const {});
