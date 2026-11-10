@@ -882,7 +882,6 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
           final tournament = tournamentSnapshot.data?.data() ?? const <String, dynamic>{};
           final isCreator = tournament['creatorDeviceId'] == widget.deviceId;
           final status = tournament['status'] as String? ?? 'in_progress';
-          final winnerUid = tournament['winnerUid'] as String?;
           return Column(children: [
             if (status == 'completed')
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
