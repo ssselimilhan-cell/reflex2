@@ -133,6 +133,9 @@ class UserProfile extends ChangeNotifier {
   /// Çıkışta hesaba ait profil cihazın misafir profilinin üzerine yazılmaz.
   Future<void> activateGuestProfile() async {
     await _readLocal();
+    try {
+      await _syncPublicProfile();
+    } catch (_) {}
     notifyListeners();
   }
 
