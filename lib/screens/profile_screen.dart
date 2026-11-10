@@ -153,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, snapshot) {
         // StreamBuilder ilk frame'de henüz event almamış olabilir. Firebase'in
         // mevcut oturumunu kullan; çıkıştan sonra currentUser da null olur.
-        final user = snapshot.data ?? AuthService.instance.currentUser;
+        final user = AuthService.instance.currentUser ?? snapshot.data;
         final isGoogleAccount = user?.providerData.any((provider) => provider.providerId == 'google.com') ?? false;
         final isVerifiedForApp = user != null && (user.emailVerified || isGoogleAccount);
         return Container(
@@ -181,7 +181,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(isVerifiedForApp ? t('account_connected') : 'E-posta doğrulaması bekleniyor',
+                            Text(isVerifiedForApp
+                                ? t('account_connected')
+                                : 'Hesap açık · e-posta doğrulaması bekleniyor',
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             Text(user.email ?? user.displayName ?? user.uid,
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
