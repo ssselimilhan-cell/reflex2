@@ -658,7 +658,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         const Icon(Icons.meeting_room_outlined,
                             color: Colors.amber, size: 52),
                         const SizedBox(height: 14),
-                        const Text(
+                        Text(
                           timedOut
                               ? '5 dakika içinde rakip gelmediği için masa otomatik kapatıldı.'
                               : 'Oda sahibi odadan ayrıldı. Bu masa iptal edildi.',
