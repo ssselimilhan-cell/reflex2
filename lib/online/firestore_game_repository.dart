@@ -379,6 +379,7 @@ class OnlineRoomRepository {
       'sender': side.name,
       'text': trimmed,
       'sentAt': FieldValue.serverTimestamp(),
+      'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 7))),
     });
   }
 
