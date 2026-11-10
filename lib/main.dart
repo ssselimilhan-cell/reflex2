@@ -51,6 +51,7 @@ void main() async {
   await Progress.instance.load();
   await LadderProgress.instance.load();
   if (AuthService.instance.currentUser != null) {
+    await UserProfile.instance.activateAccountProfile();
     AuthService.instance.syncProgressForCurrentUser().catchError((_) {});
   }
   Telemetry.log('app_open');
