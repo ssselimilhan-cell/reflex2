@@ -152,6 +152,8 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     final price = TextEditingController(text: data['priceStars']?.toString() ?? '');
     final sortOrder = TextEditingController(text: (data['sortOrder'] as int? ?? 0).toString());
     var published = data['isPublished'] == true;
+    var selectedStyle = (data['visualStyleIndex'] as int?) ?? (data['themeIndex'] as int? ?? 3);
+    const availableStyles = <int>[3, 4, 5, 10, 11, 12, 13, 14, 15];
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -160,6 +162,13 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
           title: Text('${name.text.isEmpty ? 'Tema' : name.text} ayarları', style: const TextStyle(color: Colors.white)),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
+              DropdownButtonFormField<int>(
+                value: availableStyles.contains(selectedStyle) ? selectedStyle : availableStyles.first,
+                dropdownColor: const Color(0xFF17243A),
+                decoration: const InputDecoration(labelText: 'Görsel motif şablonu', labelStyle: TextStyle(color: Colors.white70)),
+                items: availableStyles.map((i) => DropdownMenuItem(value: i, child: Text(_templateName(i), style: const TextStyle(color: Colors.white)))).toList(),
+                onChanged: (value) { if (value != null) setDialogState(() => selectedStyle = value); },
+              ),
               TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tema adı', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: description, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Açıklama', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: price, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Yıldız fiyatı', hintText: 'Boş bırak: satışa kapalı', hintStyle: TextStyle(color: Colors.white38), labelStyle: TextStyle(color: Colors.white70))),
@@ -185,7 +194,8 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     await doc.reference.set({
       'name': name.text.trim(),
       'description': description.text.trim(),
-      'visualStyleIndex': (data['visualStyleIndex'] as int?) ?? (data['themeIndex'] as int? ?? 3),
+      'visualStyleIndex': selectedStyle,
+      'themeIndex': selectedStyle,
       'priceStars': validPrice ? parsedPrice : null,
       'isPublished': published && validPrice && name.text.trim().isNotEmpty,
       'sortOrder': int.tryParse(sortOrder.text.trim()) ?? (data['sortOrder'] as int? ?? 0),
