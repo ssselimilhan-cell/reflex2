@@ -1,5 +1,5 @@
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { Timestamp, getFirestore } = require('firebase-admin/firestore');
+const { FieldValue, Timestamp, getFirestore } = require('firebase-admin/firestore');
 
 initializeApp({
   credential: applicationDefault(),
@@ -20,6 +20,25 @@ async function commitUpdates(collectionName, updates) {
 
 async function main() {
   const now = Date.now();
+  // Move legacy invite codes out of publicly readable channel documents.
+  // New channel documents keep the secret only under private/invite.
+  const channels = await db.collection('channels').get();
+  const legacyChannels = channels.docs.filter((doc) =>
+    doc.data().visibility === 'invite_only' &&
+    typeof doc.data().inviteCode === 'string' &&
+    doc.data().inviteCode.length > 0,
+  );
+  for (let offset = 0; offset < legacyChannels.length; offset += 200) {
+    const batch = db.batch();
+    for (const doc of legacyChannels.slice(offset, offset + 200)) {
+      batch.set(doc.ref.collection('private').doc('invite'), {
+        inviteCode: doc.data().inviteCode,
+      }, { merge: true });
+      batch.update(doc.ref, { inviteCode: FieldValue.delete() });
+    }
+    await batch.commit();
+  }
+
   const rooms = await db.collection('rooms').get();
   const roomUpdates = [];
 
@@ -82,7 +101,7 @@ async function main() {
     await batch.commit();
   }
 
-  console.log(`Expiry backfill complete: ${roomUpdates.length} rooms, ${inviteUpdates.length} invites, ${messageUpdates.length} room messages.`);
+  console.log(`Backfill complete: ${legacyChannels.length} legacy channel secrets migrated, ${roomUpdates.length} rooms, ${inviteUpdates.length} invites, ${messageUpdates.length} room messages.`);
 }
 
 main().catch((error) => {
