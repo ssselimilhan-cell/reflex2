@@ -78,7 +78,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         inviteOnly: _inviteOnly,
       );
       if (mounted) {
-        await _openChannel(id, joinIfNeeded: false);
         if (_inviteOnly && mounted) {
           final doc = await FirebaseFirestore.instance.collection('channels').doc(id).get();
           final code = doc.data()?['inviteCode'] as String?;
@@ -192,7 +191,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasError) return Center(child: Text('Kanallar yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.white70)));
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
-          final docs = snapshot.data!.docs;
+          final docs = snapshot.data!.docs.where((d) => d.data()['visibility'] != 'invite_only').toList();
           if (docs.isEmpty) return const Center(child: Text('Henüz kanal yok. İlk kanalı sen oluştur!', style: TextStyle(color: Colors.white60)));
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 100), itemCount: docs.length,
@@ -256,6 +255,71 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   void dispose() {
     _roomSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _createTournament() async {
+    final title = TextEditingController();
+    String format = 'single_elimination';
+    int maxPlayers = 16;
+    final result = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Turnuva oluştur', style: TextStyle(color: Colors.white)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: title, maxLength: 40, style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(labelText: 'Turnuva adı', labelStyle: TextStyle(color: Colors.white70))),
+          DropdownButtonFormField<String>(
+            value: format, dropdownColor: const Color(0xFF1B293D),
+            decoration: const InputDecoration(labelText: 'Format', labelStyle: TextStyle(color: Colors.white70)),
+            items: const [
+              DropdownMenuItem(value: 'single_elimination', child: Text('Eleme usulü', style: TextStyle(color: Colors.white))),
+              DropdownMenuItem(value: 'round_robin', child: Text('Herkes birbiriyle', style: TextStyle(color: Colors.white))),
+            ],
+            onChanged: (v) => setDialogState(() => format = v ?? format),
+          ),
+          DropdownButtonFormField<int>(
+            value: maxPlayers, dropdownColor: const Color(0xFF1B293D),
+            decoration: const InputDecoration(labelText: 'Oyuncu sınırı', labelStyle: TextStyle(color: Colors.white70)),
+            items: [8, 16, 32, 64].map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
+            onChanged: (v) => setDialogState(() => maxPlayers = v ?? maxPlayers),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Oluştur')),
+        ],
+      ),
+    ));
+    final cleanTitle = title.text.trim();
+    title.dispose();
+    if (result != true || cleanTitle.length < 2) return;
+    try {
+      await _repo.createChannelTournament(
+        channelId: widget.channelId, creatorDeviceId: widget.deviceId,
+        title: cleanTitle, format: format, maxPlayers: maxPlayers,
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Turnuva oluşturulamadı: ' + e.toString())));
+    }
+  }
+
+  Future<void> _joinTournament(String id) async {
+    final joined = await _repo.joinChannelTournament(
+      channelId: widget.channelId, tournamentId: id, deviceId: widget.deviceId,
+    );
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(joined ? 'Turnuvaya katıldın.' : 'Katılım kapalı veya kontenjan dolu.')),
+    );
+  }
+
+  Future<void> _startTournament(String id) async {
+    try {
+      await _repo.startChannelTournament(
+        channelId: widget.channelId, tournamentId: id, creatorDeviceId: widget.deviceId,
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   Future<void> _leave() async {
@@ -359,6 +423,64 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   ],
                 )),
               ]),
+            ),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _repo.watchChannelTournaments(widget.channelId),
+              builder: (context, tournamentSnapshot) {
+                final tournaments = tournamentSnapshot.data?.docs ?? const [];
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      const Expanded(child: Text('KANAL TURNUVALARI',
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1))),
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream: channel.snapshots(),
+                        builder: (context, ownerSnapshot) {
+                          final isOwner = ownerSnapshot.data?.data()?['ownerDeviceId'] == widget.deviceId;
+                          return isOwner ? TextButton.icon(
+                            onPressed: _createTournament,
+                            icon: const Icon(Icons.add, color: Color(0xFFFBBF24), size: 17),
+                            label: const Text('Turnuva kur', style: TextStyle(color: Color(0xFFFBBF24))),
+                          ) : const SizedBox.shrink();
+                        },
+                      ),
+                    ]),
+                    if (tournaments.isEmpty)
+                      const Text('Kanal kurucusu burada turnuva düzenleyebilir.',
+                        style: TextStyle(color: Colors.white54, fontSize: 11))
+                    else
+                      ...tournaments.map((doc) {
+                        final data = doc.data();
+                        final participants = List<String>.from(data['participantIds'] ?? const <String>[]);
+                        final status = data['status'] as String? ?? 'registration';
+                        final isCreator = data['creatorDeviceId'] == widget.deviceId;
+                        final isParticipant = participants.contains(widget.deviceId);
+                        final maxPlayers = data['maxPlayers'] ?? 16;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 7),
+                          padding: const EdgeInsets.all(11),
+                          decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0x44FBBF24))),
+                          child: Row(children: [
+                            const Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24)),
+                            const SizedBox(width: 9),
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(data['title'] as String? ?? 'Turnuva', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                              Text(participants.length.toString() + '/' + maxPlayers.toString() + ' oyuncu · ' + (status == 'registration' ? 'Kayıt açık' : 'Devam ediyor'),
+                                style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                            ])),
+                            if (status == 'registration' && !isParticipant)
+                              TextButton(onPressed: () => _joinTournament(doc.id), child: const Text('Katıl')),
+                            if (status == 'registration' && isCreator)
+                              IconButton(onPressed: () => _startTournament(doc.id),
+                                icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFFBBF24))),
+                          ]),
+                        );
+                      }),
+                  ]),
+                );
+              },
             ),
             if (_pendingRoomCode != null)
               Container(
