@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stres_kart/game/game_engine.dart';
-import 'package:stres_kart/models/playing_card.dart';
 
 void main() {
   group('GameEngine baseline invariants', () {
