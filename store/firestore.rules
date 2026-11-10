@@ -242,6 +242,22 @@ service cloud.firestore {
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentId == tournamentId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentMatchId == matchId)
             ||
+            // Player 1 may clear the link only after that exact room was cancelled.
+            (request.auth != null
+              && request.auth.uid == resource.data.player1Uid
+              && resource.data.status == 'ready'
+              && request.resource.data.status == 'ready'
+              && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt'])
+              && !('roomCode' in request.resource.data)
+              && !('roomCreatedBy' in request.resource.data)
+              && !('roomLinkedAt' in request.resource.data)
+              && resource.data.roomCode is string
+              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.roomStatus == 'cancelled'
+              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentChannelId == channelId
+              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentId == tournamentId
+              && get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.tournamentMatchId == matchId)
+            ||
             // The channel owner remains the only person allowed to confirm a result and advance the bracket.
             (isChannelOwner(channelId)
               && resource.data.status == 'ready'
