@@ -251,7 +251,14 @@ class OnlineRoomRepository {
       final ok = engine.attemptPlay(side, columnIndex);
       if (!ok) return false;
 
-      tx.update(ref, engine.toMap());
+      final gameUpdate = engine.toMap();
+      if (engine.status != GameStatus.playing) {
+        final retentionDays = data['tournamentMatchId'] is String ? 30 : 1;
+        gameUpdate['expiresAt'] = Timestamp.fromDate(
+          DateTime.now().add(Duration(days: retentionDays)),
+        );
+      }
+      tx.update(ref, gameUpdate);
       return true;
     });
   }
@@ -309,6 +316,7 @@ class OnlineRoomRepository {
       engine.startNewGame();
       final map = engine.toMap();
       map['rematchRequestedBy'] = null;
+      map['expiresAt'] = null;
       tx.update(ref, map);
       return true;
     });
@@ -344,6 +352,7 @@ class OnlineRoomRepository {
       if (isHost) {
         if (data['hostDeviceId'] != deviceId) return;
         final gameFinished = (data['status'] as String? ?? 'playing') != 'playing';
+        final retentionDays = data['tournamentMatchId'] is String ? 30 : 1;
         tx.update(ref, {
           'roomStatus': gameFinished ? 'finished' : 'cancelled',
           if (gameFinished) 'hostLeftAt': FieldValue.serverTimestamp(),
@@ -351,7 +360,7 @@ class OnlineRoomRepository {
           if (!gameFinished) 'cancelledAt': FieldValue.serverTimestamp(),
           'startRequestedBy': null,
           'rematchRequestedBy': null,
-          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: gameFinished ? retentionDays : 1))),
         });
         return;
       }
@@ -362,7 +371,9 @@ class OnlineRoomRepository {
         tx.update(ref, {
           'roomStatus': 'finished',
           'guestLeftAt': FieldValue.serverTimestamp(),
-          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(
+            days: data['tournamentMatchId'] is String ? 30 : 1,
+          ))),
         });
       } else {
         tx.update(ref, {
