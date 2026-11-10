@@ -34,6 +34,26 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   Set<String> _friendIds = {};
   bool _friendsOnly = false;
   bool _showPlayers = false;
+  String? _minimizedRoomCode;
+  bool _minimizedRoomIsHost = true;
+
+  Future<void> _openRoom({required String code, required String deviceId, required bool isHost}) async {
+    final minimized = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OnlineGameScreen(
+          roomCode: code,
+          deviceId: deviceId,
+          isHost: isHost,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _minimizedRoomCode = minimized == true ? code : null;
+      _minimizedRoomIsHost = isHost;
+    });
+  }
 
   @override
   void initState() {
@@ -75,16 +95,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
       );
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OnlineGameScreen(
-            roomCode: code,
-            deviceId: deviceId,
-            isHost: true,
-          ),
-        ),
-      );
+      await _openRoom(code: code, deviceId: deviceId, isHost: true);
     } catch (e) {
       setState(() => _error = 'Oda oluşturulamadı: $e');
     } finally {
@@ -127,16 +138,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       );
       // Davet gönderen de kendi bekleme masasına oturur. Oda, davetli
       // katılana kadar waiting durumunda kalır ve aynı ekrandan ready olur.
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OnlineGameScreen(
-            roomCode: code,
-            deviceId: deviceId,
-            isHost: true,
-          ),
-        ),
-      );
+      await _openRoom(code: code, deviceId: deviceId, isHost: true);
     } catch (e) {
       setState(() => _error = 'Davet gönderilemedi: $e');
     } finally {
@@ -474,16 +476,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         return;
       }
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OnlineGameScreen(
-            roomCode: code,
-            deviceId: deviceId,
-            isHost: false,
-          ),
-        ),
-      );
+      await _openRoom(code: code, deviceId: deviceId, isHost: false);
     } catch (e) {
       setState(() => _error = 'Katılınamadı: $e');
     } finally {
@@ -536,6 +529,34 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               children: [
                 _buildIncomingInvites(),
                 _buildIncomingFriendRequests(),
+                if (_minimizedRoomCode != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: Material(
+                      color: const Color(0xFF26364B),
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _myDeviceId == null ? null : () => _openRoom(
+                          code: _minimizedRoomCode!,
+                          deviceId: _myDeviceId!,
+                          isHost: _minimizedRoomIsHost,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          child: Row(children: [
+                            const Icon(Icons.sports_esports_rounded, color: Color(0xFFFBBF24)),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text('BEKLEYEN MASAN · ${_minimizedRoomCode!}',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+                            const Text('MASAYA DÖN', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w900)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.chevron_right, color: Color(0xFFFBBF24)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   child: Row(
@@ -718,7 +739,24 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 return rateB.compareTo(rateA);
               });
 
-              if (docs.isEmpty) return const SizedBox.shrink();
+              if (docs.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.table_restaurant_outlined, size: 42, color: Color(0xFFFBBF24)),
+                      const SizedBox(height: 12),
+                      const Text('Şu anda açık masa yok', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                      const SizedBox(height: 6),
+                      const Text('İlk masayı sen kurabilir veya arkadaşını davet edebilirsin.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      if (snapshot.data!.docs.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        const Text('Görünen masalar filtrelenmiş olabilir.', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                      ],
+                    ]),
+                  ),
+                );
+              }
 
               return ListView.builder(
                 padding: const EdgeInsets.fromLTRB(0, 4, 4, 16),
@@ -739,9 +777,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                     child: _buildTwoSeatCard(
                       onTap: _loading ? null : () {
                         if (data['hostDeviceId'] == _myDeviceId) {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => OnlineGameScreen(
-                            roomCode: code, deviceId: _myDeviceId!, isHost: true,
-                          )));
+                          _openRoom(code: code, deviceId: _myDeviceId!, isHost: true);
                         } else {
                           _joinRoomByCode(code);
                         }
