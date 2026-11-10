@@ -69,6 +69,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 8),
         Text(t('guest_playing'),
             style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0x22FBBF24),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x55FBBF24)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline, color: Color(0xFFFBBF24), size: 19),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  t('guest_data_warning'),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         TextField(
           controller: _nameController,
