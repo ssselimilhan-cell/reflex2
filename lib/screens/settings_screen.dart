@@ -723,12 +723,12 @@ class _CardDesignRowState extends State<_CardDesignRow> {
         return t('theme_matryoshka');
       case CardFaceTheme.soviet:
         return t('theme_soviet');
-      case CardFaceTheme.india: return 'Hindistan';
-      case CardFaceTheme.germany: return 'Almanya';
-      case CardFaceTheme.france: return 'Fransa';
-      case CardFaceTheme.japan: return 'Japonya';
-      case CardFaceTheme.persia: return 'Pers';
-      case CardFaceTheme.russia: return 'Rusya';
+      case CardFaceTheme.india: return t('theme_india');
+      case CardFaceTheme.germany: return t('theme_germany');
+      case CardFaceTheme.france: return t('theme_france');
+      case CardFaceTheme.japan: return t('theme_japan');
+      case CardFaceTheme.persia: return t('theme_persia');
+      case CardFaceTheme.russia: return t('theme_russia');
     }
   }
 
