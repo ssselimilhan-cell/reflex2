@@ -50,7 +50,6 @@ class _LadderScreenState extends State<LadderScreen> {
       builder: (context, _) {
         final next = ladder.unlockedLevel;
         final cleared = ladder.highestCleared;
-        final currentRealm = (next - 1) ~/ 10;
         return Scaffold(
           backgroundColor: settings.themeColor,
           appBar: AppBar(title: Text(t('menu_ladder'))),
@@ -200,7 +199,6 @@ class _RealmSection extends StatelessWidget {
   final void Function(int level) onPlay;
 
   const _RealmSection({
-    super.key,
     required this.realm,
     required this.cleared,
     required this.next,
