@@ -142,7 +142,8 @@ class Progress extends ChangeNotifier {
   bool isCardThemeUnlocked(int index) => index < 3 || unlockedCardThemes.contains(index);
 
   bool isCatalogThemeUnlocked(String id, int legacyStyleIndex) =>
-      isCardThemeUnlocked(legacyStyleIndex) || unlockedCardThemeIds.contains(id);
+      unlockedCardThemeIds.contains(id) ||
+      (id == 'card_theme_$legacyStyleIndex' && isCardThemeUnlocked(legacyStyleIndex));
 
   bool purchaseCatalogTheme(String id, int legacyStyleIndex, int price) {
     if (id.isEmpty || price <= 0 || isCatalogThemeUnlocked(id, legacyStyleIndex) || stars < price) return false;
