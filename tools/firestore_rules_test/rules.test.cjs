@@ -50,7 +50,6 @@ async function createChannel({ id, ownerUid, visibility, inviteCode }) {
     memberCount: 1,
     status: 'open',
     visibility,
-    ...(inviteCode ? { inviteCode } : {}),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -62,8 +61,13 @@ async function createChannel({ id, ownerUid, visibility, inviteCode }) {
     joinedAt: serverTimestamp(),
   });
   if (inviteCode) {
+    batch.set(doc(db, `channels/${id}/private/invite`), {
+      inviteCode,
+      updatedAt: serverTimestamp(),
+    });
     batch.set(doc(db, `channel_invites/${inviteCode}`), {
       channelId: id,
+      ownerUid,
       createdAt: serverTimestamp(),
     });
   }
@@ -94,25 +98,25 @@ test('unauthenticated clients cannot discover or read channels', async () => {
   await assertFails(getDocs(collection(db, 'channels')));
 });
 
-test('public channels are discoverable only through a public-filtered query', async () => {
+test('public and invite-only channels are both discoverable without exposing invite codes', async () => {
   await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
   await createChannel({ id: 'private-one', ownerUid: 'owner-a', visibility: 'invite_only', inviteCode: 'AB234567' });
   const db = env.authenticatedContext('player-b').firestore();
-  const result = await assertSucceeds(getDocs(query(
-    collection(db, 'channels'),
-    where('visibility', '==', 'public'),
-  )));
-  if (result.docs.length !== 1 || result.docs[0].id !== 'public-one') {
-    throw new Error('Public channel query returned unexpected documents.');
+  const result = await assertSucceeds(getDocs(collection(db, 'channels')));
+  if (result.docs.length !== 2) {
+    throw new Error('Both public and invite-only channels should be discoverable.');
   }
-  await assertFails(getDoc(doc(db, 'channels/private-one')));
-  await assertFails(getDocs(collection(db, 'channels')));
+  const privateDoc = await assertSucceeds(getDoc(doc(db, 'channels/private-one')));
+  if ('inviteCode' in (privateDoc.data() || {})) {
+    throw new Error('Private invite code must not be exposed in the public channel document.');
+  }
+  await assertFails(getDoc(doc(db, 'channels/private-one/private/invite')));
 });
 
 test('private channel requires a valid invite code before membership and is hidden afterwards', async () => {
   await createChannel({ id: 'private-one', ownerUid: 'owner-a', visibility: 'invite_only', inviteCode: 'AB234567' });
   const playerDb = env.authenticatedContext('player-b').firestore();
-  await assertFails(getDoc(doc(playerDb, 'channels/private-one')));
+  await assertSucceeds(getDoc(doc(playerDb, 'channels/private-one')));
   await assertSucceeds(getDoc(doc(playerDb, 'channel_invites/AB234567')));
   await assertFails(getDocs(collection(playerDb, 'channel_invites')));
 
