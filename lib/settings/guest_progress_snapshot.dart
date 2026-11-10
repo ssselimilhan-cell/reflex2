@@ -299,7 +299,7 @@ class GuestProgressSnapshot {
     }
 
     final rawUnlockedThemes = map['unlockedCardThemeIndexes'] ?? const <int>[];
-    if (rawUnlockedThemes is! List || rawUnlockedThemes.any((value) => value is! int || value < 3 || value > 9) || rawUnlockedThemes.toSet().length != rawUnlockedThemes.length) {
+    if (rawUnlockedThemes is! List || rawUnlockedThemes.any((value) => value is! int || value < 3 || value > 15) || rawUnlockedThemes.toSet().length != rawUnlockedThemes.length) {
       throw const FormatException('Invalid unlocked card themes');
     }
     final rawClaimed = map['claimedMissionIndexes'];
