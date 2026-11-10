@@ -62,7 +62,7 @@ service cloud.firestore {
         allow create: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId;
         allow update: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId
                       || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantIds']);
-        allow delete: if request.resource.data.creatorDeviceId == get(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId;
+        allow delete: if false;
       }
     }
 
