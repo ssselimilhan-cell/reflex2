@@ -253,23 +253,13 @@ test('private tournament data is member-only and members can only register thems
     roomLinkedAt: serverTimestamp(),
   }));
 
-  await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR-CANCELLED'), {
-    hostDeviceId: 'owner-a',
-    inviteToDeviceId: 'player-b',
+  await assertSucceeds(updateDoc(doc(ownerDb, 'rooms/TOUR1'), {
     roomStatus: 'cancelled',
-    tournamentChannelId: 'private-one',
-    tournamentId: 't1',
-    tournamentMatchId: 'r1_m1',
-  }));
-  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
-    roomCode: 'TOUR-CANCELLED',
-    roomCreatedBy: 'owner-a',
-    roomLinkedAt: serverTimestamp(),
   }));
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
-    roomCode: null,
-    roomCreatedBy: null,
-    roomLinkedAt: null,
+    roomCode: deleteField(),
+    roomCreatedBy: deleteField(),
+    roomLinkedAt: deleteField(),
   }));
   await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     roomCode: deleteField(),
