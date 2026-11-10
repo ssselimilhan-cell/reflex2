@@ -78,16 +78,6 @@ class GameResultOverlay extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            isWin ? 'VICTORY' : 'MATCH COMPLETE',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2.8,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
                             title,
                             textAlign: TextAlign.center,
                             style: GameUi.display(27, color: accent, spacing: 0.2),
