@@ -65,7 +65,7 @@ class StarShopScreen extends StatelessWidget {
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return const Padding(padding: EdgeInsets.all(18), child: Text('Mağaza şu anda yüklenemiyor. Daha sonra tekrar dene.', style: TextStyle(color: Colors.white70)));
                     if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
-                    final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && d.data()['themeIndex'] is int).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
+                    final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && (d.data()['visualStyleIndex'] is int || d.data()['themeIndex'] is int)).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
                     if (docs.isEmpty) return Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
@@ -84,12 +84,13 @@ class StarShopScreen extends StatelessWidget {
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
                       itemBuilder: (context, index) {
                         final data = docs[index].data();
-                        final themeIndex = data['themeIndex'] as int;
+                        final themeIndex = (data['visualStyleIndex'] as int?) ?? (data['themeIndex'] as int? ?? 3);
                         if (themeIndex < 0 || themeIndex >= CardFaceTheme.values.length) return const SizedBox.shrink();
                         final theme = CardFaceTheme.values[themeIndex];
                         final price = data['priceStars'] as int;
-                        final owned = progress.isCardThemeUnlocked(themeIndex);
-                        final equipped = AppSettings.instance.cardTheme == theme;
+                        final themeId = docs[index].id;
+                        final owned = progress.isCatalogThemeUnlocked(themeId, themeIndex);
+                        final equipped = AppSettings.instance.selectedThemeId == themeId || (AppSettings.instance.selectedThemeId.startsWith('builtin_') && AppSettings.instance.cardTheme == theme);
                         return Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(18), border: Border.all(color: equipped ? GameUi.gold : Colors.white12, width: equipped ? 1.8 : 1)),
@@ -101,10 +102,10 @@ class StarShopScreen extends StatelessWidget {
                               Padding(padding: const EdgeInsets.only(top: 3), child: Text(data['description'] as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 10))),
                             const SizedBox(height: 8),
                             SizedBox(width: double.infinity, height: 36, child: owned
-                              ? OutlinedButton(onPressed: equipped ? null : () => AppSettings.instance.setCardFaceTheme(theme), style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)), child: Text(equipped ? 'Kullanılıyor' : t('star_shop_equip'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)))
+                              ? OutlinedButton(onPressed: equipped ? null : () => AppSettings.instance.setCatalogTheme(id: themeId, visualStyle: theme), style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)), child: Text(equipped ? 'Kullanılıyor' : t('star_shop_equip'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)))
                               : FilledButton(
                                   onPressed: progress.stars >= price ? () {
-                                    final ok = progress.purchaseCardTheme(themeIndex, price);
+                                    final ok = progress.purchaseCatalogTheme(themeId, themeIndex, price);
                                     if (!ok) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('star_shop_not_enough'))));
                                   } : null,
                                   style: FilledButton.styleFrom(backgroundColor: GameUi.gold, foregroundColor: const Color(0xFF201707), disabledBackgroundColor: Colors.white12, disabledForegroundColor: Colors.white38),
