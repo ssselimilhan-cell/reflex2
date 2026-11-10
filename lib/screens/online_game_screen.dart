@@ -88,6 +88,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
       .showSnackBar(SnackBar(content: Text(msg)));
 
   bool _leaveDialogOpen = false;
+  bool _allowRoutePop = false;
 
   Future<void> _confirmLeaveRoom() async {
     if (_leaveDialogOpen || !mounted) return;
@@ -127,7 +128,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         widget.deviceId,
         isHost: widget.isHost,
       );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        setState(() => _allowRoutePop = true);
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) _snack('Odadan ayrılınamadı: $e');
     }
@@ -450,7 +454,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             ],
           ),
           body: PopScope<void>(
-            canPop: false,
+            canPop: _allowRoutePop,
             onPopInvoked: (didPop) {
               if (!didPop) _confirmLeaveRoom();
             },
@@ -544,7 +548,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () {
+                            setState(() => _allowRoutePop = true);
+                            Navigator.of(context).pop();
+                          },
                           child: const Text('Lobiye dön'),
                         ),
                       ],
