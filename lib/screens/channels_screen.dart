@@ -540,14 +540,19 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
               if (data?['ownerDeviceId'] != widget.deviceId || data?['visibility'] != 'invite_only') {
                 return const SizedBox.shrink();
               }
-              final code = data?['inviteCode'] as String?;
-              return IconButton(
-                tooltip: 'Davet kodunu kopyala',
-                onPressed: code == null ? null : () {
-                  Clipboard.setData(ClipboardData(text: code));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Davet kodu kopyalandı.')));
+              return FutureBuilder<String?>(
+                future: _repo.getChannelInviteCode(widget.channelId, widget.deviceId),
+                builder: (context, codeSnapshot) {
+                  final code = codeSnapshot.data;
+                  return IconButton(
+                    tooltip: 'Davet kodunu kopyala',
+                    onPressed: code == null ? null : () {
+                      Clipboard.setData(ClipboardData(text: code));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Davet kodu kopyalandı.')));
+                    },
+                    icon: const Icon(Icons.key_rounded, color: Color(0xFFFBBF24)),
+                  );
                 },
-                icon: const Icon(Icons.key_rounded, color: Color(0xFFFBBF24)),
               );
             },
           ),
