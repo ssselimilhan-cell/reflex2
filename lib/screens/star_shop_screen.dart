@@ -61,11 +61,11 @@ class StarShopScreen extends StatelessWidget {
                 Text(t('settings_group_cards').toUpperCase(), style: GameUi.display(13, color: GameUi.gold)),
                 const SizedBox(height: 12),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).orderBy('sortOrder').snapshots(),
+                  stream: FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) return const Padding(padding: EdgeInsets.all(18), child: Text('Mağaza şu anda yüklenemiyor. Daha sonra tekrar dene.', style: TextStyle(color: Colors.white70)));
                     if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
-                    final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && d.data()['themeIndex'] is int).toList();
+                    final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && d.data()['themeIndex'] is int).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
                     if (docs.isEmpty) return Container(
                       padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
