@@ -302,6 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     var createAccount = false;
+    var obscurePassword = true;
     final choice = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -324,13 +325,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: passwordController,
-                obscureText: true,
+                obscureText: obscurePassword,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: t('password'),
                   labelStyle: const TextStyle(color: Colors.white70),
+                  suffixIcon: IconButton(
+                    onPressed: () => setDialogState(
+                      () => obscurePassword = !obscurePassword,
+                    ),
+                    icon: Icon(
+                      obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.white54,
+                    ),
+                  ),
                 ),
               ),
+              if (!createAccount)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () async {
+                      final resetEmail = emailController.text.trim().toLowerCase();
+                      if (!resetEmail.contains('@') ||
+                          !resetEmail.substring(resetEmail.indexOf('@') + 1).contains('.')) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(content: Text('Önce e-posta adresini yaz.')),
+                        );
+                        return;
+                      }
+                      try {
+                        await FirebaseAuth.instance.sendPasswordResetEmail(email: resetEmail);
+                        if (this.mounted) {
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            const SnackBar(content: Text('Şifre yenileme bağlantısı e-posta adresine gönderildi.')),
+                          );
+                        }
+                      } catch (error) {
+                        if (this.mounted) _showAuthError(error);
+                      }
+                    },
+                    child: const Text('Şifremi unuttum'),
+                  ),
+                ),
               TextButton(
                 onPressed: () =>
                     setDialogState(() => createAccount = !createAccount),
