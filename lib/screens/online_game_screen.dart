@@ -91,6 +91,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   bool _allowRoutePop = false;
   String? _currentRoomStatus;
   Timer? _roomExpiryTimer;
+  Timer? _roomCountdownTimer;
+  DateTime? _roomExpiresAt;
+  int _waitingSecondsLeft = 300;
   bool _opponentArrivalNotified = false;
 
   void _scheduleWaitingRoomExpiry(Map<String, dynamic> data) {
@@ -98,7 +101,16 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     final createdAt = data['createdAt'];
     if (createdAt is! Timestamp) return;
     final expiresAt = createdAt.toDate().add(const Duration(minutes: 5));
+    _roomExpiresAt = expiresAt;
     final remaining = expiresAt.difference(DateTime.now());
+    _waitingSecondsLeft = remaining.inSeconds.clamp(0, 300);
+    _roomCountdownTimer?.cancel();
+    _roomCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      final seconds = _roomExpiresAt!.difference(DateTime.now()).inSeconds.clamp(0, 300);
+      if (seconds != _waitingSecondsLeft) setState(() => _waitingSecondsLeft = seconds);
+      if (seconds == 0) timer.cancel();
+    });
     _roomExpiryTimer = Timer(remaining.isNegative ? Duration.zero : remaining, () async {
       try {
         await _repo.expireWaitingRoom(widget.roomCode);
@@ -423,6 +435,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   void dispose() {
     _friendSub?.cancel();
     _roomExpiryTimer?.cancel();
+    _roomCountdownTimer?.cancel();
     for (final t in _pendingTimers) {
       t.cancel();
     }
@@ -580,18 +593,38 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
                 if (roomStatus == 'waiting') {
                 _scheduleWaitingRoomExpiry(data);
+                final minutes = (_waitingSecondsLeft ~/ 60).toString().padLeft(2, '0');
+                final seconds = (_waitingSecondsLeft % 60).toString().padLeft(2, '0');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        '${t('waiting_opponent')}\n${t('share_code')}: ${widget.roomCode}',
-                        textAlign: TextAlign.center,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18),
+                      Container(
+                        width: 112,
+                        height: 112,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0x22FBBF24),
+                          border: Border.all(color: const Color(0xFFFBBF24), width: 2),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('$minutes:$seconds',
+                          style: const TextStyle(color: Color(0xFFFFD76A), fontSize: 31, fontWeight: FontWeight.w900)),
                       ),
+                      const SizedBox(height: 18),
+                      const Text('RAKİP BEKLENİYOR',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: .5)),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${t('share_code')}: ${widget.roomCode}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Color(0xFFFFD76A), fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 3),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('5 dakika içinde rakip gelmezse bu masa otomatik kapanır.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.4)),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
                         onPressed: () => shareRoomCode(widget.roomCode),
@@ -613,6 +646,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               }
 
               if (roomStatus == 'cancelled') {
+                _roomExpiryTimer?.cancel();
+                _roomCountdownTimer?.cancel();
+                final timedOut = data['cancelledReason'] == 'waiting_timeout';
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -623,7 +659,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             color: Colors.amber, size: 52),
                         const SizedBox(height: 14),
                         const Text(
-                          'Oda sahibi odadan ayrıldı. Bu masa iptal edildi.',
+                          timedOut
+                              ? '5 dakika içinde rakip gelmediği için masa otomatik kapatıldı.'
+                              : 'Oda sahibi odadan ayrıldı. Bu masa iptal edildi.',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white, fontSize: 17),
                         ),
@@ -643,6 +681,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
               if (roomStatus == 'ready') {
                 _roomExpiryTimer?.cancel();
+                _roomCountdownTimer?.cancel();
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
