@@ -103,11 +103,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     final expiresAt = createdAt.toDate().add(const Duration(minutes: 5));
     _roomExpiresAt = expiresAt;
     final remaining = expiresAt.difference(DateTime.now());
-    _waitingSecondsLeft = remaining.inSeconds.clamp(0, 300);
+    _waitingSecondsLeft = remaining.inSeconds.clamp(0, 300).toInt();
     _roomCountdownTimer?.cancel();
     _roomCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) { timer.cancel(); return; }
-      final seconds = _roomExpiresAt!.difference(DateTime.now()).inSeconds.clamp(0, 300);
+      final seconds = _roomExpiresAt!.difference(DateTime.now()).inSeconds.clamp(0, 300).toInt();
       if (seconds != _waitingSecondsLeft) setState(() => _waitingSecondsLeft = seconds);
       if (seconds == 0) timer.cancel();
     });
