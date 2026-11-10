@@ -545,12 +545,15 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     data['guestDeviceId'] != null && !_opponentArrivalNotified) {
                   _opponentArrivalNotified = true;
                   final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
+                  final arrivalMessage = data['tournamentMatchId'] is String
+                      ? '$arrivedName masaya oturdu! Turnuva maçı başlıyor.'
+                      : '$arrivedName masaya oturdu! Oyunu başlatabilirsin.';
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       duration: const Duration(seconds: 6),
                       backgroundColor: const Color(0xFF176B45),
-                      content: Text('$arrivedName masaya oturdu! Turnuva maçı başlıyor.',
+                      content: Text(arrivalMessage,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                     ));
                   });
