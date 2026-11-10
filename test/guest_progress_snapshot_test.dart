@@ -191,7 +191,8 @@ void main() {
         GuestProgressSnapshot.fromMap(remote),
       );
       expect(merged.onlineWins, 8);
-      expect(merged.stars, 20);
+      expect(merged.starsEarned, 30);
+      expect(merged.starsSpent, 10);
       expect(merged.highestClearedLevel, 25);
       expect(merged.unlockedCardThemeIds, containsAll(['theme_ottoman_2026', 'theme_egypt_alt', 'theme_persia']));
     });
