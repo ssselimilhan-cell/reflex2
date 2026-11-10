@@ -96,7 +96,7 @@ test('private channel requires a valid invite code before membership and is hidd
   const playerDb = env.authenticatedContext('player-b').firestore();
   await assertFails(getDoc(doc(playerDb, 'channels/private-one')));
   await assertSucceeds(getDoc(doc(playerDb, 'channel_invites/AB234567')));
-  await assertFails(getDoc(doc(playerDb, 'channel_invites')));
+  await assertFails(getDocs(collection(playerDb, 'channel_invites')));
 
   const batch = writeBatch(playerDb);
   batch.set(doc(playerDb, 'channels/private-one/members/player-b'), {
