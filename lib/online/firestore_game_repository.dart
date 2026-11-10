@@ -511,6 +511,7 @@ class OnlineRoomRepository {
 
   Future<String> createChannel({
     required String ownerDeviceId,
+    required String ownerPlayerDeviceId,
     required String ownerDisplayName,
     required String name,
     required String description,
@@ -537,6 +538,7 @@ class OnlineRoomRepository {
     });
     batch.set(ref.collection('members').doc(uid), {
       'deviceId': uid,
+      'playerDeviceId': ownerPlayerDeviceId,
       'displayName': ownerDisplayName,
       'joinedAt': now,
       'role': 'owner',
@@ -554,6 +556,7 @@ class OnlineRoomRepository {
   Future<bool> joinChannel({
     required String channelId,
     required String deviceId,
+    required String playerDeviceId,
     required String displayName,
     String? inviteCode,
   }) async {
@@ -569,6 +572,7 @@ class OnlineRoomRepository {
       final data = channelSnap.data()!;
       tx.set(member, {
         'deviceId': uid,
+        'playerDeviceId': playerDeviceId,
         'displayName': displayName,
         'joinedAt': FieldValue.serverTimestamp(),
         'role': 'member',
@@ -584,6 +588,7 @@ class OnlineRoomRepository {
   Future<bool> joinPrivateChannelByCode({
     required String code,
     required String deviceId,
+    required String playerDeviceId,
     required String displayName,
   }) async {
     final uid = _requireChannelUid(deviceId);
@@ -599,6 +604,7 @@ class OnlineRoomRepository {
     final batch = FirebaseFirestore.instance.batch();
     batch.set(member, {
       'deviceId': uid,
+      'playerDeviceId': playerDeviceId,
       'displayName': displayName,
       'joinedAt': FieldValue.serverTimestamp(),
       'role': 'member',
