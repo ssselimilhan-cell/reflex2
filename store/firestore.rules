@@ -152,6 +152,8 @@ service cloud.firestore {
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 1
           && request.resource.data.displayName.size() <= 32
+          && request.resource.data.playerDeviceId is string
+          && request.resource.data.playerDeviceId.size() <= 128
           && request.resource.data.status == 'pending';
         allow delete: if isChannelOwner(channelId) && resource.data.status == 'pending';
         allow update: if false;
