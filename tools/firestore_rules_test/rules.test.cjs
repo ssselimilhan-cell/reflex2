@@ -232,6 +232,26 @@ test('private tournament data is member-only and members can only register thems
   });
   await assertSucceeds(startBatch.commit());
 
+  await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR1'), {
+    hostDeviceId: 'owner-a',
+    guestDeviceId: null,
+    inviteToDeviceId: 'player-b',
+    roomStatus: 'waiting',
+    tournamentChannelId: 'private-one',
+    tournamentId: 't1',
+    tournamentMatchId: 'r1_m1',
+  }));
+  await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    roomCode: 'TOUR1',
+    roomCreatedBy: 'player-b',
+    roomLinkedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    roomCode: 'TOUR1',
+    roomCreatedBy: 'owner-a',
+    roomLinkedAt: serverTimestamp(),
+  }));
+
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     winnerUid: 'player-b',
     status: 'completed',
