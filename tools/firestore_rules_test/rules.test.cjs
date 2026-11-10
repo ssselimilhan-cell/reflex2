@@ -18,6 +18,7 @@ const {
   updateDoc,
   arrayUnion,
   deleteField,
+  deleteDoc,
 } = require('firebase/firestore');
 const { before, after, beforeEach, test } = require('node:test');
 
@@ -346,6 +347,11 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(updateDoc(doc(ownerDb, 'rooms/TOUR1'), {
     roomStatus: 'cancelled',
   }));
+
+  // TTL can remove the cancelled room document after its retention window.
+  await env.withSecurityRulesDisabled(async (context) => {
+    await deleteDoc(doc(context.firestore(), 'rooms/TOUR1'));
+  });
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     roomCode: deleteField(),
     roomCreatedBy: deleteField(),
