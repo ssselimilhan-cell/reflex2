@@ -8,6 +8,14 @@ import 'table_felt.dart';
 class GameUi {
   static const String displayFont = 'RussoOne';
 
+  // Modern competitive palette. Existing aliases remain stable so this
+  // foundation can be adopted screen-by-screen without changing game logic.
+  static const Color background = Color(0xFF101827);
+  static const Color surface = Color(0xFF1B293D);
+  static const Color primary = Color(0xFF3B82F6);
+  static const Color cyan = Color(0xFF22D3EE);
+  static const Color rewardGold = Color(0xFFFBBF24);
+
   static const Color gold = Color(0xFFF7C948);
   static const Color goldLight = Color(0xFFFFE08A);
   static const Color goldDeep = Color(0xFFD9961A);
