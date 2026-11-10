@@ -474,7 +474,7 @@ class OnlineRoomRepository {
   Stream<QuerySnapshot<Map<String, dynamic>>> watchTournamentMatches(
       String channelId, String tournamentId) =>
       _channels.doc(channelId).collection('tournaments').doc(tournamentId)
-          .collection('matches').orderBy('round').orderBy('matchIndex').snapshots();
+          .collection('matches').snapshots();
 
   Future<void> startChannelTournament({
     required String channelId,
@@ -584,7 +584,7 @@ class OnlineRoomRepository {
       final round = (matchData['round'] as num).toInt();
       final format = tournamentSnap.data()?['format'] as String? ?? 'single_elimination';
       final currentRoundQuery = tournament.collection('matches')
-          .where('round', isEqualTo: round).orderBy('matchIndex');
+          .where('round', isEqualTo: round);
       final roundSnapshot = await tx.get(currentRoundQuery);
       final roundMatches = roundSnapshot.docs.map((doc) {
         if (doc.id == matchId) {
