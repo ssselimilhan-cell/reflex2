@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
 import '../online/persistent_device_id.dart';
@@ -180,38 +181,65 @@ class ChannelDetailScreen extends StatefulWidget {
 class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   final _repo = OnlineRoomRepository();
   bool _busy = false;
+  bool _openingMatch = false;
+  String? _pendingRoomCode;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _roomSub;
+
+  @override
+  void dispose() {
+    _roomSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> _leave() async {
     await _repo.leaveChannel(widget.channelId, widget.deviceId);
     if (mounted) Navigator.pop(context);
   }
 
-  Future<void> _startMatch(List<QueryDocumentSnapshot<Map<String, dynamic>>> members) async {
-    if (_busy || members.length < 2) return;
+  Future<void> _startMatch(String targetDeviceId) async {
+    if (_busy || targetDeviceId == widget.deviceId || _pendingRoomCode != null) return;
     setState(() => _busy = true);
     try {
       final p = UserProfile.instance;
+      final displayName = p.hasProfile ? p.displayName : t('you');
       final code = await _repo.createRoom(
         widget.deviceId,
-        hostDisplayName: p.hasProfile ? p.displayName : t('you'),
+        hostDisplayName: displayName,
         hostWinRate: p.hasProfile ? p.onlineWinRate : null,
         hostAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
         hostAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
         hostPhotoBase64: p.hasProfile ? p.photoBase64 : null,
       );
-      for (final member in members.where((m) => m.id != widget.deviceId)) {
-        await _repo.sendInvite(
-          toDeviceId: member.id, fromDeviceId: widget.deviceId, roomCode: code,
-          fromDisplayName: p.hasProfile ? p.displayName : t('you'),
-          fromAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
-          fromAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
-          fromPhotoBase64: p.hasProfile ? p.photoBase64 : null,
-          fromWinRate: p.hasProfile ? p.onlineWinRate : null);
-      }
-      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) =>
-        OnlineGameScreen(roomCode: code, deviceId: widget.deviceId, isHost: true)));
+      await _repo.sendInvite(
+        toDeviceId: targetDeviceId,
+        fromDeviceId: widget.deviceId,
+        roomCode: code,
+        fromDisplayName: displayName,
+        fromAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
+        fromAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
+        fromPhotoBase64: p.hasProfile ? p.photoBase64 : null,
+        fromWinRate: p.hasProfile ? p.onlineWinRate : null,
+      );
+      if (!mounted) return;
+      setState(() => _pendingRoomCode = code);
+      _roomSub?.cancel();
+      _roomSub = _repo.watchRoom(code).listen((snapshot) {
+        final data = snapshot.data();
+        if (!mounted || _openingMatch || data == null) return;
+        if (data['guestDeviceId'] != null && data['roomStatus'] == 'ready') {
+          _openingMatch = true;
+          _roomSub?.cancel();
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>
+            OnlineGameScreen(roomCode: code, deviceId: widget.deviceId, isHost: true)));
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Davet gönderildi. Rakibin katılana kadar kanalında kalabilirsin.')),
+      );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Davet oluşturulamadı: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Davet oluşturulamadı: $e')),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -231,25 +259,88 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           final members = snapshot.data?.docs ?? const [];
           return Column(children: [
             Container(
-              margin: const EdgeInsets.all(16), padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0x333B82F6))),
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF243A55), Color(0xFF18283D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0x44FBBF24)),
+              ),
               child: Row(children: [
-                const Icon(Icons.groups_rounded, color: Color(0xFFFBBF24), size: 32), const SizedBox(width: 12),
-                Expanded(child: Text('${members.length} oyuncu kanalda', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                FilledButton.icon(onPressed: _busy || members.length < 2 ? null : () => _startMatch(members),
-                  icon: const Icon(Icons.sports_esports_rounded), label: const Text('Maç davet et')),
+                const Icon(Icons.groups_rounded, color: Color(0xFFFBBF24), size: 30),
+                const SizedBox(width: 12),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${members.length} oyuncu kanalda',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 3),
+                    const Text('Bir oyuncu seçip özel maç daveti gönder.',
+                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                  ],
+                )),
               ]),
             ),
+            if (_pendingRoomCode != null)
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  color: const Color(0x2234D399),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0x6634D399)),
+                ),
+                child: const Row(children: [
+                  SizedBox(width: 8, height: 8, child: DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFF34D399), shape: BoxShape.circle))),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Davet bekleniyor · Kanalın açık kalıyor',
+                    style: TextStyle(color: Color(0xFFB7F7D5), fontSize: 12, fontWeight: FontWeight.w700))),
+                ]),
+              ),
             Expanded(child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: members.length,
-              separatorBuilder: (_, __) => const Divider(color: Colors.white12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              itemCount: members.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final data = members[index].data();
-                return ListTile(
-                  leading: const CircleAvatar(backgroundColor: Color(0x223B82F6), child: Icon(Icons.person, color: Colors.white)),
-                  title: Text(data['displayName'] as String? ?? t('guest_label'), style: const TextStyle(color: Colors.white)),
-                  trailing: data['role'] == 'owner' ? const Icon(Icons.star_rounded, color: Color(0xFFFBBF24)) : null);
+                final member = members[index];
+                final data = member.data();
+                final isMe = member.id == widget.deviceId;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B293D),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: isMe ? const Color(0x66FBBF24) : Colors.white10),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+                    leading: CircleAvatar(
+                      backgroundColor: isMe ? const Color(0x33FBBF24) : const Color(0x223B82F6),
+                      child: Icon(Icons.person_rounded,
+                        color: isMe ? const Color(0xFFFBBF24) : Colors.white),
+                    ),
+                    title: Text(data['displayName'] as String? ?? t('guest_label'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    subtitle: Text(isMe ? 'Sen' : (data['role'] == 'owner' ? 'Kanal sahibi' : 'Oyuncu'),
+                      style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    trailing: isMe
+                      ? const Icon(Icons.verified_rounded, color: Color(0xFFFBBF24))
+                      : FilledButton(
+                          onPressed: _busy || _pendingRoomCode != null
+                            ? null : () => _startMatch(member.id),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFFBBF24),
+                            foregroundColor: const Color(0xFF101827),
+                            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+                          ),
+                          child: const Text('Davet et', style: TextStyle(fontWeight: FontWeight.w800)),
+                        ),
+                  ),
+                );
               })),
             SafeArea(top: false, child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
