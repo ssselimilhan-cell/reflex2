@@ -131,8 +131,12 @@ class UserProfile extends ChangeNotifier {
         onlineLosses = (data['onlineLosses'] as num?)?.toInt() ?? 0;
         avatarIconIndex = (data['avatarIconIndex'] as num?)?.toInt() ?? 0;
         avatarColor = Color((data['avatarColor'] as num?)?.toInt() ?? 0xFF0B6E4F);
-        photoBase64 = data['photoBase64'] as String?;
-        photoPath = null;
+        // Older account documents may predate photoBase64. Retain the
+        // account-scoped local image in that case; explicit null still clears it.
+        if (data.containsKey('photoBase64')) {
+          photoBase64 = data['photoBase64'] as String?;
+          if (photoBase64 == null) photoPath = null;
+        }
       } else {
         displayName ??= guestName;
         if (onlineWins == 0 && onlineLosses == 0) {
