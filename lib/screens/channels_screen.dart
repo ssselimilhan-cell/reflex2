@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
+import '../settings/progress.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'online_game_screen.dart';
@@ -912,6 +913,54 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                   );
                 },
               ),
+            if (status == 'completed')
+              Builder(builder: (context) {
+                final placements = Map<String, dynamic>.from(tournament['placements'] as Map? ?? const {});
+                final myPlacement = placements[widget.deviceId];
+                if (myPlacement is! Map) return const SizedBox.shrink();
+                final rank = (myPlacement['rank'] as num?)?.toInt() ?? 0;
+                final reward = (myPlacement['stars'] as num?)?.toInt() ?? 0;
+                final rankLabel = rank == 1 ? '1.' : rank == 2 ? '2.' : '3.';
+                return Container(
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF473A19),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0x99FBBF24)),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.stars_rounded, color: Color(0xFFFBBF24), size: 25),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('$rankLabel sıra · $reward yıldız ödülün hazır',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+                    FilledButton(
+                      onPressed: _busy ? null : () async {
+                        setState(() => _busy = true);
+                        try {
+                          final amount = await _repo.claimTournamentReward(
+                            channelId: widget.channelId,
+                            tournamentId: widget.tournamentId,
+                            deviceId: widget.deviceId,
+                          );
+                          final credited = Progress.instance.awardTournamentReward(widget.tournamentId, amount);
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(credited ? '$amount yıldız hesabına eklendi!' : 'Bu turnuva ödülü daha önce hesabına eklendi.')),
+                          );
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Ödül alınamadı: $e')),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _busy = false);
+                        }
+                      },
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF241B08)),
+                      child: const Text('ÖDÜLÜ AL'),
+                    ),
+                  ]),
+                );
+              }),
             if (isCreator && status == 'in_progress')
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
