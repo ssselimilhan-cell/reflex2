@@ -269,9 +269,11 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                       return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                         stream: _repo.watchMyChannelJoinRequest(doc.id, _deviceId!),
                         builder: (context, requestSnapshot) {
-                          final pending = requestSnapshot.data?.exists == true;
+                          final requestStatus = requestSnapshot.data?.data()?['status'] as String?;
+                          final pending = requestStatus == 'pending';
+                          final alreadyRequested = requestStatus != null;
                           return FilledButton(
-                            onPressed: _busy || pending ? null : () => _requestJoin(
+                            onPressed: _busy || alreadyRequested ? null : () => _requestJoin(
                               doc.id, UserProfile.instance.hasProfile
                                   ? UserProfile.instance.displayName! : 'Oyuncu',
                             ),
@@ -279,7 +281,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                               backgroundColor: pending ? const Color(0xFF263B55) : const Color(0xFFB7791F),
                               foregroundColor: Colors.white,
                             ),
-                            child: Text(pending ? 'Talep gönderildi' : 'Katılma talebi',
+                            child: Text(pending ? 'Talep gönderildi' : requestStatus == 'rejected'
+                                ? 'Talep reddedildi' : alreadyRequested ? 'Talep tamamlandı' : 'Katılma talebi',
                               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
                           );
                         },
@@ -602,7 +605,8 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                 return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _repo.watchChannelJoinRequests(widget.channelId),
                   builder: (context, requestSnapshot) {
-                    final requests = requestSnapshot.data?.docs ?? const [];
+                    final requests = (requestSnapshot.data?.docs ?? const [])
+                        .where((request) => request.data()['status'] == 'pending').toList();
                     if (requests.isEmpty) return const SizedBox.shrink();
                     return Container(
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
