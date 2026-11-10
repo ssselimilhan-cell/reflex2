@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../online/persistent_device_id.dart';
@@ -59,70 +60,145 @@ class UserProfile extends ChangeNotifier {
 
   bool _loaded = false;
 
+  String _key(String name, [String? uid]) =>
+      uid == null ? name : 'account_${uid}_$name';
+
+  Future<void> _readLocal({String? uid, bool preserveCurrentIfMissing = false}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString(_key('displayName', uid));
+      if (name != null || !preserveCurrentIfMissing) {
+        displayName = name;
+        onlineWins = prefs.getInt(_key('onlineWins', uid)) ?? 0;
+        onlineLosses = prefs.getInt(_key('onlineLosses', uid)) ?? 0;
+        avatarIconIndex = prefs.getInt(_key('avatarIconIndex', uid)) ?? 0;
+        final color = prefs.getInt(_key('avatarColor', uid));
+        avatarColor = color == null ? const Color(0xFF0B6E4F) : Color(color);
+        photoPath = prefs.getString(_key('photoPath', uid));
+        photoBase64 = prefs.getString(_key('photoBase64', uid));
+      }
+    } catch (_) {}
+  }
+
   Future<void> load() async {
     if (_loaded) return;
     deviceId = await getPersistentDeviceId();
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      displayName = prefs.getString('displayName');
-      onlineWins = prefs.getInt('onlineWins') ?? 0;
-      onlineLosses = prefs.getInt('onlineLosses') ?? 0;
-      avatarIconIndex = prefs.getInt('avatarIconIndex') ?? 0;
-      final avatarColorValue = prefs.getInt('avatarColor');
-      if (avatarColorValue != null) avatarColor = Color(avatarColorValue);
-      photoPath = prefs.getString('photoPath');
-      photoBase64 = prefs.getString('photoBase64');
-    } catch (_) {
-      // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
-    }
+    await _readLocal(uid: FirebaseAuth.instance.currentUser?.uid);
     _loaded = true;
     notifyListeners();
   }
 
+  /// Firebase hesabına ait oyuncu profilini yükler. İlk girişte cihazdaki
+  /// misafir takma adı başlangıç önerisi olarak hesaba kopyalanır; sonraki
+  /// cihazlarda hesabın bulut profili esas alınır.
+  Future<void> activateAccountProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    deviceId ??= await getPersistentDeviceId();
+    final guestName = displayName;
+    final guestWins = onlineWins;
+    final guestLosses = onlineLosses;
+    await _readLocal(uid: user.uid, preserveCurrentIfMissing: true);
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('users').doc(user.uid)
+          .collection('private').doc('profile');
+      final snap = await ref.get();
+      if (snap.exists) {
+        final data = snap.data()!;
+        displayName = data['displayName'] as String?;
+        onlineWins = (data['onlineWins'] as num?)?.toInt() ?? 0;
+        onlineLosses = (data['onlineLosses'] as num?)?.toInt() ?? 0;
+        avatarIconIndex = (data['avatarIconIndex'] as num?)?.toInt() ?? 0;
+        avatarColor = Color((data['avatarColor'] as num?)?.toInt() ?? 0xFF0B6E4F);
+        photoBase64 = data['photoBase64'] as String?;
+        photoPath = null;
+      } else {
+        displayName ??= guestName;
+        if (onlineWins == 0 && onlineLosses == 0) {
+          onlineWins = guestWins;
+          onlineLosses = guestLosses;
+        }
+        await ref.set(_accountProfileMap());
+      }
+      await _persistLocal();
+      await _syncPublicProfile();
+    } catch (_) {
+      // Oturum açma başarılı kalır; yerel hesap profili kullanılmaya devam eder.
+      await _persistLocal();
+    }
+    notifyListeners();
+  }
+
+  /// Çıkışta hesaba ait profil cihazın misafir profilinin üzerine yazılmaz.
+  Future<void> activateGuestProfile() async {
+    await _readLocal();
+    notifyListeners();
+  }
+
+  Map<String, dynamic> _accountProfileMap() => {
+    'displayName': displayName,
+    'onlineWins': onlineWins,
+    'onlineLosses': onlineLosses,
+    'avatarIconIndex': avatarIconIndex,
+    'avatarColor': avatarColor.value,
+    'photoBase64': photoBase64,
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
+
   Future<void> _persistLocal() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       if (displayName != null) {
-        await prefs.setString('displayName', displayName!);
+        await prefs.setString(_key('displayName', uid), displayName!);
       } else {
-        await prefs.remove('displayName');
+        await prefs.remove(_key('displayName', uid));
       }
-      await prefs.setInt('onlineWins', onlineWins);
-      await prefs.setInt('onlineLosses', onlineLosses);
-      await prefs.setInt('avatarIconIndex', avatarIconIndex);
-      await prefs.setInt('avatarColor', avatarColor.value);
+      await prefs.setInt(_key('onlineWins', uid), onlineWins);
+      await prefs.setInt(_key('onlineLosses', uid), onlineLosses);
+      await prefs.setInt(_key('avatarIconIndex', uid), avatarIconIndex);
+      await prefs.setInt(_key('avatarColor', uid), avatarColor.value);
       if (photoPath != null) {
-        await prefs.setString('photoPath', photoPath!);
+        await prefs.setString(_key('photoPath', uid), photoPath!);
       } else {
-        await prefs.remove('photoPath');
+        await prefs.remove(_key('photoPath', uid));
       }
       if (photoBase64 != null) {
-        await prefs.setString('photoBase64', photoBase64!);
+        await prefs.setString(_key('photoBase64', uid), photoBase64!);
       } else {
-        await prefs.remove('photoBase64');
+        await prefs.remove(_key('photoBase64', uid));
       }
     } catch (_) {}
+  }
+
+  Future<void> _syncPublicProfile() async {
+    if (!hasProfile || deviceId == null) return;
+    await FirebaseFirestore.instance.collection('profiles').doc(deviceId).set(
+      {
+        'displayName': displayName,
+        'onlineWins': onlineWins,
+        'onlineLosses': onlineLosses,
+        'avatarIconIndex': avatarIconIndex,
+        'avatarColor': avatarColor.value,
+        'photoBase64': photoBase64,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   Future<void> _syncToFirestore() async {
     if (!hasProfile || deviceId == null) return;
     try {
-      await FirebaseFirestore.instance.collection('profiles').doc(deviceId).set(
-        {
-          'displayName': displayName,
-          'onlineWins': onlineWins,
-          'onlineLosses': onlineLosses,
-          'avatarIconIndex': avatarIconIndex,
-          'avatarColor': avatarColor.value,
-          'photoBase64': photoBase64,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await _syncPublicProfile();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection('users').doc(uid)
+            .collection('private').doc('profile').set(_accountProfileMap());
+      }
     } catch (_) {
-      // Firebase kurulu değilse ya da ağ hatası varsa sessizce yut;
-      // yerel istatistikler zaten güvende, bir dahaki senkronizasyonda
-      // (bir sonraki sonuç kaydında) tekrar denenir.
+      // Yerel profil korunur; sonraki profil güncellemesinde tekrar denenir.
     }
   }
 
