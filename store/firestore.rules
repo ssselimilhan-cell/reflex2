@@ -335,7 +335,7 @@ service cloud.firestore {
               && request.resource.data.roomCreatedBy == request.auth.uid
               && request.resource.data.roomCode is string
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId == request.auth.uid
-              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.inviteToDeviceId == resource.data.player2Uid
+              && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.inviteToDeviceId == resource.data.player2DeviceId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentChannelId == channelId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentId == tournamentId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentMatchId == matchId)
