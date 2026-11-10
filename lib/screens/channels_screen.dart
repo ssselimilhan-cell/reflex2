@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
 import '../settings/progress.dart';
+import '../settings/auth_service.dart';
 import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'online_game_screen.dart';
@@ -966,6 +967,13 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                             deviceId: widget.deviceId,
                           );
                           final credited = Progress.instance.awardTournamentReward(widget.tournamentId, amount);
+                          if (credited) {
+                            try {
+                              await AuthService.instance.syncProgressForCurrentUser();
+                            } catch (_) {
+                              // Local balance is saved; the next account sync will upload it.
+                            }
+                          }
                           if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(credited ? '$amount yıldız hesabına eklendi!' : 'Bu turnuva ödülü daha önce hesabına eklendi.')),
                           );
