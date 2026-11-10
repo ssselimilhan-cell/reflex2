@@ -187,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                             Text(user.email ?? user.displayName ?? user.uid,
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                style: const TextStyle(color: Colors.white70, fontSize: 14)),
                           ],
                         ),
                       ),
@@ -668,7 +668,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 5),
                   Text(t('online_win_rate').toUpperCase(),
-                    style: const TextStyle(color: Colors.white60, fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, letterSpacing: 1.1, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
                   Text(rate == null ? t('no_games_yet') : '${rate.round()}%',
                     style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 30, fontWeight: FontWeight.w900)),
@@ -866,7 +866,7 @@ class _ProfileMetric extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: FittedBox(fit: BoxFit.scaleDown, child: Text(label,
-          style: const TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w600))),
+          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w700))),
       ),
     ]),
   );
@@ -918,7 +918,7 @@ class _RankCard extends StatelessWidget {
                     t('next_rank_hint')
                         .replaceAll('{name}', t(next.nameKey))
                         .replaceAll('{n}', '${next.minWins - wins}'),
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
               ],
