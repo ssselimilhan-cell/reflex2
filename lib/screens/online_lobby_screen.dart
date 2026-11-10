@@ -590,7 +590,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                             SizedBox(height: 2),
                             Text('Masa kur, arkadaşını bekle veya açık masaya katıl.',
-                              style: TextStyle(color: Colors.white60, fontSize: 15)),
+                              style: TextStyle(color: Colors.white70, fontSize: 16)),
                           ],
                         ),
                       ),
@@ -624,7 +624,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         const Icon(Icons.key_rounded, color: Color(0xFFFBBF24), size: 17),
                         const SizedBox(width: 8),
                         Text(t('manual_join_title'),
-                          style: const TextStyle(color: Colors.white70, fontSize: 15, fontWeight: FontWeight.w600)),
+                          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
                       ]),
                       iconColor: Colors.white70,
                       collapsedIconColor: Colors.white70,
@@ -712,7 +712,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: selected ? const Color(0xFF101827) : Colors.white70,
-                fontSize: 14, fontWeight: FontWeight.w800))),
+                fontSize: 16, fontWeight: FontWeight.w900))),
           ]),
         ),
       ),
@@ -765,14 +765,14 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(28),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.table_restaurant_outlined, size: 42, color: Color(0xFFFBBF24)),
+                      const Icon(Icons.table_restaurant_outlined, size: 64, color: Color(0xFFFBBF24)),
                       const SizedBox(height: 12),
-                      const Text('Şu anda açık masa yok', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                      const Text('Şu anda açık masa yok', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 21)),
                       const SizedBox(height: 6),
-                      const Text('İlk masayı sen kurabilir veya arkadaşını davet edebilirsin.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 14)),
+                      const Text('İlk masayı sen kurabilir veya arkadaşını davet edebilirsin.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.4)),
                       if (snapshot.data!.docs.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        const Text('Görünen masalar filtrelenmiş olabilir.', style: TextStyle(color: Colors.white38, fontSize: 15)),
+                        const Text('Görünen masalar filtrelenmiş olabilir.', style: TextStyle(color: Colors.white38, fontSize: 16, fontWeight: FontWeight.w700)),
                       ],
                     ]),
                   ),
@@ -864,7 +864,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 15)),
+                            fontSize: 18)),
                     Text(centerSubtitle,
                         textAlign: TextAlign.center,
                         maxLines: 1,
@@ -915,7 +915,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Text(t('players_title'),
                 style: const TextStyle(
-                    color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                    color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -982,7 +982,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                           _friendsOnly ? t('no_friends_yet') : t('no_open_tables'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              color: Colors.white38, fontSize: 15)),
+                              color: Colors.white70, fontSize: 17)),
                     ),
                   );
                 }
