@@ -52,14 +52,20 @@ class AuthService {
 
   Future<UserCredential> signInWithEmail(String email, String password) {
     return FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: email,
+      email: email.trim().toLowerCase(),
       password: password,
     );
   }
 
   Future<UserCredential> createAccount(String email, String password) async {
+    if (password.length < 6) {
+      throw FirebaseAuthException(
+        code: 'weak-password',
+        message: 'Şifre en az 6 karakter olmalı.',
+      );
+    }
     final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password: password,
     );
     // E-posta doğrulaması admin yetkisi için zorunlu; hesap açılışında
