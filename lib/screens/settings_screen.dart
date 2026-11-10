@@ -707,8 +707,6 @@ class _CardDesignRowState extends State<_CardDesignRow> {
         return t('theme_classic');
       case CardFaceTheme.fruit:
         return t('theme_fruit');
-      case CardFaceTheme.figure:
-        return t('theme_figure');
       case CardFaceTheme.ottoman:
         return t('theme_ottoman');
       case CardFaceTheme.egypt:
@@ -723,6 +721,12 @@ class _CardDesignRowState extends State<_CardDesignRow> {
         return t('theme_matryoshka');
       case CardFaceTheme.soviet:
         return t('theme_soviet');
+      case CardFaceTheme.india: return 'Hindistan';
+      case CardFaceTheme.germany: return 'Almanya';
+      case CardFaceTheme.france: return 'Fransa';
+      case CardFaceTheme.japan: return 'Japonya';
+      case CardFaceTheme.persia: return 'Pers';
+      case CardFaceTheme.russia: return 'Rusya';
     }
   }
 
@@ -787,7 +791,7 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                             spacing: gap,
                             runSpacing: gap,
                             children: [
-                              for (final theme in CardFaceTheme.values)
+                              for (final theme in const [CardFaceTheme.classic, CardFaceTheme.fruit, CardFaceTheme.ottoman, CardFaceTheme.egypt, CardFaceTheme.rome, CardFaceTheme.india, CardFaceTheme.germany, CardFaceTheme.france, CardFaceTheme.japan, CardFaceTheme.persia, CardFaceTheme.russia])
                                 SizedBox(
                                   width: tileWidth,
                                   child: _ThemeTile(
