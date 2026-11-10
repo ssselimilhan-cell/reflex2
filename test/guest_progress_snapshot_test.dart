@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stres_kart/settings/guest_progress_snapshot.dart';
+import 'package:stres_kart/settings/ladder.dart';
+import 'package:stres_kart/settings/progress.dart';
+import 'package:stres_kart/settings/user_profile.dart';
 
 GuestProgressSnapshot sampleSnapshot() => const GuestProgressSnapshot(
       exportedAtUtc: '2026-11-10T09:00:00.000Z',
@@ -29,6 +33,54 @@ void main() {
       final restored = GuestProgressSnapshot.fromMap(original.toMap());
 
       expect(restored.toMap(), original.toMap());
+    });
+
+    test('captures all local guest progression after startup', () {
+      final profile = UserProfile.instance
+        ..displayName = 'Local Player'
+        ..onlineWins = 8
+        ..onlineLosses = 2
+        ..avatarIconIndex = 4
+        ..avatarColor = const Color(0xFF3B82F6)
+        ..photoBase64 = 'YWJj';
+      final progress = Progress.instance
+        ..streakDays = 6
+        ..lastPlayDay = '2026-11-10'
+        ..missionDay = '2026-11-10'
+        ..todayGames = 4
+        ..todayWins = 2
+        ..todayBonuses = 1
+        ..stars = 31
+        ..totalWins = 50
+        ..reviewAsked = true
+        ..claimed
+          ..clear()
+          ..addAll([0, 2]);
+      LadderProgress.instance.highestCleared = 21;
+
+      final snapshot = GuestProgressSnapshot.capture(
+        exportedAt: DateTime.utc(2026, 11, 10),
+      );
+
+      expect(snapshot.displayName, 'Local Player');
+      expect(snapshot.onlineWins, 8);
+      expect(snapshot.onlineLosses, 2);
+      expect(snapshot.avatarIconIndex, 4);
+      expect(snapshot.photoBase64, 'YWJj');
+      expect(snapshot.streakDays, 6);
+      expect(snapshot.todayGames, 4);
+      expect(snapshot.todayWins, 2);
+      expect(snapshot.todayBonuses, 1);
+      expect(snapshot.stars, 31);
+      expect(snapshot.totalWins, 50);
+      expect(snapshot.claimedMissionIndexes, [0, 2]);
+      expect(snapshot.highestClearedLevel, 21);
+      expect(snapshot.toMap()['exportedAtUtc'], '2026-11-10T00:00:00.000Z');
+
+      // Keep the analyzer aware that the singleton is intentionally mutated
+      // here as a test fixture rather than a persistence operation.
+      expect(profile.hasProfile, isTrue);
+      expect(progress.claimed, containsAll([0, 2]));
     });
 
     test('does not include device-specific identity or photo path', () {
