@@ -299,53 +299,89 @@ class _VsBotScreenState extends State<VsBotScreen> {
                 const Positioned.fill(child: TableFelt()),
                 if (!_gameStarted)
                   Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 36),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: _beginGame,
-                            icon: const Icon(Icons.play_arrow),
-                            label: Text(t('start_game'),
-                                style: const TextStyle(fontSize: 18)),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 18),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 26),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(22, 26, 22, 20),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xE6253B58), Color(0xE6101B2C)],
                             ),
+                            borderRadius: BorderRadius.circular(26),
+                            border: Border.all(color: GameUi.cyan.withOpacity(0.24)),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x50000000), blurRadius: 28, offset: Offset(0, 12)),
+                            ],
                           ),
-                          const SizedBox(height: 32),
-                          Text('${t('difficulty')}:',
-                              style: const TextStyle(color: Colors.white)),
-                          Row(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    activeTrackColor: difficultyColor,
-                                    thumbColor: difficultyColor,
-                                    overlayColor:
-                                        difficultyColor.withOpacity(0.2),
+                              Container(
+                                width: 76,
+                                height: 76,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF2563EB), Color(0xFF0891B2)],
                                   ),
-                                  child: Slider(
-                                    value: difficulty,
-                                    onChanged: (v) =>
-                                        setState(() => difficulty = v),
-                                  ),
+                                  boxShadow: [
+                                    BoxShadow(color: GameUi.cyan.withOpacity(0.25), blurRadius: 22),
+                                  ],
                                 ),
+                                child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 38),
                               ),
-                              SizedBox(
-                                width: 44,
-                                child: Text(
-                                  '${(difficulty * 100).round()}%',
-                                  style: TextStyle(
-                                      color: difficultyColor,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                              const SizedBox(height: 18),
+                              Text(t('menu_bot'),
+                                  style: GameUi.display(25, color: Colors.white)),
+                              const SizedBox(height: 7),
+                              Text(t('difficulty'),
+                                  style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        activeTrackColor: difficultyColor,
+                                        inactiveTrackColor: Colors.white12,
+                                        thumbColor: GameUi.cyan,
+                                        overlayColor: GameUi.cyan.withOpacity(0.16),
+                                        trackHeight: 5,
+                                      ),
+                                      child: Slider(
+                                        value: difficulty,
+                                        onChanged: (v) => setState(() => difficulty = v),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 48,
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.symmetric(vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: difficultyColor.withOpacity(0.14),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: difficultyColor.withOpacity(0.35)),
+                                    ),
+                                    child: Text('${(difficulty * 100).round()}%',
+                                      style: TextStyle(color: difficultyColor, fontWeight: FontWeight.w900)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              GamePrimaryButton(
+                                label: t('start_game'),
+                                icon: Icons.play_arrow_rounded,
+                                height: 58,
+                                onTap: _beginGame,
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   )
