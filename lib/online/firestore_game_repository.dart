@@ -553,19 +553,20 @@ class OnlineRoomRepository {
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final matchSnap = await tx.get(match);
       final roomSnap = await tx.get(room);
-      if (!matchSnap.exists || !roomSnap.exists) {
-        throw StateError('Maç odası bulunamadı.');
+      if (!matchSnap.exists) {
+        throw StateError('Turnuva eşleşmesi bulunamadı.');
       }
       final matchData = matchSnap.data()!;
-      final roomData = roomSnap.data()!;
+      final roomData = roomSnap.data();
       if (matchData['status'] != 'ready' ||
           matchData['player1Uid'] != uid ||
           matchData['roomCode'] != roomCode ||
-          roomData['roomStatus'] != 'cancelled' ||
-          roomData['tournamentChannelId'] != channelId ||
-          roomData['tournamentId'] != tournamentId ||
-          roomData['tournamentMatchId'] != matchId) {
-        throw StateError('Yalnızca iptal edilmiş bu maçın odası yeniden açılabilir.');
+          (roomSnap.exists &&
+            (roomData?['roomStatus'] != 'cancelled' ||
+             roomData?['tournamentChannelId'] != channelId ||
+             roomData?['tournamentId'] != tournamentId ||
+             roomData?['tournamentMatchId'] != matchId))) {
+        throw StateError('Yalnızca iptal edilmiş veya süresi dolmuş bu maç odası yeniden açılabilir.');
       }
       tx.update(match, {
         'roomCode': FieldValue.delete(),
