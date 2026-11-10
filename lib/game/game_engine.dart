@@ -259,36 +259,104 @@ class GameEngine {
     };
   }
 
+  /// Firestore/yerel kayıttan gelen durumu önce tamamen doğrular, sonra
+  /// motorun mevcut durumuna uygular. Bozuk veya eksik uzak veri oyunu
+  /// yarım yamalak değiştiremez.
   void loadFromMap(Map<String, dynamic> map) {
-    List<PlayingCard> decodeList(List raw) =>
-        raw.map((e) => PlayingCard.fromCode(e as String)).toList();
+    List<PlayingCard> decodeCards(dynamic raw, String field) {
+      if (raw is! List) {
+        throw FormatException('Geçersiz oyun verisi: $field listesi yok.');
+      }
+      return raw.map((value) {
+        if (value is! String ||
+            !RegExp(r'^[SHDC](?:[1-9]|1[0-3])
+}
+).hasMatch(value)) {
+          throw FormatException('Geçersiz kart kodu: $value');
+        }
+        return PlayingCard.fromCode(value);
+      }).toList();
+    }
 
-    List<PlayingCard> decodeColumnString(String raw) => raw.isEmpty
-        ? <PlayingCard>[]
-        : raw.split(',').map(PlayingCard.fromCode).toList();
+    List<PlayingCard> decodeColumn(dynamic raw, int index) {
+      if (raw is! String) {
+        throw FormatException('Geçersiz kolon verisi: $index');
+      }
+      if (raw.isEmpty) return <PlayingCard>[];
+      return decodeCards(raw.split(','), 'columns[$index]');
+    }
 
+    final nextPlayer1Stock = decodeCards(map['player1Stock'], 'player1Stock');
+    final nextPlayer2Stock = decodeCards(map['player2Stock'], 'player2Stock');
+    final rawColumns = map['columns'];
+    if (rawColumns is! List || rawColumns.length != columnCount) {
+      throw FormatException('Oyun tam olarak $columnCount kolon içermeli.');
+    }
+    final nextColumns = List<List<PlayingCard>>.generate(
+      columnCount,
+      (index) => decodeColumn(rawColumns[index], index),
+    );
+
+    final rawUnlocked = map['unlocked'] ?? const <dynamic>[];
+    if (rawUnlocked is! List ||
+        rawUnlocked.any((value) => value is! int || value < 0 || value >= columnCount)) {
+      throw const FormatException('Geçersiz aktif kolon listesi.');
+    }
+    final nextUnlocked = rawUnlocked.cast<int>().toSet();
+    if (nextUnlocked.length != rawUnlocked.length) {
+      throw const FormatException('Aktif kolon listesinde tekrar var.');
+    }
+
+    final nextStatusName = map['status'];
+    final nextStatus = GameStatus.values.where(
+      (value) => value.name == nextStatusName,
+    );
+    if (nextStatus.length != 1) {
+      throw const FormatException('Geçersiz oyun durumu.');
+    }
+
+    final nextStreakEventId = (map['streakEventId'] as num?)?.toInt() ?? 0;
+    final nextBonusAmount =
+        (map['lastStreakBonusAmount'] as num?)?.toInt();
+    final nextBonusSide = map['lastStreakBonusSide'] as String?;
+    if (nextStreakEventId < 0 ||
+        (nextBonusAmount != null && (nextBonusAmount < 1 || nextBonusAmount > 3)) ||
+        (nextBonusSide != null &&
+            nextBonusSide != 'player1' &&
+            nextBonusSide != 'player2')) {
+      throw const FormatException('Geçersiz oyun ilerleme verisi.');
+    }
+
+    final allCards = <PlayingCard>[
+      ...nextPlayer1Stock,
+      ...nextPlayer2Stock,
+      for (final column in nextColumns) ...column,
+    ];
+    if (allCards.length != 52 || allCards.toSet().length != 52) {
+      throw const FormatException(
+        'Oyun kaydı 52 farklı kartın tamamını içermeli.',
+      );
+    }
+
+    // Tüm kontroller geçti: artık mevcut durumu atomik biçimde değiştir.
     player1Stock
       ..clear()
-      ..addAll(decodeList(map['player1Stock'] as List));
+      ..addAll(nextPlayer1Stock);
     player2Stock
       ..clear()
-      ..addAll(decodeList(map['player2Stock'] as List));
-
-    final rawColumns = map['columns'] as List;
+      ..addAll(nextPlayer2Stock);
     for (var i = 0; i < columnCount; i++) {
       columns[i]
         ..clear()
-        ..addAll(decodeColumnString(rawColumns[i] as String));
+        ..addAll(nextColumns[i]);
     }
-
     _unlocked
       ..clear()
-      ..addAll((map['unlocked'] as List? ?? const [])
-          .map((e) => e as int));
-
-    status = GameStatus.values.firstWhere((s) => s.name == map['status']);
-    streakEventId = (map['streakEventId'] as num?)?.toInt() ?? 0;
-    lastStreakBonusAmount = (map['lastStreakBonusAmount'] as num?)?.toInt();
-    lastStreakBonusSide = map['lastStreakBonusSide'] as String?;
+      ..addAll(nextUnlocked);
+    status = nextStatus.single;
+    streakEventId = nextStreakEventId;
+    lastStreakBonusAmount = nextBonusAmount;
+    lastStreakBonusSide = nextBonusSide;
+    locked = false;
   }
 }
