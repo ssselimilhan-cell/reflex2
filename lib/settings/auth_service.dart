@@ -25,14 +25,29 @@ class AuthService {
         message: 'Firebase Authentication is not configured.',
       );
     }
-    final googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return null;
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    return FirebaseAuth.instance.signInWithCredential(credential);
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return null;
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
+        throw FirebaseAuthException(
+          code: 'google-token-missing',
+          message: 'Google oturumundan kimlik bilgisi alınamadı.',
+        );
+      }
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      return await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException {
+      rethrow;
+    } catch (error) {
+      throw FirebaseAuthException(
+        code: 'google-sign-in-configuration-error',
+        message: 'Google ile giriş yapılandırması başarısız: $error',
+      );
+    }
   }
 
   Future<UserCredential> signInWithEmail(String email, String password) {
@@ -42,11 +57,21 @@ class AuthService {
     );
   }
 
-  Future<UserCredential> createAccount(String email, String password) {
-    return FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
+  Future<UserCredential> createAccount(String email, String password) async {
+    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email.trim(),
       password: password,
     );
+    // E-posta doğrulaması admin yetkisi için zorunlu; hesap açılışında
+    // kullanıcıya doğrulama bağlantısını otomatik gönder.
+    await credential.user?.sendEmailVerification();
+    return credential;
+  }
+
+  Future<void> resendVerificationEmail() async {
+    final user = currentUser;
+    if (user == null || user.emailVerified) return;
+    await user.sendEmailVerification();
   }
 
   /// Uploads guest progress on first sign-in and restores/merges it on
