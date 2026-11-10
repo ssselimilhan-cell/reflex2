@@ -31,7 +31,7 @@ class VsBotScreen extends StatefulWidget {
   /// Bot Yolu seviyesi (1-100). Verilirse zorluk çubuğu yerine o seviyenin
   /// botu kullanılır ve oyun hemen başlar.
   final int? level;
-  final Future<void> Function()? onGameFinished;
+  final Future<Widget?> Function()? onGameFinished;
   final Future<void> Function()? onAbandon;
 
   const VsBotScreen({
@@ -139,7 +139,14 @@ class _VsBotScreenState extends State<VsBotScreen> {
       if (!_matchCallbackInvoked && widget.onGameFinished != null) {
         _matchCallbackInvoked = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) widget.onGameFinished!.call();
+          if (!mounted) return;
+          widget.onGameFinished!().then((nextScreen) {
+            if (!mounted || nextScreen == null) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => nextScreen),
+            );
+          });
         });
       }
       if (widget.level != null) {

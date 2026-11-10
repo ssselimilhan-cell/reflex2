@@ -36,19 +36,14 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
     });
   }
 
-  Future<void> _finishAndTransition() async {
+  Future<Widget?> _finishAndTransition() async {
     final match = await _session.finish();
-    if (!mounted || match == null) return;
+    if (match == null) return null;
     Telemetry.log('quick_match_found_after_bot', {'host': match.isHost});
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OnlineGameScreen(
-          roomCode: match.roomCode,
-          deviceId: match.deviceId,
-          isHost: match.isHost,
-        ),
-      ),
+    return OnlineGameScreen(
+      roomCode: match.roomCode,
+      deviceId: match.deviceId,
+      isHost: match.isHost,
     );
   }
 
