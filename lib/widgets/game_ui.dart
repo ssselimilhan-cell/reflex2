@@ -12,8 +12,8 @@ class GameUi {
   // foundation can be adopted screen-by-screen without changing game logic.
   static const Color background = Color(0xFF101827);
   static const Color surface = Color(0xFF1B293D);
-  static const Color primary = Color(0xFF3B82F6);
-  static const Color cyan = Color(0xFF22D3EE);
+  static const Color primary = Color(0xFFFBBF24);
+  static const Color cyan = Color(0xFFFFE08A);
   static const Color rewardGold = Color(0xFFFBBF24);
 
   static const Color gold = Color(0xFFF7C948);
@@ -137,12 +137,12 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [const Color(0xFF60A5FA), GameUi.primary, const Color(0xFF1D4ED8)],
+                  colors: [GameUi.goldLight, GameUi.primary, GameUi.goldDeep],
                 ),
-                border: Border.all(color: const Color(0xFF93C5FD), width: 1.2),
+                border: Border.all(color: GameUi.goldLight, width: 1.4),
                 boxShadow: [
                   BoxShadow(
-                      color: const Color(0xFF1E40AF),
+                      color: GameUi.goldEdge,
                       offset: Offset(0, _down ? 1 : 4)),
                   BoxShadow(
                       color: GameUi.cyan.withOpacity(glow),
@@ -190,13 +190,13 @@ class _GamePrimaryButtonState extends State<GamePrimaryButton>
                           children: [
                             Text(widget.label,
                                 maxLines: 1,
-                                style: GameUi.display(21, color: Colors.white)),
+                                style: GameUi.display(22, color: GameUi.ink)),
                             if (widget.subtitle != null)
                               Text(widget.subtitle!,
                                   maxLines: 1,
                                   style: const TextStyle(
-                                      color: Color(0xCCFFFFFF),
-                                      fontSize: 12,
+                                      color: Color(0xDD1A1208),
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600)),
                           ],
                         ),
@@ -257,8 +257,8 @@ class GameTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -271,19 +271,19 @@ class GameTile extends StatelessWidget {
                           color: accent.withOpacity(0.38), blurRadius: 14),
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 23),
+                  child: Icon(icon, color: GameUi.ink, size: 26),
                 ),
                 const SizedBox(height: 10),
                 Text(title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GameUi.display(16)),
+                    style: GameUi.display(18)),
                 const SizedBox(height: 3),
                 Text(subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        color: Colors.white60, fontSize: 12, height: 1.25)),
+                        color: Colors.white70, fontSize: 14, height: 1.3)),
                 if (footer != null) ...[
                   const SizedBox(height: 10),
                   footer!,
