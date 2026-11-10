@@ -39,7 +39,7 @@ class AppSettings extends ChangeNotifier {
   bool highContrast = true; // varsayılan açık
   AppLanguage language = AppLanguage.tr;
   CardFaceTheme cardTheme = CardFaceTheme.classic; // seçili temanın yerel görsel şablonu
-  String selectedThemeId = 'builtin_classic'; // katalog kimliği; tema sayısından bağımsız
+  String selectedThemeId = 'builtin_classic'; // katalog kimliği; tema sayısından bağımsız\n  String selectedThemeName = 'Klasik';
   /// "Yardımlı mod" — açıkken aktif (eşleşen) kolonlar parlak çerçeyle
   /// vurgulanır; kapalıyken hamle mantığı aynı kalır ama vurgu
   /// gösterilmez (oyuncu eşleşmeyi kendi bulmalıdır). İki taraf için de
@@ -101,7 +101,7 @@ class AppSettings extends ChangeNotifier {
           break;
         // null ya da bilinmeyen değer: varsayılan (tr) kalır.
       }
-      selectedThemeId = prefs.getString('selectedThemeId') ?? 'builtin_classic';
+      selectedThemeId = prefs.getString('selectedThemeId') ?? 'builtin_classic';\n      selectedThemeName = prefs.getString('selectedThemeName') ?? 'Klasik';
       final themeIndex = prefs.getInt('cardTheme');
       if (themeIndex != null &&
           themeIndex >= 0 &&
@@ -136,7 +136,7 @@ class AppSettings extends ChangeNotifier {
         AppLanguage.tr => 'tr',
       });
       await prefs.setInt('cardTheme', cardTheme.index);
-      await prefs.setString('selectedThemeId', selectedThemeId);
+      await prefs.setString('selectedThemeId', selectedThemeId);\n      await prefs.setString('selectedThemeName', selectedThemeName);
       await prefs.setBool('assistedMode', assistedMode);
       await prefs.setBool('soundEnabled', soundEnabled);
       await prefs.setBool('hapticsEnabled', hapticsEnabled);
@@ -177,7 +177,7 @@ class AppSettings extends ChangeNotifier {
 
   void setCardFaceTheme(CardFaceTheme t) {
     cardTheme = t;
-    selectedThemeId = 'builtin_${t.name}';
+    selectedThemeId = 'builtin_${t.name}';\n    selectedThemeName = t == CardFaceTheme.fruit ? 'Meyve' : 'Klasik';
     notifyListeners();
     _persist();
   }
