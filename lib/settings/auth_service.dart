@@ -68,9 +68,14 @@ class AuthService {
       email: email.trim().toLowerCase(),
       password: password,
     );
-    // E-posta doğrulaması admin yetkisi için zorunlu; hesap açılışında
-    // kullanıcıya doğrulama bağlantısını otomatik gönder.
-    await credential.user?.sendEmailVerification();
+    // Hesap oluşturma başarılı olduktan sonra doğrulama e-postası gönderimi
+    // ayrı bir ağ işlemi olabilir. Gönderim başarısızsa hesabı başarısız
+    // göstermeyiz; profil kartından yeniden gönderilebilir.
+    try {
+      await credential.user?.sendEmailVerification();
+    } catch (_) {
+      // Authentication hesabı oluşturuldu; kullanıcı yeniden gönderebilir.
+    }
     return credential;
   }
 
