@@ -16,6 +16,7 @@ class AuthService {
       FirebaseAuth.instance.authStateChanges();
   User? get currentUser =>
       isAvailable ? FirebaseAuth.instance.currentUser : null;
+  bool get isAdmin => currentUser?.email?.trim().toLowerCase() == 'ssselimilhan@gmail.com' && currentUser?.emailVerified == true;
 
   Future<UserCredential?> signInWithGoogle() async {
     if (!isAvailable) {
