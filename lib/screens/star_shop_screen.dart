@@ -102,7 +102,7 @@ class StarShopScreen extends StatelessWidget {
                               Padding(padding: const EdgeInsets.only(top: 3), child: Text(data['description'] as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 10))),
                             const SizedBox(height: 8),
                             SizedBox(width: double.infinity, height: 36, child: owned
-                              ? OutlinedButton(onPressed: equipped ? null : () => AppSettings.instance.setCatalogTheme(id: themeId, visualStyle: theme), style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)), child: Text(equipped ? 'Kullanılıyor' : t('star_shop_equip'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)))
+                              ? OutlinedButton(onPressed: equipped ? null : () => AppSettings.instance.setCatalogTheme(id: themeId, name: (data['name'] as String?) ?? 'Tema', visualStyle: theme), style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)), child: Text(equipped ? 'Kullanılıyor' : t('star_shop_equip'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)))
                               : FilledButton(
                                   onPressed: progress.stars >= price ? () {
                                     final ok = progress.purchaseCatalogTheme(themeId, themeIndex, price);
