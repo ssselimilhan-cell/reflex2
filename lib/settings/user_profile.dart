@@ -242,7 +242,39 @@ class UserProfile extends ChangeNotifier {
     }
   }
 
+  String _nicknameDocumentId(String name) =>
+      Uri.encodeComponent(name.trim().toLowerCase());
+
+  Future<void> _claimAccountNickname(String name) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Guest names remain local until linked to an account.
+    final db = FirebaseFirestore.instance;
+    final newRef = db.collection('nicknames').doc(_nicknameDocumentId(name));
+    final oldName = displayName?.trim();
+    final oldRef = oldName == null || oldName.isEmpty
+        ? null
+        : db.collection('nicknames').doc(_nicknameDocumentId(oldName));
+    await db.runTransaction((tx) async {
+      final newSnap = await tx.get(newRef);
+      final oldSnap = oldRef == null || oldRef.path == newRef.path
+          ? null
+          : await tx.get(oldRef);
+      if (newSnap.exists && newSnap.data()?['uid'] != user.uid) {
+        throw StateError('Bu takma ad başka bir oyuncu tarafından kullanılıyor. Lütfen farklı bir ad seç.');
+      }
+      if (oldSnap?.exists == true && oldSnap?.data()?['uid'] == user.uid) {
+        tx.delete(oldRef!);
+      }
+      tx.set(newRef, {
+        'uid': user.uid,
+        'displayName': name.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   Future<void> createProfile(String name) async {
+    await _claimAccountNickname(name.trim());
     displayName = name.trim();
     notifyListeners();
     await _persistLocal();
