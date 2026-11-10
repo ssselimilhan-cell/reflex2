@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'guest_progress_snapshot.dart';
+import 'user_profile.dart';
 
 /// Firebase Authentication girişlerini tek noktadan yönetir.
 /// Yerel misafir ilerlemesi bu servis tarafından silinmez veya sıfırlanmaz.
@@ -44,7 +45,9 @@ class AuthService {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      return await FirebaseAuth.instance.signInWithCredential(credential);
+      final result = await FirebaseAuth.instance.signInWithCredential(credential);
+      await UserProfile.instance.activateAccountProfile();
+      return result;
     } on FirebaseAuthException {
       rethrow;
     } catch (error) {
@@ -55,11 +58,13 @@ class AuthService {
     }
   }
 
-  Future<UserCredential> signInWithEmail(String email, String password) {
-    return FirebaseAuth.instance.signInWithEmailAndPassword(
+  Future<UserCredential> signInWithEmail(String email, String password) async {
+    final result = await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email.trim().toLowerCase(),
       password: password,
     );
+    await UserProfile.instance.activateAccountProfile();
+    return result;
   }
 
   Future<UserCredential> createAccount(String email, String password) async {
@@ -81,6 +86,7 @@ class AuthService {
     } catch (_) {
       // Authentication hesabı oluşturuldu; kullanıcı yeniden gönderebilir.
     }
+    await UserProfile.instance.activateAccountProfile();
     return credential;
   }
 
@@ -135,6 +141,7 @@ class AuthService {
     // Firebase oturumunu Google SDK temizliğinden önce kapat. Böylece
     // GoogleSignIn.signOut() hata verse bile uygulama misafir durumuna geçer.
     await FirebaseAuth.instance.signOut();
+    await UserProfile.instance.activateGuestProfile();
     try {
       await GoogleSignIn().signOut().timeout(const Duration(seconds: 2));
     } catch (_) {
