@@ -180,7 +180,8 @@ void main() {
       final remote = sampleSnapshot().toMap()
         ..['onlineWins'] = 5
         ..['stars'] = 20
-        ..['highestClearedLevel'] = 25;
+        ..['highestClearedLevel'] = 25
+        ..['unlockedCardThemeIds'] = ['theme_persia'];
       final merged = GuestProgressSnapshot.merge(
         GuestProgressSnapshot.fromMap(local),
         GuestProgressSnapshot.fromMap(remote),
@@ -188,7 +189,7 @@ void main() {
       expect(merged.onlineWins, 8);
       expect(merged.stars, 20);
       expect(merged.highestClearedLevel, 25);
-      expect(merged.unlockedCardThemeIds, containsAll(['theme_ottoman_2026', 'theme_egypt_alt']));
+      expect(merged.unlockedCardThemeIds, containsAll(['theme_ottoman_2026', 'theme_egypt_alt', 'theme_persia']));
     });
 
     test('creates an empty snapshot for a different account', () {
