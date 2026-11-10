@@ -35,6 +35,7 @@ class GuestProgressSnapshot {
   final int highestClearedLevel;
   final List<int> unlockedCardThemeIndexes;
   final List<String> unlockedCardThemeIds;
+  final List<String> claimedTournamentRewardIds;
 
   const GuestProgressSnapshot({
     this.schemaVersion = currentSchemaVersion,
@@ -60,6 +61,7 @@ class GuestProgressSnapshot {
     required this.highestClearedLevel,
     this.unlockedCardThemeIndexes = const [],
     this.unlockedCardThemeIds = const [],
+    this.claimedTournamentRewardIds = const [],
   });
 
   /// Captures the current local profile and progression after app startup has
@@ -91,6 +93,7 @@ class GuestProgressSnapshot {
       highestClearedLevel: ladder.highestCleared,
       unlockedCardThemeIndexes: progress.unlockedCardThemes.toList()..sort(),
       unlockedCardThemeIds: progress.unlockedCardThemeIds.toList()..sort(),
+      claimedTournamentRewardIds: progress.claimedTournamentRewards.toList()..sort(),
     );
   }
 
@@ -170,6 +173,7 @@ class GuestProgressSnapshot {
           ? local.highestClearedLevel : remote.highestClearedLevel,
       unlockedCardThemeIndexes: {...local.unlockedCardThemeIndexes, ...remote.unlockedCardThemeIndexes}.toList()..sort(),
       unlockedCardThemeIds: {...local.unlockedCardThemeIds, ...remote.unlockedCardThemeIds}.toList()..sort(),
+      claimedTournamentRewardIds: {...local.claimedTournamentRewardIds, ...remote.claimedTournamentRewardIds}.toList()..sort(),
     );
   }
 
@@ -197,6 +201,7 @@ class GuestProgressSnapshot {
       claimedMissionIndexes: claimedMissionIndexes,
       unlockedCardThemeIndexes: unlockedCardThemeIndexes,
       unlockedCardThemeIds: unlockedCardThemeIds,
+      claimedTournamentRewardIds: claimedTournamentRewardIds,
     );
     await LadderProgress.instance.restoreAccountData(highestClearedLevel);
   }
@@ -235,6 +240,7 @@ class GuestProgressSnapshot {
         'highestClearedLevel': highestClearedLevel,
         'unlockedCardThemeIndexes': List<int>.from(unlockedCardThemeIndexes),
       'unlockedCardThemeIds': List<String>.from(unlockedCardThemeIds),
+        'claimedTournamentRewardIds': List<String>.from(claimedTournamentRewardIds),
       };
 
   factory GuestProgressSnapshot.fromMap(Map<String, dynamic> map) {
@@ -332,6 +338,11 @@ class GuestProgressSnapshot {
       throw const FormatException('Inconsistent snapshot counters');
     }
 
+    final rawTournamentClaims = map['claimedTournamentRewardIds'] ?? const <String>[];
+    if (rawTournamentClaims is! List || rawTournamentClaims.any((value) => value is! String || value.isEmpty || value.length > 128) || rawTournamentClaims.toSet().length != rawTournamentClaims.length) {
+      throw const FormatException('Invalid tournament reward claims');
+    }
+
     return GuestProgressSnapshot(
       schemaVersion: version,
       exportedAtUtc: exportedAt,
@@ -358,6 +369,7 @@ class GuestProgressSnapshot {
       highestClearedLevel: integer('highestClearedLevel', max: 100),
       unlockedCardThemeIndexes: List<int>.unmodifiable(rawUnlockedThemes.cast<int>()),
       unlockedCardThemeIds: List<String>.unmodifiable(rawThemeIds.cast<String>()),
+      claimedTournamentRewardIds: List<String>.unmodifiable(rawTournamentClaims.cast<String>()),
     );
   }
 }
