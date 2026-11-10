@@ -536,45 +536,35 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               children: [
                 _buildIncomingInvites(),
                 _buildIncomingFriendRequests(),
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF243B58), Color(0xFF142238)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0x44FBBF24)),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x33000000), blurRadius: 14, offset: Offset(0, 6)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('OYUNA KATIL',
+                              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                            SizedBox(height: 2),
+                            Text('Masa kur, arkadaşını bekle veya açık masaya katıl.',
+                              style: TextStyle(color: Colors.white60, fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      FilledButton.icon(
+                        onPressed: _loading ? null : _createRoom,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Masa Kur'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFFBBF24),
+                          foregroundColor: const Color(0xFF101827),
+                          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                        ),
+                      ),
                     ],
                   ),
-                  child: Row(children: [
-                    Container(
-                      width: 44, height: 44,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(colors: [Color(0xFFFFD84D), Color(0xFFF59E0B)]),
-                      ),
-                      child: const Icon(Icons.sports_esports_rounded, color: Color(0xFF172033), size: 24),
-                    ),
-                    const SizedBox(width: 13),
-                    const Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('GENEL LOBİ', style: TextStyle(
-                          color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.7)),
-                        SizedBox(height: 3),
-                        Text('Açık masalara katıl veya kendi masanı kur.',
-                          style: TextStyle(color: Colors.white70, fontSize: 11.5)),
-                      ],
-                    )),
-                    if (_loading)
-                      const SizedBox(width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFBBF24))),
-                  ]),
                 ),
                 if (_error != null)
                   Padding(
@@ -692,21 +682,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     // yüklenirken, hata verirken ya da hiç kayıt yokken bile HER ZAMAN
     // görünsün diye. Önceki tasarımda bu kart akışın içindeydi ve akış
     // (ör. eksik bir Firestore dizini yüzünden) takılırsa hiç görünmüyordu.
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: _buildTwoSeatCard(
-            onTap: _loading ? null : _createRoom,
-            seat1: _seatEmpty(highlight: true),
-            seat2: _seatEmpty(),
-            centerTitle: t('empty_table'),
-            centerSubtitle: t('sit_and_wait'),
-            borderColor: Colors.white.withOpacity(0.35),
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: _repo.watchOpenTables(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -793,11 +769,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
               );
             },
           ),
-        ),
-      ],
-    );
+  );
   }
-
   /// Karşılıklı iki koltuklu masa görünümü: solda 1. koltuk, sağda 2.
   /// koltuk, ortada masa bilgisi. Dolu koltuk avatar gösterir, boş
   /// koltuk "+" ile oturulabilir olduğunu belli eder.
