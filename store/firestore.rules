@@ -141,6 +141,22 @@ service cloud.firestore {
         allow delete: if request.auth != null && uid == request.auth.uid;
       }
 
+      match /messages/{messageId} {
+        allow read: if isChannelMember(channelId);
+        allow create: if isChannelMember(channelId)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.senderName is string
+          && request.resource.data.senderName.size() >= 1
+          && request.resource.data.senderName.size() <= 32
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 1
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.isAnnouncement is bool
+          && request.resource.data.sentAt == request.time
+          && (!request.resource.data.isAnnouncement || isChannelOwner(channelId));
+        allow update, delete: if false;
+      }
+
       match /tournaments/{tournamentId} {
         allow read: if isChannelMember(channelId);
         allow create: if isChannelOwner(channelId)
