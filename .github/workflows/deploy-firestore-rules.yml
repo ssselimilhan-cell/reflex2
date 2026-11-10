@@ -1,0 +1,31 @@
+name: Firestore Kurallarını Canlı Projeye Yayımla
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Firebase servis hesabı kimlik bilgisini hazırla
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STRES_CARD }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT_STRES_CARD GitHub Actions secret tanımlı değil."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STRES_CARD }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Firebase CLI kur
+        run: npm install --global firebase-tools
+      - name: Yalnızca Firestore güvenlik kurallarını yayımla
+        run: firebase deploy --only firestore:rules --project stres-card --non-interactive
