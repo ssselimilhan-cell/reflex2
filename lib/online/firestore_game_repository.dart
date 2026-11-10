@@ -558,6 +558,7 @@ class OnlineRoomRepository {
         'startedAt': FieldValue.serverTimestamp(),
         'currentRound': 1,
         'matchCount': matchIndex,
+        'prizeStars': {'1': 100, '2': 60, '3': 30},
       });
     });
   }
@@ -620,34 +621,99 @@ class OnlineRoomRepository {
           (latest.data()?['currentRound'] as num?)?.toInt() != round) {
         return; // Another completion already advanced this round.
       }
+      final prizeStars = Map<String, dynamic>.from(
+        latest.data()?['prizeStars'] as Map? ?? const {'1': 100, '2': 60, '3': 30});
+      Map<String, dynamic> prize(String uid, int rank) => {
+        'rank': rank,
+        'stars': (prizeStars['$rank'] as num?)?.toInt() ?? 0,
+      };
+
       if (format == 'round_robin') {
         final wins = <String, int>{};
+        final headToHead = <String, int>{};
+        final participants = <String>{};
         for (final item in roundMatches) {
+          final p1 = item['player1Uid'] as String?;
+          final p2 = item['player2Uid'] as String?;
           final winner = item['winnerUid'] as String?;
-          if (winner != null) wins[winner] = (wins[winner] ?? 0) + 1;
+          if (p1 != null) participants.add(p1);
+          if (p2 != null) participants.add(p2);
+          if (winner != null) {
+            wins[winner] = (wins[winner] ?? 0) + 1;
+            final loser = winner == p1 ? p2 : p1;
+            if (loser != null) headToHead['$winner|$loser'] = 1;
+          }
         }
-        final ordered = wins.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-        final topScore = ordered.isEmpty ? 0 : ordered.first.value;
-        final leaders = ordered.where((entry) => entry.value == topScore).map((entry) => entry.key).toList();
+        final ordered = participants.toList()
+          ..sort((a, b) {
+            final winCompare = (wins[b] ?? 0).compareTo(wins[a] ?? 0);
+            if (winCompare != 0) return winCompare;
+            final aAgainstB = headToHead['$a|$b'] ?? 0;
+            final bAgainstA = headToHead['$b|$a'] ?? 0;
+            if (aAgainstB != bAgainstA) return bAgainstA.compareTo(aAgainstB);
+            return a.compareTo(b);
+          });
+        final placements = <String, dynamic>{};
+        for (var i = 0; i < ordered.length && i < 3; i++) {
+          placements[ordered[i]] = prize(ordered[i], i + 1);
+        }
         tx.update(tournament, {
           'status': 'completed',
-          'winnerUid': leaders.length == 1 ? leaders.first : null,
-          'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
+          'winnerUid': ordered.isEmpty ? null : ordered.first,
+          'placements': placements,
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+        return;
+      }
+
+      // Final and third-place playoff are resolved together so the podium
+      // cannot be published before both matches have a confirmed result.
+      if (roundMatches.any((item) => item['isThirdPlace'] == true)) {
+        final finalMatch = roundMatches.firstWhere((item) => item['isThirdPlace'] != true);
+        final thirdMatch = roundMatches.firstWhere((item) => item['isThirdPlace'] == true);
+        final champion = finalMatch['winnerUid'] as String?;
+        final runnerUp = champion == finalMatch['player1Uid']
+            ? finalMatch['player2Uid'] as String?
+            : finalMatch['player1Uid'] as String?;
+        final third = thirdMatch['winnerUid'] as String?;
+        final placements = <String, dynamic>{};
+        if (champion != null) placements[champion] = prize(champion, 1);
+        if (runnerUp != null) placements[runnerUp] = prize(runnerUp, 2);
+        if (third != null) placements[third] = prize(third, 3);
+        tx.update(tournament, {
+          'status': 'completed',
+          'winnerUid': champion,
+          'placements': placements,
           'completedAt': FieldValue.serverTimestamp(),
         });
         return;
       }
 
       if (winners.length == 1) {
+        final finalMatch = roundMatches.first;
+        final champion = winners.first;
+        final runnerUp = champion == finalMatch['player1Uid']
+            ? finalMatch['player2Uid'] as String?
+            : finalMatch['player1Uid'] as String?;
+        final placements = <String, dynamic>{champion: prize(champion, 1)};
+        if (runnerUp != null) placements[runnerUp] = prize(runnerUp, 2);
         tx.update(tournament, {
           'status': 'completed',
-          'winnerUid': winners.first,
+          'winnerUid': champion,
+          'placements': placements,
           'completedAt': FieldValue.serverTimestamp(),
         });
         return;
       }
       var nextMatchIndex = 0;
+      final losers = <String>[];
+      for (final item in roundMatches) {
+        final winner = item['winnerUid'] as String?;
+        final p1 = item['player1Uid'] as String?;
+        final p2 = item['player2Uid'] as String?;
+        final loser = winner == p1 ? p2 : (winner == p2 ? p1 : null);
+        if (loser != null) losers.add(loser);
+      }
       for (var i = 0; i < winners.length; i += 2) {
         nextMatchIndex++;
         final p1 = winners[i];
@@ -673,10 +739,67 @@ class OnlineRoomRepository {
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
+      if (winners.length == 2 && losers.length >= 2) {
+        nextMatchIndex++;
+        final loser1 = losers[0];
+        final loser2 = losers[1];
+        String nameFor(String uid) {
+          for (final item in roundMatches) {
+            if (item['player1Uid'] == uid) return item['player1Name'] as String? ?? 'Oyuncu';
+            if (item['player2Uid'] == uid) return item['player2Name'] as String? ?? 'Oyuncu';
+          }
+          return 'Oyuncu';
+        }
+        tx.set(tournament.collection('matches').doc('r${round + 1}_m$nextMatchIndex'), {
+          'round': round + 1,
+          'matchIndex': nextMatchIndex,
+          'player1Uid': loser1,
+          'player1Name': nameFor(loser1),
+          'player2Uid': loser2,
+          'player2Name': nameFor(loser2),
+          'winnerUid': null,
+          'status': 'ready',
+          'isThirdPlace': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
       tx.update(tournament, {
         'currentRound': round + 1,
         'matchCount': FieldValue.increment(nextMatchIndex),
       });
+    });
+  }
+
+  /// A participant can claim only their own published podium reward.
+  /// Existing claim documents are returned so a client interrupted between
+  /// claim creation and local credit can safely finish the credit once.
+  Future<int> claimTournamentReward({
+    required String channelId,
+    required String tournamentId,
+    required String deviceId,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final claim = tournament.collection('reward_claims').doc(uid);
+    return FirebaseFirestore.instance.runTransaction<int>((tx) async {
+      final tournamentSnap = await tx.get(tournament);
+      final claimSnap = await tx.get(claim);
+      if (claimSnap.exists) return (claimSnap.data()?['stars'] as num?)?.toInt() ?? 0;
+      final data = tournamentSnap.data();
+      if (!tournamentSnap.exists || data?['status'] != 'completed') return 0;
+      final placements = Map<String, dynamic>.from(data?['placements'] as Map? ?? const {});
+      final placement = placements[uid];
+      if (placement is! Map) return 0;
+      final rank = (placement['rank'] as num?)?.toInt() ?? 0;
+      final stars = (placement['stars'] as num?)?.toInt() ?? 0;
+      if (rank < 1 || rank > 3 || stars <= 0) return 0;
+      tx.set(claim, {
+        'uid': uid,
+        'rank': rank,
+        'stars': stars,
+        'claimedAt': FieldValue.serverTimestamp(),
+      });
+      return stars;
     });
   }
 
