@@ -15,6 +15,17 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     3: 'Osmanlı', 4: 'Mısır', 5: 'Roma', 10: 'Hindistan',
     11: 'Almanya', 12: 'Fransa', 13: 'Japonya', 14: 'Pers', 15: 'Rusya',
   };
+  static const _descriptions = <int, String>{
+    3: 'Osmanlı çini geometrisi, rumi kıvrımları ve zarif tezhip bordürlerinden ilham alan tasarım.',
+    4: 'Nil mavisi, lotus çiçeği, güneş diski ve piramit siluetleriyle Antik Mısır estetiği.',
+    5: 'Roma mermer mimarisi, sütun ritmi, defne ve mozaik detaylarından oluşan klasik tema.',
+    10: 'Hint mandalaları, lotus katmanları ve tavus kuşu tüylerinin zengin renk ritmi.',
+    11: 'Gotik mimari çizgileri, vitray geometrisi ve meşe yaprağı bezemelerinden ilham.',
+    12: 'Fransız fleur-de-lis motifleri, zarif simetri ve Art Nouveau çizgileri.',
+    13: 'Japon torii silueti, seigaiha dalga deseni ve sakura çiçekleri.',
+    14: 'Pers girih geometrisi, yıldız rozetleri ve turkuaz çini bezemeleri.',
+    15: 'Rus mimarisinin kubbe formları, mine renkleri ve geleneksel geometrik bordürler.',
+  };
   final _db = FirebaseFirestore.instance;
   bool _seeded = false;
 
@@ -36,7 +47,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
         batch.set(ref, {
           'themeIndex': entry.key,
           'name': entry.value,
-          'description': 'Kültürel motiflerle hazırlanmış özel kart tasarımı.',
+          'description': _descriptions[entry.key] ?? 'Kültürel motiflerle hazırlanmış özel kart tasarımı.',
           'priceStars': null,
           'isPublished': false,
           'sortOrder': entry.key,
