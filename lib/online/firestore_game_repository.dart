@@ -664,7 +664,10 @@ class OnlineRoomRepository {
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
-      tx.update(tournament, {'currentRound': round + 1});
+      tx.update(tournament, {
+        'currentRound': round + 1,
+        'matchCount': FieldValue.increment(nextMatchIndex),
+      });
     });
   }
 
