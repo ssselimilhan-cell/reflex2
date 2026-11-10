@@ -28,7 +28,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = AppSettings.instance;
     return AnimatedBuilder(
-      animation: Listenable.merge([settings, Moderation.instance, Progress.instance]),
+      animation: Listenable.merge([settings, Moderation.instance]),
       builder: (context, _) {
         return Scaffold(
           backgroundColor: settings.themeColor,
@@ -568,6 +568,7 @@ class _SwatchRow extends StatelessWidget {
 class _Swatch extends StatelessWidget {
   final Color color;
   final bool selected;
+  final bool locked;
   final VoidCallback onTap;
 
   const _Swatch(
@@ -843,7 +844,6 @@ class _ThemeTile extends StatelessWidget {
   final String label;
   final CardFaceTheme theme;
   final bool selected;
-  final bool locked;
   final VoidCallback onTap;
 
   const _ThemeTile({

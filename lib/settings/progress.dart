@@ -33,6 +33,8 @@ class Progress extends ChangeNotifier {
   int todayWins = 0;
   int todayBonuses = 0;
   int stars = 0;
+  int starsEarned = 0;
+  int starsSpent = 0;
   int totalWins = 0;
   bool reviewAsked = false;
   final Set<int> claimed = {};
@@ -74,6 +76,9 @@ class Progress extends ChangeNotifier {
       todayWins = prefs.getInt('pg_wins') ?? 0;
       todayBonuses = prefs.getInt('pg_bonuses') ?? 0;
       stars = prefs.getInt('pg_stars') ?? 0;
+      starsEarned = prefs.getInt('pg_starsEarned') ?? stars;
+      starsSpent = prefs.getInt('pg_starsSpent') ?? 0;
+      stars = (starsEarned > starsSpent) ? starsEarned - starsSpent : 0;
       totalWins = prefs.getInt('pg_totalWins') ?? 0;
       reviewAsked = prefs.getBool('pg_reviewAsked') ?? false;
       unlockedCardThemes
@@ -97,6 +102,8 @@ class Progress extends ChangeNotifier {
     required int todayWins,
     required int todayBonuses,
     required int stars,
+    int? starsEarned,
+    int starsSpent = 0,
     required int totalWins,
     required bool reviewAsked,
     required List<int> claimedMissionIndexes,
@@ -108,7 +115,10 @@ class Progress extends ChangeNotifier {
     this.todayGames = todayGames;
     this.todayWins = todayWins;
     this.todayBonuses = todayBonuses;
-    this.stars = stars;
+    this.starsEarned = starsEarned ?? stars;
+    this.starsSpent = starsSpent;
+    this.stars = this.starsEarned > this.starsSpent
+        ? this.starsEarned - this.starsSpent : 0;
     this.totalWins = totalWins;
     this.reviewAsked = reviewAsked;
     claimed
@@ -130,7 +140,8 @@ class Progress extends ChangeNotifier {
   bool purchaseCardTheme(int index) {
     final price = cardThemePrices[index];
     if (price == null || isCardThemeUnlocked(index) || stars < price) return false;
-    stars -= price;
+    starsSpent += price;
+    stars = starsEarned > starsSpent ? starsEarned - starsSpent : 0;
     unlockedCardThemes.add(index);
     _persist();
     notifyListeners();
@@ -142,6 +153,7 @@ class Progress extends ChangeNotifier {
   void addStars(int n) {
     if (n <= 0) return;
     stars += n;
+    starsEarned += n;
     _persist();
     notifyListeners();
   }
@@ -156,6 +168,8 @@ class Progress extends ChangeNotifier {
       await prefs.setInt('pg_wins', todayWins);
       await prefs.setInt('pg_bonuses', todayBonuses);
       await prefs.setInt('pg_stars', stars);
+      await prefs.setInt('pg_starsEarned', starsEarned);
+      await prefs.setInt('pg_starsSpent', starsSpent);
       await prefs.setInt('pg_totalWins', totalWins);
       await prefs.setBool('pg_reviewAsked', reviewAsked);
       await prefs.setStringList('pg_unlockedCardThemes',
@@ -231,6 +245,7 @@ class Progress extends ChangeNotifier {
       if (v >= missions[i].target) {
         claimed.add(i);
         stars++;
+        starsEarned++;
         rootMessengerKey.currentState?.showSnackBar(SnackBar(
           content:
               Text('⭐ ${t('mission_done')}: ${t(missions[i].titleKey)}'),

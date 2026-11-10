@@ -27,6 +27,8 @@ class GuestProgressSnapshot {
   final int todayWins;
   final int todayBonuses;
   final int stars;
+  final int starsEarned;
+  final int starsSpent;
   final int totalWins;
   final bool reviewAsked;
   final List<int> claimedMissionIndexes;
@@ -49,6 +51,8 @@ class GuestProgressSnapshot {
     required this.todayWins,
     required this.todayBonuses,
     required this.stars,
+    this.starsEarned = 0,
+    this.starsSpent = 0,
     required this.totalWins,
     required this.reviewAsked,
     required this.claimedMissionIndexes,
@@ -77,6 +81,8 @@ class GuestProgressSnapshot {
       todayWins: progress.todayWins,
       todayBonuses: progress.todayBonuses,
       stars: progress.stars,
+      starsEarned: progress.starsEarned,
+      starsSpent: progress.starsSpent,
       totalWins: progress.totalWins,
       reviewAsked: progress.reviewAsked,
       claimedMissionIndexes: progress.claimed.toList()..sort(),
@@ -101,6 +107,8 @@ class GuestProgressSnapshot {
       todayWins: 0,
       todayBonuses: 0,
       stars: 0,
+      starsEarned: 0,
+      starsSpent: 0,
       totalWins: 0,
       reviewAsked: false,
       claimedMissionIndexes: const [],
@@ -148,7 +156,9 @@ class GuestProgressSnapshot {
       todayBonuses: sameDay
           ? (local.todayBonuses > remote.todayBonuses ? local.todayBonuses : remote.todayBonuses)
           : daily.todayBonuses,
-      stars: local.stars > remote.stars ? local.stars : remote.stars,
+      stars: 0,
+      starsEarned: local.starsEarned > remote.starsEarned ? local.starsEarned : remote.starsEarned,
+      starsSpent: local.starsSpent > remote.starsSpent ? local.starsSpent : remote.starsSpent,
       totalWins: local.totalWins > remote.totalWins
           ? local.totalWins : remote.totalWins,
       reviewAsked: local.reviewAsked || remote.reviewAsked,
@@ -176,6 +186,8 @@ class GuestProgressSnapshot {
       todayWins: todayWins,
       todayBonuses: todayBonuses,
       stars: stars,
+      starsEarned: starsEarned,
+      starsSpent: starsSpent,
       totalWins: totalWins,
       reviewAsked: reviewAsked,
       claimedMissionIndexes: claimedMissionIndexes,
@@ -210,6 +222,8 @@ class GuestProgressSnapshot {
         'todayWins': todayWins,
         'todayBonuses': todayBonuses,
         'stars': stars,
+        'starsEarned': starsEarned,
+        'starsSpent': starsSpent,
         'totalWins': totalWins,
         'reviewAsked': reviewAsked,
         'claimedMissionIndexes': List<int>.from(claimedMissionIndexes),
@@ -324,6 +338,8 @@ class GuestProgressSnapshot {
       todayWins: wins,
       todayBonuses: bonuses,
       stars: integer('stars'),
+      starsEarned: map['starsEarned'] == null ? integer('stars') : integer('starsEarned'),
+      starsSpent: map['starsSpent'] == null ? 0 : integer('starsSpent'),
       totalWins: totalWins,
       reviewAsked: map['reviewAsked'] is bool
           ? map['reviewAsked'] as bool
