@@ -156,7 +156,9 @@ class OnlineRoomRepository {
       // ("start_requested" -> "active") başlar.
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
-        'roomStatus': 'ready',
+        // A tournament invitation is already the players' consent to play:
+        // once the invited player takes the seat, start the match immediately.
+        'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
         'guestAvatarIconIndex': guestAvatarIconIndex,
