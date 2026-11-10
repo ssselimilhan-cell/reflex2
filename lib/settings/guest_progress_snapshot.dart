@@ -178,7 +178,7 @@ class GuestProgressSnapshot {
     final onlineWins = integer('onlineWins');
     final onlineLosses = integer('onlineLosses');
     final totalWins = integer('totalWins');
-    if (wins > games || totalWins < wins || bonuses > games) {
+    if (wins > games || totalWins < wins) {
       throw const FormatException('Inconsistent snapshot counters');
     }
 
