@@ -887,11 +887,11 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _repo.watchChannelMembers(widget.channelId),
                 builder: (context, memberSnapshot) {
-                  final winnerName = winnerUid == null ? null :
-                    memberSnapshot.data?.docs
-                      .where((member) => member.id == winnerUid)
-                      .map((member) => member.data()['displayName'] as String? ?? 'Oyuncu')
-                      .firstOrNull;
+                  final winnerMembers = memberSnapshot.data?.docs
+                    .where((member) => member.id == winnerUid).toList() ?? [];
+                  final winnerName = winnerMembers.isEmpty
+                    ? null
+                    : winnerMembers.first.data()['displayName'] as String? ?? 'Oyuncu';
                   return Container(
                     margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                     padding: const EdgeInsets.all(14),
