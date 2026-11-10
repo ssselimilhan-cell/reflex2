@@ -230,7 +230,6 @@ class _CardWidgetState extends State<CardWidget>
     final cornerSuitSize = widget.height * 0.105;
     final theme = widget.themeOverride ?? AppSettings.instance.cardTheme;
     final centerSize = switch (theme) {
-      CardFaceTheme.figure => widget.height * 0.40,
       CardFaceTheme.classic => widget.height * 0.30,
       _ => widget.height * 0.36,
     };
@@ -348,8 +347,6 @@ class _CardWidgetState extends State<CardWidget>
         return '';
       case CardFaceTheme.fruit:
         return _fruitForSuit(s);
-      case CardFaceTheme.figure:
-        return _figureForSuit(s);
       case CardFaceTheme.ottoman:
         return switch (s) {
           Suit.spades => '⚔️',
@@ -393,12 +390,19 @@ class _CardWidgetState extends State<CardWidget>
           Suit.clubs => '❄️',
         };
       case CardFaceTheme.soviet:
-        return switch (s) {
-          Suit.spades => '⭐',
-          Suit.hearts => '⭐',
-          Suit.diamonds => '🏰',
-          Suit.clubs => '🏰',
-        };
+        return '✦';
+      case CardFaceTheme.india:
+        return switch (s) { Suit.spades => '🪷', Suit.hearts => '🦚', Suit.diamonds => 'ॐ', Suit.clubs => '✺' };
+      case CardFaceTheme.germany:
+        return switch (s) { Suit.spades => '♜', Suit.hearts => '❧', Suit.diamonds => '✥', Suit.clubs => '♣' };
+      case CardFaceTheme.france:
+        return switch (s) { Suit.spades => '⚜', Suit.hearts => '✿', Suit.diamonds => '✦', Suit.clubs => '❦' };
+      case CardFaceTheme.japan:
+        return switch (s) { Suit.spades => '鳥', Suit.hearts => '桜', Suit.diamonds => '扇', Suit.clubs => '波' };
+      case CardFaceTheme.persia:
+        return switch (s) { Suit.spades => '✺', Suit.hearts => '❁', Suit.diamonds => '۞', Suit.clubs => '❧' };
+      case CardFaceTheme.russia:
+        return switch (s) { Suit.spades => '❄', Suit.hearts => '✧', Suit.diamonds => '✿', Suit.clubs => '❖' };
     }
   }
 
@@ -436,14 +440,7 @@ class _CardWidgetState extends State<CardWidget>
     }
   }
 
-  /// "Boydan" ve daha iddialı/hareketli figürler için: statik yüz
-  /// emojileri yerine, tam vücut ve daha "gösterişli" duran dans
-  /// emojileri kullanılıyor — kırmızı takımlar için parlak elbiseli kadın
-  /// dansçı, siyah takımlar için şık takım elbiseli erkek dansçı.
-  String _figureForSuit(Suit s) {
-    final isRed = s == Suit.hearts || s == Suit.diamonds;
-    return isRed ? '💃' : '🕺';
-  }
+
 }
 
 
