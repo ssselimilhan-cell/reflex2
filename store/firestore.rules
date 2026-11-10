@@ -85,7 +85,7 @@ service cloud.firestore {
           && !exists(channelMemberPath(channelId, request.auth.uid))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
           && resource.data.status == 'open'
-          && resource.data.visibility == 'public'
+          && resource.data.visibility in ['public', 'invite_only']
           && request.resource.data.memberCount == resource.data.memberCount + 1)
         ||
         // Member leaves: their membership is deleted in the same transaction.
