@@ -47,8 +47,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
             decoration: const InputDecoration(labelText: 'Kısa açıklama', labelStyle: TextStyle(color: Colors.white70))),
           StatefulBuilder(builder: (context, setDialogState) => SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Yalnızca davetliler katılabilsin', style: TextStyle(color: Colors.white, fontSize: 13)),
-            subtitle: const Text('Davet kodu olmayan oyuncular kanala katılamaz.', style: TextStyle(color: Colors.white60, fontSize: 11)),
+            title: const Text('Yalnızca davetliler katılabilsin', style: TextStyle(color: Colors.white, fontSize: 15)),
+            subtitle: const Text('Davet kodu olmayan oyuncular kanala katılamaz.', style: TextStyle(color: Colors.white60, fontSize: 15)),
             value: _inviteOnly,
             activeColor: const Color(0xFFFBBF24),
             onChanged: (value) => setDialogState(() => _inviteOnly = value),
@@ -229,7 +229,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     ],
                     const SizedBox(height: 5),
                     Text('${data['memberCount'] ?? 0} oyuncu  ·  ${data['ownerDisplayName'] ?? 'Topluluk'}',
-                      style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 13, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w700)),
                   ])),
                   StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                     stream: _deviceId == null ? null : _repo.watchChannelMembership(doc.id, _deviceId!),
@@ -312,11 +312,11 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             ),
             child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('SIRALAMA ÖDÜLLERİ',
-                style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10,
+                style: TextStyle(color: Color(0xFFFBBF24), fontSize: 14,
                   fontWeight: FontWeight.w900, letterSpacing: .6)),
               SizedBox(height: 6),
               Text('🥇 1. 100 yıldız   ·   🥈 2. 60 yıldız   ·   🥉 3. 30 yıldız',
-                style: TextStyle(color: Colors.white, fontSize: 11,
+                style: TextStyle(color: Colors.white, fontSize: 15,
                   fontWeight: FontWeight.w700)),
             ]),
           ),
@@ -486,7 +486,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 3),
                     const Text('Bir oyuncu seçip özel maç daveti gönder.',
-                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      style: TextStyle(color: Colors.white60, fontSize: 14)),
                   ],
                 )),
               ]),
@@ -500,7 +500,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       const Expanded(child: Text('KANAL TURNUVALARI',
-                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1))),
+                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1))),
                       StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                         stream: channel.snapshots(),
                         builder: (context, ownerSnapshot) {
@@ -515,7 +515,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     ]),
                     if (tournaments.isEmpty)
                       const Text('Kanal kurucusu burada turnuva düzenleyebilir.',
-                        style: TextStyle(color: Colors.white54, fontSize: 11))
+                        style: TextStyle(color: Colors.white54, fontSize: 15))
                     else
                       ...tournaments.map((doc) {
                         final data = doc.data();
@@ -535,10 +535,10 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(data['title'] as String? ?? 'Turnuva', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                               Text(participants.length.toString() + '/' + maxPlayers.toString() + ' oyuncu · ' + (status == 'registration' ? 'Kayıt açık' : status == 'completed' ? 'Tamamlandı' : 'Devam ediyor'),
-                                style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                                style: const TextStyle(color: Colors.white60, fontSize: 15)),
                               const Text('Ödül: 100 / 60 / 30 ⭐',
                                 style: TextStyle(color: Color(0xFFFBBF24),
-                                  fontSize: 10, fontWeight: FontWeight.w800)),
+                                  fontSize: 14, fontWeight: FontWeight.w800)),
                             ])),
                             if (status == 'registration' && !isParticipant)
                               TextButton(onPressed: () => _joinTournament(doc.id), child: const Text('Katıl')),
@@ -621,7 +621,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     if (myStats != null) ...[
                       const Text('SENİN TURNUVA PERFORMANSIN',
-                        style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10,
+                        style: TextStyle(color: Color(0xFFFBBF24), fontSize: 14,
                           fontWeight: FontWeight.w900, letterSpacing: .5)),
                       const SizedBox(height: 7),
                       Row(children: [
@@ -641,7 +641,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                           const SizedBox(width: 6),
                           Text('Kanal sıralamasında $myRank. sıradasın',
                             style: const TextStyle(color: Color(0xFFFFE7A3),
-                              fontSize: 11, fontWeight: FontWeight.w800)),
+                              fontSize: 15, fontWeight: FontWeight.w800)),
                         ]),
                       ],
                       const SizedBox(height: 12),
@@ -650,7 +650,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                       Icon(Icons.leaderboard_rounded, color: Color(0xFFFBBF24), size: 19),
                       SizedBox(width: 8),
                       Text('KANALIN TURNUVA SIRALAMASI',
-                        style: TextStyle(color: Colors.white, fontSize: 11,
+                        style: TextStyle(color: Colors.white, fontSize: 15,
                           fontWeight: FontWeight.w900, letterSpacing: .5)),
                     ]),
                     const SizedBox(height: 8),
@@ -671,7 +671,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
                           Text('${stats[i].data()['championships'] ?? 0} şamp.  ·  '
                             '${stats[i].data()['podiums'] ?? 0} podyum',
-                            style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                            style: const TextStyle(color: Colors.white70, fontSize: 14)),
                         ]),
                       ),
                   ]),
@@ -692,7 +692,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     decoration: BoxDecoration(color: Color(0xFF34D399), shape: BoxShape.circle))),
                   SizedBox(width: 10),
                   Expanded(child: Text('Davet bekleniyor · Kanalın açık kalıyor',
-                    style: TextStyle(color: Color(0xFFB7F7D5), fontSize: 12, fontWeight: FontWeight.w700))),
+                    style: TextStyle(color: Color(0xFFB7F7D5), fontSize: 14, fontWeight: FontWeight.w700))),
                 ]),
               ),
             Expanded(child: ListView.separated(
@@ -719,7 +719,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                     title: Text(data['displayName'] as String? ?? t('guest_label'),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                     subtitle: Text(isMe ? 'Sen' : (data['role'] == 'owner' ? 'Kanal sahibi' : 'Oyuncu'),
-                      style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      style: const TextStyle(color: Colors.white54, fontSize: 15)),
                     trailing: isMe
                       ? const Icon(Icons.verified_rounded, color: Color(0xFFFBBF24))
                       : FilledButton(
@@ -856,14 +856,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                                   Icon(Icons.campaign_rounded, color: Color(0xFFFBBF24), size: 15),
                                   SizedBox(width: 5),
-                                  Text('KANAL DUYURUSU', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10, fontWeight: FontWeight.w900)),
+                                  Text('KANAL DUYURUSU', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.w900)),
                                 ]),
                               ),
                             if (!mine)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 4),
                                 child: Text(data['senderName'] as String? ?? 'Oyuncu',
-                                  style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w800)),
+                                  style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w800)),
                               ),
                             Text(data['text'] as String? ?? '', style: const TextStyle(color: Colors.white, height: 1.35)),
                             if (time != null)
@@ -890,7 +890,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 if (_announcement && isOwner)
                   const Align(alignment: Alignment.centerLeft, child: Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 5),
-                    child: Text('Duyuru olarak gönderilecek', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w700)),
+                    child: Text('Duyuru olarak gönderilecek', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w700)),
                   )),
                 Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                   if (isOwner)
@@ -1104,7 +1104,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                         const Padding(
                           padding: EdgeInsets.only(top: 8),
                           child: Text('Turnuva tamamlandı · Sıralama eşitlikle sonuçlandı',
-                            style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            style: TextStyle(color: Colors.white70, fontSize: 14)),
                         ),
                       for (final entry in podium)
                         Padding(
@@ -1185,7 +1185,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: Text('Maçları oynattıktan sonra kazananı burada işle. Eleme turnuvasında sonraki tur otomatik oluşturulur.',
-                  style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  style: TextStyle(color: Colors.white54, fontSize: 15)),
               ),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -1226,12 +1226,12 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text('TUR $round · MAÇ ${data['matchIndex'] ?? index + 1}',
-                            style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: .7)),
+                            style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: .7)),
                           const SizedBox(height: 8),
                           _TournamentPlayerRow(name: p1, winner: p1Won, isBye: isBye),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 5),
-                            child: Text('VS', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w900)),
+                            child: Text('VS', style: TextStyle(color: Colors.white30, fontSize: 14, fontWeight: FontWeight.w900)),
                           ),
                           _TournamentPlayerRow(name: p2, winner: p2Won, isBye: false),
                           if (ready && data['roomCode'] == null &&
@@ -1255,7 +1255,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                       spacing: 8,
                                       children: [
                                         const Text('Önceki maç odası iptal edildi',
-                                          style: TextStyle(color: Colors.white54, fontSize: 11)),
+                                          style: TextStyle(color: Colors.white54, fontSize: 15)),
                                         if (canRetry)
                                           TextButton.icon(
                                             onPressed: _busy ? null : () async {
@@ -1299,20 +1299,20 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 return Align(alignment: Alignment.centerRight, child: Text(
                                   winnerUid != null ? 'Maç bitti · Turnuva yöneticisi sonucu işleyecek'
                                     : 'Oda ${data['roomCode']} · ${roomSnapshot.hasData ? 'Rakip bekleniyor / maç sürüyor' : 'Oda yükleniyor'}',
-                                  style: const TextStyle(color: Colors.white54, fontSize: 11)));
+                                  style: const TextStyle(color: Colors.white54, fontSize: 15)));
                               },
                             ),
                           if (ready && data['roomCode'] == null &&
                               data['player1Uid'] != widget.deviceId && !isCreator)
                             const Align(alignment: Alignment.centerRight, child: Text('İlk oyuncunun maç odasını açması bekleniyor',
-                              style: TextStyle(color: Colors.white38, fontSize: 11))),
+                              style: TextStyle(color: Colors.white38, fontSize: 15))),
                           if (ready && isCreator && data['roomCode'] == null &&
                               data['player1Uid'] != widget.deviceId)
                             const Align(alignment: Alignment.centerRight, child: Text('İlk oyuncu maçı başlatabilir',
-                              style: TextStyle(color: Colors.white38, fontSize: 11))),
+                              style: TextStyle(color: Colors.white38, fontSize: 15))),
                           if (!ready)
                             Align(alignment: Alignment.centerRight, child: Text(isBye ? 'Bay geçti' : 'Tamamlandı',
-                              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w700))),
+                              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w700))),
                         ]),
                       );
                     },
@@ -1341,7 +1341,7 @@ class _TournamentPlayerRow extends StatelessWidget {
     Expanded(child: Text(name,
       style: TextStyle(color: winner ? const Color(0xFFFBBF24) : Colors.white,
         fontWeight: winner ? FontWeight.w900 : FontWeight.w600))),
-    if (isBye) const Text('BYE', style: TextStyle(color: Colors.white38, fontSize: 10)),
+    if (isBye) const Text('BYE', style: TextStyle(color: Colors.white38, fontSize: 14)),
     if (winner) const Icon(Icons.check_rounded, color: Color(0xFFFBBF24), size: 17),
   ]);
 }
