@@ -260,8 +260,7 @@ class GameEngine {
   }
 
   /// Firestore/yerel kayıttan gelen durumu önce tamamen doğrular, sonra
-  /// motorun mevcut durumuna uygular. Bozuk veya eksik uzak veri oyunu
-  /// yarım yamalak değiştiremez.
+  /// motorun mevcut durumuna uygular. Bozuk uzak veri oyunu yarım değiştiremez.
   void loadFromMap(Map<String, dynamic> map) {
     List<PlayingCard> decodeCards(dynamic raw, String field) {
       if (raw is! List) {
@@ -269,7 +268,7 @@ class GameEngine {
       }
       return raw.map((value) {
         if (value is! String ||
-            !RegExp(r'^[SHDC](?:[1-9]|1[0-3])
+            !RegExp(r'^[SHDC](?:[1-9]|1[0-3])$').hasMatch(value)) {
           throw FormatException('Geçersiz kart kodu: $value');
         }
         return PlayingCard.fromCode(value);
@@ -297,7 +296,8 @@ class GameEngine {
 
     final rawUnlocked = map['unlocked'] ?? const <dynamic>[];
     if (rawUnlocked is! List ||
-        rawUnlocked.any((value) => value is! int || value < 0 || value >= columnCount)) {
+        rawUnlocked.any((value) =>
+            value is! int || value < 0 || value >= columnCount)) {
       throw const FormatException('Geçersiz aktif kolon listesi.');
     }
     final nextUnlocked = rawUnlocked.cast<int>().toSet();
@@ -305,23 +305,35 @@ class GameEngine {
       throw const FormatException('Aktif kolon listesinde tekrar var.');
     }
 
-    final nextStatusName = map['status'];
-    final nextStatus = GameStatus.values.where(
-      (value) => value.name == nextStatusName,
-    );
-    if (nextStatus.length != 1) {
+    final statusName = map['status'];
+    final matchingStatuses =
+        GameStatus.values.where((value) => value.name == statusName);
+    if (matchingStatuses.length != 1) {
       throw const FormatException('Geçersiz oyun durumu.');
     }
 
-    final nextStreakEventId = (map['streakEventId'] as num?)?.toInt() ?? 0;
-    final nextBonusAmount =
-        (map['lastStreakBonusAmount'] as num?)?.toInt();
-    final nextBonusSide = map['lastStreakBonusSide'] as String?;
+    final rawStreakEventId = map['streakEventId'];
+    if (rawStreakEventId != null && rawStreakEventId is! num) {
+      throw const FormatException('Geçersiz avantaj olay numarası.');
+    }
+    final nextStreakEventId = (rawStreakEventId as num?)?.toInt() ?? 0;
+
+    final rawBonusAmount = map['lastStreakBonusAmount'];
+    if (rawBonusAmount != null && rawBonusAmount is! num) {
+      throw const FormatException('Geçersiz avantaj miktarı.');
+    }
+    final nextBonusAmount = (rawBonusAmount as num?)?.toInt();
+    final rawBonusSide = map['lastStreakBonusSide'];
+    if (rawBonusSide != null &&
+        rawBonusSide != 'player1' &&
+        rawBonusSide != 'player2') {
+      throw const FormatException('Geçersiz avantaj oyuncusu.');
+    }
+    final nextBonusSide = rawBonusSide as String?;
+
     if (nextStreakEventId < 0 ||
-        (nextBonusAmount != null && (nextBonusAmount < 1 || nextBonusAmount > 3)) ||
-        (nextBonusSide != null &&
-            nextBonusSide != 'player1' &&
-            nextBonusSide != 'player2')) {
+        (nextBonusAmount != null &&
+            (nextBonusAmount < 1 || nextBonusAmount > 3))) {
       throw const FormatException('Geçersiz oyun ilerleme verisi.');
     }
 
@@ -336,7 +348,6 @@ class GameEngine {
       );
     }
 
-    // Tüm kontroller geçti: artık mevcut durumu atomik biçimde değiştir.
     player1Stock
       ..clear()
       ..addAll(nextPlayer1Stock);
@@ -351,10 +362,11 @@ class GameEngine {
     _unlocked
       ..clear()
       ..addAll(nextUnlocked);
-    status = nextStatus.single;
+    status = matchingStatuses.single;
     streakEventId = nextStreakEventId;
     lastStreakBonusAmount = nextBonusAmount;
     lastStreakBonusSide = nextBonusSide;
     locked = false;
   }
+}
 }
