@@ -98,10 +98,23 @@ class UserProfile extends ChangeNotifier {
     if (user == null) return;
     deviceId ??= await getPersistentDeviceId();
     final cameFromGuest = _activeUid == null;
-    final guestName = cameFromGuest ? displayName : null;
-    final guestWins = cameFromGuest ? onlineWins : 0;
-    final guestLosses = cameFromGuest ? onlineLosses : 0;
-    await _readLocal(uid: user.uid, preserveCurrentIfMissing: cameFromGuest);
+    final prefs = await SharedPreferences.getInstance();
+    final hasAccountLocal = prefs.containsKey(_key('displayName', user.uid)) ||
+        prefs.containsKey(_key('onlineWins', user.uid));
+    // Uygulamanın önceki sürümünde kullanıcı zaten oturum açmış olabilir;
+    // hesap-özel anahtarlar yoksa eski yerel profilini bir defaya mahsus taşı.
+    final migrateLegacyGuest = cameFromGuest ||
+        (_activeUid == user.uid && !hasAccountLocal);
+    final guestName = migrateLegacyGuest
+        ? (cameFromGuest ? displayName : prefs.getString('displayName'))
+        : null;
+    final guestWins = migrateLegacyGuest
+        ? (cameFromGuest ? onlineWins : (prefs.getInt('onlineWins') ?? 0))
+        : 0;
+    final guestLosses = migrateLegacyGuest
+        ? (cameFromGuest ? onlineLosses : (prefs.getInt('onlineLosses') ?? 0))
+        : 0;
+    await _readLocal(uid: user.uid, preserveCurrentIfMissing: migrateLegacyGuest);
     try {
       final ref = FirebaseFirestore.instance
           .collection('users').doc(user.uid)
