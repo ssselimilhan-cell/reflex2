@@ -54,11 +54,11 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: Color(0xFF22D3EE)),
+          CircularProgressIndicator(color: Color(0xFFFBBF24), strokeWidth: 4),
           SizedBox(height: 16),
-          Text('Rakip aranıyor…', style: TextStyle(color: Colors.white70)),
+          Text('RAKİP ARANIYOR…', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
           SizedBox(height: 6),
-          Text('Bu sırada bot maçın başlıyor.', style: TextStyle(color: Colors.white54)),
+          Text('Bu sırada botla oynayabilirsin. Gerçek rakip bulunduğunda maç otomatik hazırlanır.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.4)),
         ],
       ),
     ),
