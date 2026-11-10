@@ -1,5 +1,5 @@
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { FieldPath, Timestamp, getFirestore } = require('firebase-admin/firestore');
+const { Timestamp, getFirestore } = require('firebase-admin/firestore');
 
 initializeApp({
   credential: applicationDefault(),
