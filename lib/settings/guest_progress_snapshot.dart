@@ -1,3 +1,7 @@
+import 'ladder.dart';
+import 'progress.dart';
+import 'user_profile.dart';
+
 /// Versioned, device-independent representation of guest progression.
 ///
 /// This model deliberately contains no device ID or local photo path. It is
@@ -47,6 +51,34 @@ class GuestProgressSnapshot {
     required this.claimedMissionIndexes,
     required this.highestClearedLevel,
   });
+
+  /// Captures the current local profile and progression after app startup has
+  /// loaded UserProfile, Progress and LadderProgress.
+  factory GuestProgressSnapshot.capture({DateTime? exportedAt}) {
+    final profile = UserProfile.instance;
+    final progress = Progress.instance;
+    final ladder = LadderProgress.instance;
+    return GuestProgressSnapshot(
+      exportedAtUtc: (exportedAt ?? DateTime.now()).toUtc().toIso8601String(),
+      displayName: profile.displayName,
+      onlineWins: profile.onlineWins,
+      onlineLosses: profile.onlineLosses,
+      avatarIconIndex: profile.avatarIconIndex,
+      avatarColorValue: profile.avatarColor.value,
+      photoBase64: profile.photoBase64,
+      streakDays: progress.streakDays,
+      lastPlayDay: progress.lastPlayDay,
+      missionDay: progress.missionDay,
+      todayGames: progress.todayGames,
+      todayWins: progress.todayWins,
+      todayBonuses: progress.todayBonuses,
+      stars: progress.stars,
+      totalWins: progress.totalWins,
+      reviewAsked: progress.reviewAsked,
+      claimedMissionIndexes: progress.claimed.toList()..sort(),
+      highestClearedLevel: ladder.highestCleared,
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         'schemaVersion': schemaVersion,
