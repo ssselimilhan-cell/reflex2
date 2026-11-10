@@ -98,15 +98,24 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SettingsScreen())),
                     ),
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 520),
-                            child: Column(
-                              children: [
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final contentWidth = constraints.maxWidth < 552
+                              ? constraints.maxWidth
+                              : 520.0;
+                          return Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topCenter,
+                              child: SizedBox(
+                                width: contentWidth,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
                                 const Reveal(index: 0, child: _Hero()),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 8),
                                 Reveal(
                                   index: 1,
                                   child: GamePrimaryButton(
@@ -118,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                                     onTap: () => _openQuickMatch(context),
                                   ),
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 8),
                                 Reveal(
                                   index: 2,
                                   child: IntrinsicHeight(
@@ -154,7 +163,7 @@ class HomeScreen extends StatelessWidget {
                                                         const LadderScreen())),
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
+                                        const SizedBox(width: 9),
                                         Expanded(
                                           child: GameTile(
                                             title: t('menu_online'),
@@ -168,7 +177,7 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 8),
                                 Reveal(
                                   index: 3,
                                   child: IntrinsicHeight(
@@ -204,12 +213,15 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 8),
                                 const Reveal(index: 4, child: DailyCard()),
-                              ],
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                     _RulesBar(
