@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';\nimport 'package:cloud_firestore/cloud_firestore.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
@@ -685,7 +685,7 @@ class _Segmented<T> extends StatelessWidget {
 /// dokununca açılan ızgarada bir tasarıma dokunmak sadece "adaylığa" alır;
 /// gerçekten uygulanması için "Kaydet" basılmalıdır.
 class _CardDesignRow extends StatefulWidget {
-  _CardDesignRow();
+  const _CardDesignRow();
 
   @override
   State<_CardDesignRow> createState() => _CardDesignRowState();
@@ -693,48 +693,43 @@ class _CardDesignRow extends StatefulWidget {
 
 class _CardDesignRowState extends State<_CardDesignRow> {
   bool _expanded = false;
-  late CardFaceTheme _pending;
+  late String _pendingId;
+  late CardFaceTheme _pendingStyle;
 
   @override
   void initState() {
     super.initState();
-    _pending = AppSettings.instance.cardTheme;
+    final settings = AppSettings.instance;
+    _pendingId = settings.selectedThemeId;
+    _pendingStyle = settings.cardTheme;
   }
 
-  String _labelFor(CardFaceTheme theme) {
-    switch (theme) {
-      case CardFaceTheme.classic:
-        return t('theme_classic');
-      case CardFaceTheme.fruit:
-        return t('theme_fruit');
-      case CardFaceTheme.figure:
-        return t('theme_classic');
-      case CardFaceTheme.ottoman:
-        return t('theme_ottoman');
-      case CardFaceTheme.egypt:
-        return t('theme_egypt');
-      case CardFaceTheme.rome:
-        return t('theme_rome');
-      case CardFaceTheme.animals:
-        return t('theme_animals');
-      case CardFaceTheme.chineseZodiac:
-        return t('theme_chinese_zodiac');
-      case CardFaceTheme.matryoshka:
-        return t('theme_matryoshka');
-      case CardFaceTheme.soviet:
-        return t('theme_soviet');
-      case CardFaceTheme.india: return t('theme_india');
-      case CardFaceTheme.germany: return t('theme_germany');
-      case CardFaceTheme.france: return t('theme_france');
-      case CardFaceTheme.japan: return t('theme_japan');
-      case CardFaceTheme.persia: return t('theme_persia');
-      case CardFaceTheme.russia: return t('theme_russia');
+  CardFaceTheme _styleFromIndex(dynamic value) {
+    final index = value is int ? value : CardFaceTheme.classic.index;
+    if (index < 0 || index >= CardFaceTheme.values.length) {
+      return CardFaceTheme.classic;
     }
+    final style = CardFaceTheme.values[index];
+    const hidden = {
+      CardFaceTheme.figure,
+      CardFaceTheme.animals,
+      CardFaceTheme.chineseZodiac,
+      CardFaceTheme.matryoshka,
+      CardFaceTheme.soviet,
+    };
+    return hidden.contains(style) ? CardFaceTheme.classic : style;
   }
+
+  String _builtinLabel(CardFaceTheme theme) => switch (theme) {
+    CardFaceTheme.classic => t('theme_classic'),
+    CardFaceTheme.fruit => t('theme_fruit'),
+    _ => t('theme_classic'),
+  };
 
   @override
   Widget build(BuildContext context) {
-    final hasPendingChange = _pending != AppSettings.instance.cardTheme;
+    final settings = AppSettings.instance;
+    final hasPendingChange = _pendingId != settings.selectedThemeId;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -747,23 +742,19 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                 SizedBox(
                   width: 32,
                   height: 44,
-                  child: CardWidget(
-                      card: _demoCard,
-                      themeOverride: _pending,
-                      width: 32,
-                      height: 44),
+                  child: CardWidget(card: _demoCard, themeOverride: _pendingStyle, width: 32, height: 44),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                    child: Text(t('settings_card_theme'), style: _titleStyle)),
+                Expanded(child: Text(t('settings_card_theme'), style: _titleStyle)),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    _labelFor(_pending),
+                    _pendingId.startsWith('builtin_')
+                        ? _builtinLabel(_pendingStyle)
+                        : '$_pendingId',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style:
-                        const TextStyle(color: Colors.white70, fontSize: 15),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -782,60 +773,130 @@ class _CardDesignRowState extends State<_CardDesignRow> {
           child: _expanded
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-                  child: Column(
-                    children: [
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          const gap = 8.0;
-                          final tileWidth =
-                              (constraints.maxWidth - gap * 2) / 3;
-                          return Wrap(
-                            spacing: gap,
-                            runSpacing: gap,
-                            children: [
-                              for (final theme in const [CardFaceTheme.classic, CardFaceTheme.fruit, CardFaceTheme.ottoman, CardFaceTheme.egypt, CardFaceTheme.rome, CardFaceTheme.india, CardFaceTheme.germany, CardFaceTheme.france, CardFaceTheme.japan, CardFaceTheme.persia, CardFaceTheme.russia])
-                                SizedBox(
-                                  width: tileWidth,
-                                  child: _ThemeTile(
-                                    label: _labelFor(theme),
-                                    theme: theme,
-                                    selected: theme == _pending,
-                                    locked: !Progress.instance.isCardThemeUnlocked(theme.index),
-                                    onTap: () {
-                                      if (!Progress.instance.isCardThemeUnlocked(theme.index)) {
-                                        Navigator.push(context, MaterialPageRoute(builder: (_) => const StarShopScreen()));
-                                        return;
-                                      }
-                                      setState(() => _pending = theme);
-                                    },
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: hasPendingChange
-                              ? () {
-                                  AppSettings.instance
-                                      .setCardFaceTheme(_pending);
-                                  setState(() => _expanded = false);
-                                }
-                              : null,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.amber,
-                            foregroundColor: Colors.black87,
-                            disabledBackgroundColor: const Color(0x1FFFFFFF),
-                            disabledForegroundColor: Colors.white38,
-                            minimumSize: const Size.fromHeight(46),
-                          ),
-                          child: Text(t('save')),
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('cosmetic_catalog')
+                        .where('isPublished', isEqualTo: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return const Text('Temalar şu anda yüklenemiyor.', style: TextStyle(color: Colors.white70));
+                      }
+                      if (!snapshot.hasData) {
+                        return const Padding(
+                          padding: EdgeInsets.all(18),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      final docs = snapshot.data!.docs
+                          .where((doc) {
+                            final data = doc.data();
+                            final price = data['priceStars'];
+                            final rawStyle = data['visualStyleIndex'] ?? data['themeIndex'];
+                            if (price is! int || price <= 0 || rawStyle is! int) return false;
+                            return Progress.instance.isCatalogThemeUnlocked(doc.id, rawStyle);
+                          })
+                          .toList()
+                        ..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0)
+                            .compareTo((b.data()['sortOrder'] as int?) ?? 0));
+
+                      final tiles = <Widget>[
+                        _ThemeTile(
+                          label: _builtinLabel(CardFaceTheme.classic),
+                          theme: CardFaceTheme.classic,
+                          selected: _pendingId == 'builtin_classic',
+                          locked: false,
+                          onTap: () => setState(() {
+                            _pendingId = 'builtin_classic';
+                            _pendingStyle = CardFaceTheme.classic;
+                          }),
                         ),
-                      ),
-                    ],
+                        _ThemeTile(
+                          label: _builtinLabel(CardFaceTheme.fruit),
+                          theme: CardFaceTheme.fruit,
+                          selected: _pendingId == 'builtin_fruit',
+                          locked: false,
+                          onTap: () => setState(() {
+                            _pendingId = 'builtin_fruit';
+                            _pendingStyle = CardFaceTheme.fruit;
+                          }),
+                        ),
+                        for (final doc in docs)
+                          _ThemeTile(
+                            label: (doc.data()['name'] as String?)?.trim().isNotEmpty == true
+                                ? (doc.data()['name'] as String).trim()
+                                : 'Tema',
+                            theme: _styleFromIndex(doc.data()['visualStyleIndex'] ?? doc.data()['themeIndex']),
+                            selected: _pendingId == doc.id,
+                            locked: false,
+                            onTap: () => setState(() {
+                              _pendingId = doc.id;
+                              _pendingStyle = _styleFromIndex(doc.data()['visualStyleIndex'] ?? doc.data()['themeIndex']);
+                            }),
+                          ),
+                      ];
+
+                      return Column(
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              const gap = 8.0;
+                              final tileWidth = (constraints.maxWidth - gap * 2) / 3;
+                              return Wrap(
+                                spacing: gap,
+                                runSpacing: gap,
+                                children: [
+                                  for (final tile in tiles)
+                                    SizedBox(width: tileWidth, child: tile),
+                                ],
+                              );
+                            },
+                          ),
+                          if (docs.isEmpty) ...[
+                            const SizedBox(height: 10),
+                            const Text('Yeni temaları yıldız mağazasından açabilirsin.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                          ],
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StarShopScreen())),
+                              icon: const Icon(Icons.storefront_outlined),
+                              label: const Text('Tema mağazasını aç'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.amber,
+                                side: const BorderSide(color: Colors.amber),
+                                minimumSize: const Size.fromHeight(42),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: hasPendingChange
+                                  ? () {
+                                      if (_pendingId.startsWith('builtin_')) {
+                                        settings.setCardFaceTheme(_pendingStyle);
+                                      } else {
+                                        settings.setCatalogTheme(id: _pendingId, visualStyle: _pendingStyle);
+                                      }
+                                      setState(() => _expanded = false);
+                                    }
+                                  : null,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.amber,
+                                foregroundColor: Colors.black87,
+                                disabledBackgroundColor: const Color(0x1FFFFFFF),
+                                disabledForegroundColor: Colors.white38,
+                                minimumSize: const Size.fromHeight(46),
+                              ),
+                              child: Text(t('save')),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 )
               : const SizedBox(width: double.infinity),
