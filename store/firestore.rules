@@ -31,7 +31,9 @@ service cloud.firestore {
       allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId
         && (!('tournamentMatchId' in resource.data)
           || request.resource.data.guestDeviceId == resource.data.guestDeviceId
-          || request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
+          || (request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
+            && request.auth != null
+            && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)/tournaments/$(resource.data.tournamentId)/matches/$(resource.data.tournamentMatchId)).data.player2Uid == request.auth.uid)
           || request.resource.data.guestDeviceId == null);
       allow delete: if false;
 
