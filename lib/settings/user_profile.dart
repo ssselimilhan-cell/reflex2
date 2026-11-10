@@ -145,6 +145,19 @@ class UserProfile extends ChangeNotifier {
         }
         await ref.set(_accountProfileMap()).timeout(const Duration(seconds: 6));
       }
+      // Existing account names are claimed on first upgraded sign-in too.
+      // A collision is resolved by asking the player to choose another name.
+      if (displayName != null && displayName!.trim().isNotEmpty) {
+        try {
+          await _claimAccountNickname(displayName!);
+        } on StateError {
+          displayName = null;
+          await ref.set({'displayName': null, 'updatedAt': FieldValue.serverTimestamp()},
+              SetOptions(merge: true));
+        } catch (_) {
+          // A temporary network/rules deployment issue must not erase the profile.
+        }
+      }
       if (generation != _activationGeneration ||
           FirebaseAuth.instance.currentUser?.uid != user.uid) return;
       await _persistLocal(accountUid: user.uid);
