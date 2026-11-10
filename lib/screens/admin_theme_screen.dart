@@ -54,6 +54,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
       if (!existing.exists) {
         batch.set(ref, {
           'themeIndex': entry.key,
+          'visualStyleIndex': entry.key,
           'name': entry.value,
           'description': _descriptions[entry.key] ?? '',
           'priceStars': null,
@@ -92,14 +93,8 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
   }
 
   Future<void> _addTheme(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) async {
-    final used = docs.map((d) => d.data()['themeIndex']).whereType<int>().toSet();
-    final available = List.generate(CardFaceTheme.values.length, (i) => i)
-        .where((i) => i >= 3 && !used.contains(i)).toList();
-    if (available.isEmpty) {
-      _message('Şu an tanımlı tüm görsel şablonlar katalogda. Yeni motif ailesi eklendiğinde burada seçilebilir olacak.');
-      return;
-    }
-
+    // Görsel şablonlar tekrar kullanılabilir; katalogda tema adedi sınırsızdır.
+    final available = <int>[3, 4, 5, 10, 11, 12, 13, 14, 15];
     int selected = available.first;
     final name = TextEditingController();
     final description = TextEditingController();
@@ -137,9 +132,10 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     final cleanName = name.text.trim();
     if (cleanName.isEmpty) { _message('Tema adı boş bırakılamaz.'); return; }
     final parsedPrice = int.tryParse(price.text.trim());
-    final doc = _db.collection('cosmetic_catalog').doc('card_theme_$selected');
+    final doc = _db.collection('cosmetic_catalog').doc();
     await doc.set({
       'themeIndex': selected,
+      'visualStyleIndex': selected,
       'name': cleanName,
       'description': description.text.trim(),
       'priceStars': parsedPrice != null && parsedPrice > 0 ? parsedPrice : null,
@@ -189,6 +185,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     await doc.reference.set({
       'name': name.text.trim(),
       'description': description.text.trim(),
+      'visualStyleIndex': (data['visualStyleIndex'] as int?) ?? (data['themeIndex'] as int? ?? 3),
       'priceStars': validPrice ? parsedPrice : null,
       'isPublished': published && validPrice && name.text.trim().isNotEmpty,
       'sortOrder': int.tryParse(sortOrder.text.trim()) ?? (data['sortOrder'] as int? ?? 0),
