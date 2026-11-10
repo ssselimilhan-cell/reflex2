@@ -82,24 +82,9 @@ const Map<String, Map<String, String>> _strings = {
   'theme_classic': {'tr': 'İskambil', 'en': 'Classic', 'ru': 'Классика', 'zh': '经典'},
   'theme_fruit': {'tr': 'Meyve', 'en': 'Fruit', 'ru': 'Фрукты', 'zh': '水果'},
   'theme_figure': {'tr': 'Figür', 'en': 'Figure', 'ru': 'Персонажи', 'zh': '人物'},
-  'theme_ottoman': {
-    'tr': 'Osmanlı Yeniçeri',
-    'en': 'Ottoman Janissary',
-    'ru': 'Османский янычар',
-    'zh': '奥斯曼禁卫军'
-  },
-  'theme_egypt': {
-    'tr': 'Mısır Firavun',
-    'en': 'Egyptian Pharaoh',
-    'ru': 'Египетский фараон',
-    'zh': '埃及法老'
-  },
-  'theme_rome': {
-    'tr': 'Roma İmparatorluğu',
-    'en': 'Roman Empire',
-    'ru': 'Римская империя',
-    'zh': '罗马帝国'
-  },
+  'theme_ottoman': {'tr': 'Osmanlı', 'en': 'Ottoman', 'ru': 'Османская империя', 'zh': '奥斯曼'},
+  'theme_egypt': {'tr': 'Mısır', 'en': 'Egypt', 'ru': 'Египет', 'zh': '埃及'},
+  'theme_rome': {'tr': 'Roma', 'en': 'Rome', 'ru': 'Рим', 'zh': '罗马'},
   'theme_animals': {
     'tr': 'Hayvan Figürleri',
     'en': 'Animal Figures',
@@ -124,6 +109,12 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Советский / Кремль',
     'zh': '苏联/克里姆林宫'
   },
+  'theme_india': {'tr': 'Hindistan', 'en': 'India', 'ru': 'Индия', 'zh': '印度'},
+  'theme_germany': {'tr': 'Almanya', 'en': 'Germany', 'ru': 'Германия', 'zh': '德国'},
+  'theme_france': {'tr': 'Fransa', 'en': 'France', 'ru': 'Франция', 'zh': '法国'},
+  'theme_japan': {'tr': 'Japonya', 'en': 'Japan', 'ru': 'Япония', 'zh': '日本'},
+  'theme_persia': {'tr': 'Pers', 'en': 'Persia', 'ru': 'Персия', 'zh': '波斯'},
+  'theme_russia': {'tr': 'Rusya', 'en': 'Russia', 'ru': 'Россия', 'zh': '俄罗斯'},
   'choose_theme': {
     'tr': 'Tema Seç',
     'en': 'Choose Theme',
