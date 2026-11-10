@@ -667,22 +667,35 @@ class OnlineRoomRepository {
             if (loser != null) headToHead['$winner|$loser'] = 1;
           }
         }
+        int headToHeadScore(String player) => participants
+            .where((other) => other != player && wins[other] == wins[player])
+            .where((other) => (headToHead['$player|$other'] ?? 0) > 0)
+            .length;
         final ordered = participants.toList()
           ..sort((a, b) {
             final winCompare = (wins[b] ?? 0).compareTo(wins[a] ?? 0);
             if (winCompare != 0) return winCompare;
-            final aAgainstB = headToHead['$a|$b'] ?? 0;
-            final bAgainstA = headToHead['$b|$a'] ?? 0;
-            if (aAgainstB != bAgainstA) return bAgainstA.compareTo(aAgainstB);
+            final headToHeadCompare = headToHeadScore(b).compareTo(headToHeadScore(a));
+            if (headToHeadCompare != 0) return headToHeadCompare;
             return a.compareTo(b);
           });
         final placements = <String, dynamic>{};
-        for (var i = 0; i < ordered.length && i < 3; i++) {
-          placements[ordered[i]] = prize(ordered[i], i + 1);
+        var rank = 0;
+        String? previousStanding;
+        for (var i = 0; i < ordered.length; i++) {
+          final player = ordered[i];
+          final standing = '${wins[player] ?? 0}:${headToHeadScore(player)}';
+          if (standing != previousStanding) rank = i + 1;
+          if (rank <= 3) placements[player] = prize(player, rank);
+          previousStanding = standing;
         }
+        final leaders = placements.entries
+            .where((entry) => (entry.value['rank'] as num?)?.toInt() == 1)
+            .map((entry) => entry.key).toList();
         tx.update(tournament, {
           'status': 'completed',
-          'winnerUid': ordered.isEmpty ? null : ordered.first,
+          'winnerUid': leaders.length == 1 ? leaders.first : null,
+          'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
           'placements': placements,
           'completedAt': FieldValue.serverTimestamp(),
         });
