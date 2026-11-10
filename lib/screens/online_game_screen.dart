@@ -87,6 +87,52 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   void _snack(String msg) => ScaffoldMessenger.of(context)
       .showSnackBar(SnackBar(content: Text(msg)));
 
+  bool _leaveDialogOpen = false;
+
+  Future<void> _confirmLeaveRoom() async {
+    if (_leaveDialogOpen || !mounted) return;
+    _leaveDialogOpen = true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Odadan ayrıl?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          widget.isHost
+              ? 'Odadan ayrılırsan bu masa iptal edilir ve davet kodu geçersiz olur.'
+              : 'Odadan ayrılırsan masadan çıkarsın. Oyun başlamadıysa masa yeniden beklemeye açılır.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF9B3434),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Odadan ayrıl'),
+          ),
+        ],
+      ),
+    );
+    _leaveDialogOpen = false;
+    if (confirmed != true || !mounted) return;
+    try {
+      await _repo.leaveRoom(
+        widget.roomCode,
+        widget.deviceId,
+        isHost: widget.isHost,
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) _snack('Odadan ayrılınamadı: $e');
+    }
+  }
+
   Future<void> _addFriendOpponent() async {
     final id = _opponentDeviceId;
     if (id == null) return;
@@ -351,8 +397,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     for (final t in _pendingTimers) {
       t.cancel();
     }
-    _repo.leaveRoom(widget.roomCode);
-    _repo.clearMessages(widget.roomCode);
+    // Oda yaşam döngüsü ekranın kapanmasına bağlı değildir.
+    // Geri tuşu/route dispose bekleme masasını iptal etmemelidir.
     super.dispose();
   }
 
@@ -403,7 +449,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               ),
             ],
           ),
-          body: GestureDetector(
+          body: PopScope<void>(
+            canPop: false,
+            onPopInvoked: (didPop) {
+              if (!didPop) _confirmLeaveRoom();
+            },
+            child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
             child: SafeArea(
@@ -462,7 +513,42 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         icon: const Icon(Icons.share),
                         label: Text(t('share_code_button')),
                       ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _confirmLeaveRoom,
+                        icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
+                        label: const Text('Odadan ayrıl', style: TextStyle(color: Colors.redAccent)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent),
+                        ),
+                      ),
                     ],
+                  ),
+                );
+              }
+
+              if (roomStatus == 'cancelled') {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.meeting_room_outlined,
+                            color: Colors.amber, size: 52),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Oda sahibi odadan ayrıldı. Bu masa iptal edildi.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 17),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Lobiye dön'),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
@@ -782,6 +868,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   ],
               );
             },
+          ),
           ),
           ),
           ),
