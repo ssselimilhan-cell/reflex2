@@ -303,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(choice
-              ? 'Hesap oluşturuldu. E-posta adresine gönderdiğimiz doğrulama bağlantısını onayla.'
+              ? 'Hesap oluşturuldu. E-posta doğrulamasını profil kartından takip edebilir ve gerekirse yeniden gönderebilirsin.'
               : t('account_connected'))),
           );
         }
