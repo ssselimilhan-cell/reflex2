@@ -316,14 +316,14 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                             Text(t('invite_received'),
                                 style: const TextStyle(
                                     color: Colors.amber,
-                                    fontSize: 11,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold)),
                             Text(
                               fromWinRate == null
                                   ? fromName
                                   : '$fromName · ${fromWinRate.round()}%',
                               style: const TextStyle(
-                                  color: Colors.white, fontSize: 13),
+                                  color: Colors.white, fontSize: 15),
                             ),
                           ],
                         ),
@@ -425,7 +425,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         child: Text(
                           '$fromName ${t('friend_request_text')}',
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 13),
+                              color: Colors.white, fontSize: 15),
                         ),
                       ),
                       IconButton(
@@ -539,7 +539,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 fontWeight: FontWeight.w900, letterSpacing: .4)),
                               SizedBox(height: 3),
                               Text('Topluluğunu kur, oyuncuları davet et, turnuva düzenle',
-                                style: TextStyle(color: Colors.white, fontSize: 13, height: 1.3)),
+                                style: TextStyle(color: Colors.white, fontSize: 15, height: 1.3)),
                             ],
                           )),
                           const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFFBBF24), size: 18),
@@ -568,7 +568,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                             const SizedBox(width: 10),
                             Expanded(child: Text('BEKLEYEN MASAN · ${_minimizedRoomCode!}',
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
-                            const Text('MASAYA DÖN', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w900)),
+                            const Text('MASAYA DÖN', style: TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w900)),
                             const SizedBox(width: 4),
                             const Icon(Icons.chevron_right, color: Color(0xFFFBBF24)),
                           ]),
@@ -588,7 +588,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                               style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                             SizedBox(height: 2),
                             Text('Masa kur, arkadaşını bekle veya açık masaya katıl.',
-                              style: TextStyle(color: Colors.white60, fontSize: 11)),
+                              style: TextStyle(color: Colors.white60, fontSize: 15)),
                           ],
                         ),
                       ),
@@ -622,7 +622,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         const Icon(Icons.key_rounded, color: Color(0xFFFBBF24), size: 17),
                         const SizedBox(width: 8),
                         Text(t('manual_join_title'),
-                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: const TextStyle(color: Colors.white70, fontSize: 15, fontWeight: FontWeight.w600)),
                       ]),
                       iconColor: Colors.white70,
                       collapsedIconColor: Colors.white70,
@@ -710,7 +710,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: selected ? const Color(0xFF101827) : Colors.white70,
-                fontSize: 12, fontWeight: FontWeight.w800))),
+                fontSize: 14, fontWeight: FontWeight.w800))),
           ]),
         ),
       ),
@@ -728,7 +728,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                     child: Text('${snapshot.error}',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            color: Colors.redAccent, fontSize: 11)),
+                            color: Colors.redAccent, fontSize: 15)),
                   ),
                 );
               }
@@ -767,10 +767,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       const SizedBox(height: 12),
                       const Text('Şu anda açık masa yok', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 6),
-                      const Text('İlk masayı sen kurabilir veya arkadaşını davet edebilirsin.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      const Text('İlk masayı sen kurabilir veya arkadaşını davet edebilirsin.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 14)),
                       if (snapshot.data!.docs.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        const Text('Görünen masalar filtrelenmiş olabilir.', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                        const Text('Görünen masalar filtrelenmiş olabilir.', style: TextStyle(color: Colors.white38, fontSize: 15)),
                       ],
                     ]),
                   ),
@@ -862,13 +862,13 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13)),
+                            fontSize: 15)),
                     Text(centerSubtitle,
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            color: Colors.white60, fontSize: 11)),
+                            color: Colors.white60, fontSize: 15)),
                   ],
                 ),
               ),
@@ -913,7 +913,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Text(t('players_title'),
                 style: const TextStyle(
-                    color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -980,7 +980,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                           _friendsOnly ? t('no_friends_yet') : t('no_open_tables'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              color: Colors.white38, fontSize: 11)),
+                              color: Colors.white38, fontSize: 15)),
                     ),
                   );
                 }
@@ -1025,14 +1025,14 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                   Row(
                                     children: [
                                       Text('${rankFor(wins).emoji} ',
-                                          style: const TextStyle(fontSize: 11)),
+                                          style: const TextStyle(fontSize: 15)),
                                       Flexible(
                                         child: Text(name,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 12,
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.bold)),
                                       ),
                                       if (_friendIds.contains(docs[i].id))
@@ -1046,7 +1046,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                   Text(
                                     '$played · ${rate == null ? "—" : "${rate.round()}%"}',
                                     style: const TextStyle(
-                                        color: Colors.white54, fontSize: 10),
+                                        color: Colors.white54, fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -1120,7 +1120,7 @@ class _StatChip extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 15)),
       ],
     );
   }
