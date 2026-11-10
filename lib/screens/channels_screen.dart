@@ -517,7 +517,19 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                               TextButton(onPressed: () => _joinTournament(doc.id), child: const Text('Katıl')),
                             if (status == 'registration' && isCreator)
                               IconButton(onPressed: () => _startTournament(doc.id),
+                                tooltip: 'Turnuvayı başlat',
                                 icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFFBBF24))),
+                            if (status == 'in_progress' || status == 'completed')
+                              TextButton(
+                                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                                  builder: (_) => ChannelTournamentScreen(
+                                    channelId: widget.channelId,
+                                    tournamentId: doc.id,
+                                    deviceId: widget.deviceId,
+                                  ),
+                                )),
+                                child: const Text('Eşleşmeler'),
+                              ),
                           ]),
                         );
                       }),
@@ -779,4 +791,207 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       ),
     );
   }
+}
+
+
+class ChannelTournamentScreen extends StatefulWidget {
+  final String channelId;
+  final String tournamentId;
+  final String deviceId;
+  const ChannelTournamentScreen({
+    super.key,
+    required this.channelId,
+    required this.tournamentId,
+    required this.deviceId,
+  });
+
+  @override
+  State<ChannelTournamentScreen> createState() => _ChannelTournamentScreenState();
+}
+
+class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
+  final _repo = OnlineRoomRepository();
+  bool _busy = false;
+
+  Future<void> _setWinner(String matchId, Map<String, dynamic> match) async {
+    final player1 = match['player1Uid'] as String?;
+    final player2 = match['player2Uid'] as String?;
+    if (player1 == null || player2 == null) return;
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Maç kazananını seç', style: TextStyle(color: Colors.white)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            title: Text(match['player1Name'] as String? ?? 'Oyuncu 1',
+              style: const TextStyle(color: Colors.white)),
+            leading: const Icon(Icons.person, color: Color(0xFFFBBF24)),
+            onTap: () => Navigator.pop(ctx, player1),
+          ),
+          ListTile(
+            title: Text(match['player2Name'] as String? ?? 'Oyuncu 2',
+              style: const TextStyle(color: Colors.white)),
+            leading: const Icon(Icons.person, color: Color(0xFFFBBF24)),
+            onTap: () => Navigator.pop(ctx, player2),
+          ),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Vazgeç'))],
+      ),
+    );
+    if (selected == null) return;
+    setState(() => _busy = true);
+    try {
+      await _repo.recordTournamentMatchWinner(
+        channelId: widget.channelId,
+        tournamentId: widget.tournamentId,
+        matchId: matchId,
+        creatorDeviceId: widget.deviceId,
+        winnerUid: selected,
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Maç sonucu kaydedilemedi: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tournamentRef = FirebaseFirestore.instance.collection('channels')
+        .doc(widget.channelId).collection('tournaments').doc(widget.tournamentId);
+    return Scaffold(
+      backgroundColor: const Color(0xFF101827),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF142238),
+        foregroundColor: Colors.white,
+        title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: tournamentRef.snapshots(),
+          builder: (context, snapshot) => Text(snapshot.data?.data()?['title'] as String? ?? 'Turnuva'),
+        ),
+      ),
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: tournamentRef.snapshots(),
+        builder: (context, tournamentSnapshot) {
+          final tournament = tournamentSnapshot.data?.data() ?? const <String, dynamic>{};
+          final isCreator = tournament['creatorDeviceId'] == widget.deviceId;
+          final status = tournament['status'] as String? ?? 'in_progress';
+          final winnerUid = tournament['winnerUid'] as String?;
+          return Column(children: [
+            if (status == 'completed')
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF473A19),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0x99FBBF24)),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.emoji_events_rounded, color: Color(0xFFFBBF24), size: 26),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(
+                    winnerUid == null ? 'Turnuva tamamlandı · Beraberlik' : 'Turnuva şampiyonu: $winnerUid',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                  )),
+                ]),
+              ),
+            if (isCreator && status == 'in_progress')
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text('Maçları oynattıktan sonra kazananı burada işle. Eleme turnuvasında sonraki tur otomatik oluşturulur.',
+                  style: TextStyle(color: Colors.white54, fontSize: 11)),
+              ),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _repo.watchTournamentMatches(widget.channelId, widget.tournamentId),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) return Center(child: Text('Eşleşmeler yüklenemedi: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.white54)));
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
+                  final matches = [...snapshot.data!.docs]
+                    ..sort((a, b) {
+                      final roundCompare = ((a.data()['round'] as num?) ?? 1).compareTo((b.data()['round'] as num?) ?? 1);
+                      if (roundCompare != 0) return roundCompare;
+                      return ((a.data()['matchIndex'] as num?) ?? 0).compareTo((b.data()['matchIndex'] as num?) ?? 0);
+                    });
+                  if (matches.isEmpty) return const Center(child: Text('Henüz eşleşme oluşturulmadı.',
+                    style: TextStyle(color: Colors.white54)));
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final doc = matches[index];
+                      final data = doc.data();
+                      final round = (data['round'] as num?)?.toInt() ?? 1;
+                      final p1 = data['player1Name'] as String? ?? 'Oyuncu 1';
+                      final p2 = data['player2Name'] as String? ?? 'Bay';
+                      final matchWinner = data['winnerUid'] as String?;
+                      final p1Won = matchWinner != null && matchWinner == data['player1Uid'];
+                      final p2Won = matchWinner != null && matchWinner == data['player2Uid'];
+                      final isBye = data['isBye'] == true;
+                      final ready = data['status'] == 'ready';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 9),
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B293D),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: ready ? Colors.white12 : const Color(0x66FBBF24)),
+                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('TUR $round · MAÇ ${data['matchIndex'] ?? index + 1}',
+                            style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: .7)),
+                          const SizedBox(height: 8),
+                          _TournamentPlayerRow(name: p1, winner: p1Won, isBye: isBye),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 5),
+                            child: Text('VS', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w900)),
+                          ),
+                          _TournamentPlayerRow(name: p2, winner: p2Won, isBye: false),
+                          if (ready && isCreator)
+                            Align(alignment: Alignment.centerRight, child: TextButton.icon(
+                              onPressed: _busy ? null : () => _setWinner(doc.id, data),
+                              icon: const Icon(Icons.check_circle_outline, size: 17),
+                              label: const Text('Sonucu işle'),
+                            )),
+                          if (ready && !isCreator)
+                            const Align(alignment: Alignment.centerRight, child: Text('Maç bekliyor',
+                              style: TextStyle(color: Colors.white38, fontSize: 11))),
+                          if (!ready)
+                            Align(alignment: Alignment.centerRight, child: Text(isBye ? 'Bay geçti' : 'Tamamlandı',
+                              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w700))),
+                        ]),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ]);
+        },
+      ),
+    );
+  }
+}
+
+class _TournamentPlayerRow extends StatelessWidget {
+  final String name;
+  final bool winner;
+  final bool isBye;
+  const _TournamentPlayerRow({required this.name, required this.winner, required this.isBye});
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+    Icon(winner ? Icons.emoji_events_rounded : Icons.person_outline_rounded,
+      color: winner ? const Color(0xFFFBBF24) : Colors.white54, size: 18),
+    const SizedBox(width: 8),
+    Expanded(child: Text(name,
+      style: TextStyle(color: winner ? const Color(0xFFFBBF24) : Colors.white,
+        fontWeight: winner ? FontWeight.w900 : FontWeight.w600))),
+    if (isBye) const Text('BYE', style: TextStyle(color: Colors.white38, fontSize: 10)),
+    if (winner) const Icon(Icons.check_rounded, color: Color(0xFFFBBF24), size: 17),
+  ]);
 }
