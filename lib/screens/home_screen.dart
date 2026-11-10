@@ -106,13 +106,17 @@ class HomeScreen extends StatelessWidget {
                           return Center(
                             child: SingleChildScrollView(
                               physics: const BouncingScrollPhysics(),
-                              child: SizedBox(
-                                width: contentWidth,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                                child: SizedBox(
+                                  width: contentWidth,
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
+                                  child: IntrinsicHeight(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
                                 const Reveal(index: 0, child: _Hero()),
                                 const SizedBox(height: 8),
                                 Reveal(
@@ -214,11 +218,13 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 const Reveal(index: 4, child: DailyCard()),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                          ),
                           );
                         },
                       ),
