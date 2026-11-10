@@ -71,6 +71,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       final p = UserProfile.instance;
       final id = await _repo.createChannel(
         ownerDeviceId: _deviceId!,
+        ownerPlayerDeviceId: p.deviceId ?? '',
         ownerDisplayName: p.hasProfile ? p.displayName! : t('you'),
         name: cleanName,
         description: cleanDescription,
@@ -115,6 +116,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       final p = UserProfile.instance;
       final joined = await _repo.joinPrivateChannelByCode(
         code: code, deviceId: _deviceId!,
+        playerDeviceId: p.deviceId ?? '',
         displayName: p.hasProfile ? p.displayName! : t('you'),
       );
       if (!joined) throw StateError('Davet kodu geçersiz veya kanal kapalı.');
@@ -133,6 +135,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       final p = UserProfile.instance;
       final joined = await _repo.joinChannel(
         channelId: id, deviceId: _deviceId!,
+        playerDeviceId: p.deviceId ?? '',
         displayName: p.hasProfile ? p.displayName! : t('you'),
       );
       if (!joined) {
@@ -142,7 +145,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(
-      builder: (_) => ChannelDetailScreen(channelId: id, deviceId: _deviceId!),
+      builder: (_) => ChannelDetailScreen(channelId: id, deviceId: _deviceId!, playerDeviceId: UserProfile.instance.deviceId ?? ''),
     ));
   }
 
@@ -258,7 +261,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
 class ChannelDetailScreen extends StatefulWidget {
   final String channelId;
   final String deviceId;
-  const ChannelDetailScreen({super.key, required this.channelId, required this.deviceId});
+  final String playerDeviceId;
+  const ChannelDetailScreen({super.key, required this.channelId, required this.deviceId, required this.playerDeviceId});
   @override
   State<ChannelDetailScreen> createState() => _ChannelDetailScreenState();
 }
@@ -347,13 +351,13 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   }
 
   Future<void> _startMatch(String targetDeviceId) async {
-    if (_busy || targetDeviceId == widget.deviceId || _pendingRoomCode != null) return;
+    if (_busy || targetDeviceId == widget.playerDeviceId || _pendingRoomCode != null) return;
     setState(() => _busy = true);
     try {
       final p = UserProfile.instance;
       final displayName = p.hasProfile ? p.displayName : t('you');
       final code = await _repo.createRoom(
-        widget.deviceId,
+        widget.playerDeviceId,
         hostDisplayName: displayName,
         hostWinRate: p.hasProfile ? p.onlineWinRate : null,
         hostAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
@@ -362,7 +366,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       );
       await _repo.sendInvite(
         toDeviceId: targetDeviceId,
-        fromDeviceId: widget.deviceId,
+        fromDeviceId: widget.playerDeviceId,
         roomCode: code,
         fromDisplayName: displayName,
         fromAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
@@ -380,7 +384,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           _openingMatch = true;
           _roomSub?.cancel();
           Navigator.push(context, MaterialPageRoute(builder: (_) =>
-            OnlineGameScreen(roomCode: code, deviceId: widget.deviceId, isHost: true)))
+            OnlineGameScreen(roomCode: code, deviceId: widget.playerDeviceId, isHost: true)))
             .then((_) {
               if (mounted) {
                 setState(() {
@@ -570,7 +574,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                       ? const Icon(Icons.verified_rounded, color: Color(0xFFFBBF24))
                       : FilledButton(
                           onPressed: _busy || _pendingRoomCode != null
-                            ? null : () => _startMatch(member.id),
+                            ? null : () => _startMatch(data['playerDeviceId'] as String? ?? member.id),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFFFBBF24),
                             foregroundColor: const Color(0xFF101827),
