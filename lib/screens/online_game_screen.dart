@@ -90,6 +90,23 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   bool _leaveDialogOpen = false;
   bool _allowRoutePop = false;
   String? _currentRoomStatus;
+  Timer? _roomExpiryTimer;
+  bool _opponentArrivalNotified = false;
+
+  void _scheduleWaitingRoomExpiry(Map<String, dynamic> data) {
+    if (_roomExpiryTimer != null) return;
+    final createdAt = data['createdAt'];
+    if (createdAt is! Timestamp) return;
+    final expiresAt = createdAt.toDate().add(const Duration(minutes: 5));
+    final remaining = expiresAt.difference(DateTime.now());
+    _roomExpiryTimer = Timer(remaining.isNegative ? Duration.zero : remaining, () async {
+      try {
+        await _repo.expireWaitingRoom(widget.roomCode);
+      } catch (_) {
+        _roomExpiryTimer = null;
+      }
+    });
+  }
 
   void _minimizeRoom() {
     if (!mounted) return;
@@ -405,6 +422,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   @override
   void dispose() {
     _friendSub?.cancel();
+    _roomExpiryTimer?.cancel();
     for (final t in _pendingTimers) {
       t.cancel();
     }
@@ -429,6 +447,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             surfaceTintColor: Colors.transparent,
             title: Text('${t('room')}: ${widget.roomCode}'),
             actions: [
+              if (widget.isHost)
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.redAccent, size: 27),
+                  tooltip: 'Masayı kapat',
+                  onPressed: _confirmLeaveRoom,
+                ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.flag_outlined),
                 tooltip: t('report_user'),
@@ -540,6 +564,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 }
 
                 if (roomStatus == 'waiting') {
+                _scheduleWaitingRoomExpiry(data);
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -602,6 +627,20 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               }
 
               if (roomStatus == 'ready') {
+                _roomExpiryTimer?.cancel();
+                if (widget.isHost && data['guestDeviceId'] != null && !_opponentArrivalNotified) {
+                  _opponentArrivalNotified = true;
+                  final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      duration: const Duration(seconds: 6),
+                      backgroundColor: const Color(0xFF176B45),
+                      content: Text('$arrivedName masaya oturdu! Maç başlatılmaya hazır.',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ));
+                  });
+                }
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -611,22 +650,26 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         const Icon(Icons.check_circle,
                             color: Colors.greenAccent, size: 48),
                         const SizedBox(height: 12),
-                        Text(t('opponent_connected'),
+                        Text(widget.isHost
+                                ? '${data['guestDisplayName'] as String? ?? 'Rakibin'} MASAYA OTURDU!'
+                                : t('opponent_connected'),
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 6),
-                        Text(t('press_start_hint'),
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 14)),
+                                color: Color(0xFFFFD76A),
+                                fontSize: 25,
+                                fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 10),
+                        const Text('İkiniz de masadasınız. Oyunu başlatmak için aşağıdaki düğmeye dokunun.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 18, height: 1.35)),
                         const SizedBox(height: 28),
                         ElevatedButton.icon(
                           onPressed: () =>
                               _repo.requestStart(widget.roomCode, mySide),
                           icon: const Icon(Icons.play_arrow),
-                          label: Text(t('start_game'),
-                              style: const TextStyle(fontSize: 16)),
+                          label: const Text('OYUNU BAŞLAT',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 28, vertical: 16),
