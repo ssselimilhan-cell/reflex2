@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'local_pvp_screen.dart';
 import 'vs_bot_screen.dart';
@@ -342,29 +343,46 @@ class _CardFan extends StatefulWidget {
 }
 
 class _CardFanState extends State<_CardFan>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  final math.Random _random = math.Random();
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 4),
   )..repeat(reverse: true);
 
+  late final List<AnimationController> _glows = List.generate(3, (_) {
+    final controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 650 + _random.nextInt(1250)),
+      value: _random.nextDouble(),
+    );
+    controller.repeat(reverse: true);
+    return controller;
+  });
+
   @override
   void dispose() {
     _c.dispose();
+    for (final glow in _glows) {
+      glow.dispose();
+    }
     super.dispose();
   }
 
   Widget _card(PlayingCard card, double angle, Offset offset,
-      {bool highlighted = false}) {
+      {required int glowIndex}) {
     return Transform.translate(
       offset: offset,
       child: Transform.rotate(
         angle: angle,
-        child: CardWidget(
-          card: card,
-          highlighted: highlighted,
-          width: 66,
-          height: 94,
+        child: AnimatedBuilder(
+          animation: _glows[glowIndex],
+          builder: (context, _) => CardWidget(
+            card: card,
+            highlighted: _glows[glowIndex].value > 0.48,
+            width: 66,
+            height: 94,
+          ),
         ),
       ),
     );
@@ -383,12 +401,11 @@ class _CardFanState extends State<_CardFan>
               alignment: Alignment.center,
               children: [
                 _card(const PlayingCard(Suit.spades, 13), -0.30 + v * 0.04,
-                    Offset(-62, 10 - v * 3)),
+                    Offset(-62, 10 - v * 3), glowIndex: 0),
                 _card(const PlayingCard(Suit.hearts, 7), 0.30 - v * 0.04,
-                    Offset(62, 10 + v * 3),
-                    highlighted: true),
-                _card(const PlayingCard(Suit.diamonds, 7), 0, Offset(0, -4 + v * 5),
-                    highlighted: true),
+                    Offset(62, 10 + v * 3), glowIndex: 1),
+                _card(const PlayingCard(Suit.diamonds, 7), 0,
+                    Offset(0, -4 + v * 5), glowIndex: 2),
               ],
             ),
           );
