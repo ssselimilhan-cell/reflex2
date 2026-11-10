@@ -98,9 +98,14 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
 
   void _scheduleWaitingRoomExpiry(Map<String, dynamic> data) {
     if (_roomExpiryTimer != null) return;
+    final storedExpiry = data['expiresAt'];
     final createdAt = data['createdAt'];
-    if (createdAt is! Timestamp) return;
-    final expiresAt = createdAt.toDate().add(const Duration(minutes: 5));
+    final expiresAt = storedExpiry is Timestamp
+        ? storedExpiry.toDate()
+        : createdAt is Timestamp
+            ? createdAt.toDate().add(const Duration(minutes: 5))
+            : null;
+    if (expiresAt == null) return;
     _roomExpiresAt = expiresAt;
     final remaining = expiresAt.difference(DateTime.now());
     _waitingSecondsLeft = remaining.inSeconds.clamp(0, 300).toInt();
@@ -529,6 +534,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 final data = snapshot.data!.data()!;
                 final roomStatus = data['roomStatus'] as String;
                 _currentRoomStatus = roomStatus;
+                if (roomStatus != 'waiting' && _roomExpiryTimer != null) {
+                  _roomExpiryTimer?.cancel();
+                  _roomExpiryTimer = null;
+                  _roomCountdownTimer?.cancel();
+                  _roomCountdownTimer = null;
+                }
                 if (widget.isHost &&
                     (roomStatus == 'ready' || roomStatus == 'active') &&
                     data['guestDeviceId'] != null && !_opponentArrivalNotified) {
