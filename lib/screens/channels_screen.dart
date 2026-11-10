@@ -1472,7 +1472,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                               stream: _repo.watchRoom(data['roomCode'] as String),
                               builder: (context, roomSnapshot) {
                                 final room = roomSnapshot.data?.data();
-                                if (room?['roomStatus'] == 'cancelled') {
+                                if (roomSnapshot.hasData &&
+                                    (!roomSnapshot.data!.exists || room?['roomStatus'] == 'cancelled')) {
                                   final canRetry = data['player1Uid'] == widget.deviceId;
                                   return Align(
                                     alignment: Alignment.centerRight,
