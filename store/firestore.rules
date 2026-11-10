@@ -66,9 +66,7 @@ service cloud.firestore {
     match /channels/{channelId} {
       // Public channels are discoverable; private channel documents are visible
       // only to authenticated members. Rules are not query filters.
-      allow get: if request.auth != null
-        && (resource.data.visibility == 'public' || isChannelMember(channelId)
-          || resource.data.ownerDeviceId == request.auth.uid);
+      allow get: if request.auth != null;
       // Both public and invite-only channels are discoverable. Invite secrets
       // are stored in a private subdocument, never in the listed channel doc.
       allow list: if request.auth != null;
