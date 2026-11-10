@@ -1115,6 +1115,7 @@ class OnlineRoomRepository {
   Future<void> requestChannelJoin({
     required String channelId,
     required String uid,
+    required String playerDeviceId,
     required String displayName,
   }) async {
     _requireChannelUid(uid);
@@ -1133,6 +1134,7 @@ class OnlineRoomRepository {
       tx.set(request, {
         'uid': uid,
         'displayName': displayName.trim().isEmpty ? 'Oyuncu' : displayName.trim(),
+        'playerDeviceId': playerDeviceId,
         'status': 'pending',
         'requestedAt': FieldValue.serverTimestamp(),
       });
@@ -1160,7 +1162,7 @@ class OnlineRoomRepository {
         final data = requestSnap.data()!;
         tx.set(member, {
           'deviceId': requesterUid,
-          'playerDeviceId': '',
+          'playerDeviceId': data['playerDeviceId'] ?? requesterUid,
           'displayName': data['displayName'] ?? 'Oyuncu',
           'joinedAt': FieldValue.serverTimestamp(),
           'role': 'member',
