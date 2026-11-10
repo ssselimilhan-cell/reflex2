@@ -160,7 +160,26 @@ class GuestProgressSnapshot {
     String day(String key) {
       final value = string(key);
       if (value.isEmpty) return value;
-      if (!RegExp(r'^\d{4}-\d{2}-\d{2}
+      if (value.length != 10 ||
+          value[4] != '-' ||
+          value[7] != '-') {
+        throw FormatException('Invalid snapshot date: $key');
+      }
+      final parts = value.split('-');
+      if (parts.any((part) => part.isEmpty || int.tryParse(part) == null)) {
+        throw FormatException('Invalid snapshot date: $key');
+      }
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final date = int.parse(parts[2]);
+      final parsed = DateTime.utc(year, month, date);
+      if (parsed.year != year ||
+          parsed.month != month ||
+          parsed.day != date) {
+        throw FormatException('Invalid snapshot date: $key');
+      }
+      return value;
+    }
 
     final rawClaimed = map['claimedMissionIndexes'];
     if (rawClaimed is! List ||
