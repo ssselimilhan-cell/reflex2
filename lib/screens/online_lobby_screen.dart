@@ -563,7 +563,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       final guestId = room?['guestDeviceId'] as String?;
                       final guestName = room?['guestDisplayName'] as String? ?? 'Rakibin';
                       final status = room?['roomStatus'] as String?;
-                      final roomClosed = roomSnapshot.data?.exists != true || status == 'cancelled';
+                      final roomMissing = roomSnapshot.hasData && !roomSnapshot.data!.exists;
+                      final roomClosed = roomMissing || status == 'cancelled';
                       final hasOpponent = guestId != null && !roomClosed;
                       final roomStarted = status == 'active';
                       if (!roomClosed && guestId != null && guestId != _lastMinimizedRoomGuestId) {
@@ -580,8 +581,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                       } else if (guestId == null || roomClosed) {
                         _lastMinimizedRoomGuestId = null;
                       }
-                      final label = roomClosed
-                          ? 'MASA KAPANDI · ${_minimizedRoomCode!}'
+                      final label = !roomSnapshot.hasData
+                          ? 'MASA DURUMU YÜKLENİYOR…'
+                          : roomClosed
+                              ? 'MASA KAPANDI · ${_minimizedRoomCode!}'
                           : status == 'finished'
                               ? 'MAÇ TAMAMLANDI · $guestName'
                               : roomStarted
