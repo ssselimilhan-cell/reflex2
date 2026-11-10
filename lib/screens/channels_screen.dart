@@ -301,6 +301,25 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             items: (format == 'round_robin' ? [8, 16] : [8, 16, 32, 64]).map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
             onChanged: (v) => setDialogState(() => maxPlayers = v ?? maxPlayers),
           ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25364C),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0x66FBBF24)),
+            ),
+            child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('SIRALAMA ÖDÜLLERİ',
+                style: TextStyle(color: Color(0xFFFBBF24), fontSize: 10,
+                  fontWeight: FontWeight.w900, letterSpacing: .6)),
+              SizedBox(height: 6),
+              Text('🥇 1. 100 yıldız   ·   🥈 2. 60 yıldız   ·   🥉 3. 30 yıldız',
+                style: TextStyle(color: Colors.white, fontSize: 11,
+                  fontWeight: FontWeight.w700)),
+            ]),
+          ),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
@@ -517,6 +536,9 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                               Text(data['title'] as String? ?? 'Turnuva', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                               Text(participants.length.toString() + '/' + maxPlayers.toString() + ' oyuncu · ' + (status == 'registration' ? 'Kayıt açık' : status == 'completed' ? 'Tamamlandı' : 'Devam ediyor'),
                                 style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                              const Text('Ödül: 100 / 60 / 30 ⭐',
+                                style: TextStyle(color: Color(0xFFFBBF24),
+                                  fontSize: 10, fontWeight: FontWeight.w800)),
                             ])),
                             if (status == 'registration' && !isParticipant)
                               TextButton(onPressed: () => _joinTournament(doc.id), child: const Text('Katıl')),
