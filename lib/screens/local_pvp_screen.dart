@@ -10,6 +10,7 @@ import '../settings/app_settings.dart';
 import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
 import '../widgets/table_felt.dart';
+import '../widgets/game_ui.dart';
 import '../settings/telemetry.dart';
 import '../settings/score_board.dart';
 import '../settings/strings.dart';
@@ -193,14 +194,45 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
                 const Positioned.fill(child: TableFelt()),
                 if (!_gameStarted)
                   Center(
-                    child: ElevatedButton.icon(
-                      onPressed: _beginGame,
-                      icon: const Icon(Icons.play_arrow),
-                      label: Text(t('start_game'),
-                          style: const TextStyle(fontSize: 18)),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 18),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 26),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xE6253B58), Color(0xE6101B2C)],
+                        ),
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(color: GameUi.cyan.withOpacity(0.24)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x50000000), blurRadius: 28, offset: Offset(0, 12)),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2563EB), Color(0xFF0891B2)],
+                              ),
+                            ),
+                            child: const Icon(Icons.people_alt_rounded, color: Colors.white, size: 38),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(t('menu_local'), style: GameUi.display(24)),
+                          const SizedBox(height: 22),
+                          GamePrimaryButton(
+                            label: t('start_game'),
+                            icon: Icons.play_arrow_rounded,
+                            height: 58,
+                            onTap: _beginGame,
+                          ),
+                        ],
                       ),
                     ),
                   )
