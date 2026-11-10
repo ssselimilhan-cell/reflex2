@@ -14,7 +14,7 @@ class Mission {
   const Mission(this.titleKey, this.target);
 }
 
-/// Günlük seri (art arda kaç gün oynandı), günlük görevler ve toplanan
+/// Günlük seri (art arda kaç gün oynandı), yıldız hedefleri ve toplanan
 /// yıldızlar. Tamamen cihazda tutulur.
 class Progress extends ChangeNotifier {
   Progress._();
