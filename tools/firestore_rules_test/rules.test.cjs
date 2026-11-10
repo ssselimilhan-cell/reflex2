@@ -195,6 +195,7 @@ test('invite-only channel join requests require owner approval before membership
   await assertSucceeds(setDoc(requestRef, {
     uid: 'player-c',
     displayName: 'Player C',
+    playerDeviceId: 'device-player-c',
     status: 'pending',
     requestedAt: serverTimestamp(),
   }));
