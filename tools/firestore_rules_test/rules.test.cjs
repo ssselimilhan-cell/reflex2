@@ -285,6 +285,47 @@ test('private tournament data is member-only and members can only register thems
 });
 
 
+test('channel tournament stats are updated only once from a completed tournament', async () => {
+  await createChannel({ id: 'stats-channel', ownerUid: 'owner-a', visibility: 'public' });
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const tournament = doc(ownerDb, 'channels/stats-channel/tournaments/stats-cup');
+  await assertSucceeds(setDoc(tournament, {
+    title: 'Stats Cup',
+    format: 'single_elimination',
+    status: 'registration',
+    creatorDeviceId: 'owner-a',
+    maxPlayers: 8,
+    participantIds: ['owner-a', 'player-b'],
+    createdAt: serverTimestamp(),
+  }));
+  const stats = doc(ownerDb, 'channels/stats-channel/tournament_stats/owner-a');
+  await assertSucceeds(setDoc(stats, {
+    uid: 'owner-a',
+    tournamentIds: ['stats-cup'],
+    tournamentsPlayed: 1,
+    championships: 1,
+    secondPlaces: 0,
+    thirdPlaces: 0,
+    podiums: 1,
+    starsEarned: 100,
+    lastTournamentId: 'stats-cup',
+    lastRank: 1,
+    lastStars: 100,
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(stats, {
+    tournamentIds: ['stats-cup', 'stats-cup'],
+    tournamentsPlayed: 2,
+    championships: 2,
+    lastTournamentId: 'stats-cup',
+    lastRank: 1,
+    lastStars: 100,
+    updatedAt: serverTimestamp(),
+  }));
+  const outsiderDb = env.authenticatedContext('outsider').firestore();
+  await assertFails(getDoc(doc(outsiderDb, 'channels/stats-channel/tournament_stats/owner-a')));
+});
+
 test('tournament podium rewards can only be claimed once by the eligible member', async () => {
   await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
   const ownerDb = env.authenticatedContext('owner-a').firestore();
