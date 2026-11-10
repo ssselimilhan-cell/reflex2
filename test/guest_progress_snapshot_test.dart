@@ -35,6 +35,21 @@ void main() {
       expect(restored.toMap(), original.toMap());
     });
 
+    test('round-trips through JSON for portable backup transport', () {
+      final original = sampleSnapshot();
+
+      final restored = GuestProgressSnapshot.fromJson(original.toJson());
+
+      expect(restored.toMap(), original.toMap());
+    });
+
+    test('rejects JSON that is not a snapshot object', () {
+      expect(
+        () => GuestProgressSnapshot.fromJson('[1, 2, 3]'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('captures all local guest progression after startup', () {
       final profile = UserProfile.instance
         ..displayName = 'Local Player'
