@@ -566,7 +566,7 @@ class OnlineRoomRepository {
     final uid = _requireChannelUid(creatorDeviceId);
     final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
     final match = tournament.collection('matches').doc(matchId);
-    await FirebaseFirestore.instance.runTransaction((tx) async {
+    final round = await FirebaseFirestore.instance.runTransaction<int>((tx) async {
       final tournamentSnap = await tx.get(tournament);
       final matchSnap = await tx.get(match);
       if (!tournamentSnap.exists || !matchSnap.exists ||
@@ -581,86 +581,90 @@ class OnlineRoomRepository {
       if (winnerUid != player1 && winnerUid != player2) {
         throw StateError('Kazanan bu maçın oyuncularından biri olmalı.');
       }
-      final round = (matchData['round'] as num).toInt();
-      final format = tournamentSnap.data()?['format'] as String? ?? 'single_elimination';
-      final currentRoundQuery = tournament.collection('matches')
-          .where('round', isEqualTo: round);
-      final roundSnapshot = await tx.get(currentRoundQuery);
-      final roundMatches = roundSnapshot.docs.map((doc) {
-        if (doc.id == matchId) {
-          return {...doc.data(), 'winnerUid': winnerUid, 'status': 'completed'};
-        }
-        return doc.data();
-      }).toList();
+      final currentRound = (matchData['round'] as num).toInt();
       tx.update(match, {
         'winnerUid': winnerUid,
         'status': 'completed',
         'resultAt': FieldValue.serverTimestamp(),
       });
+      return currentRound;
+    });
 
+    // Query reads are deliberately outside the transaction (the Flutter
+    // Firestore Transaction API accepts document references only). The
+    // tournament currentRound field below is the atomic advancement guard.
+    final roundSnapshot = await tournament.collection('matches')
+        .where('round', isEqualTo: round).get();
+    final roundMatches = roundSnapshot.docs.map((doc) => doc.data()).toList();
+    if (roundMatches.isEmpty || roundMatches.any((item) => item['status'] != 'completed')) return;
+
+    final tournamentSnapshot = await tournament.get();
+    final format = tournamentSnapshot.data()?['format'] as String? ?? 'single_elimination';
+    final winners = roundMatches
+        .map((item) => item['winnerUid'] as String?)
+        .whereType<String>()
+        .toList();
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final latest = await tx.get(tournament);
+      if (!latest.exists || latest.data()?['status'] != 'in_progress' ||
+          (latest.data()?['currentRound'] as num?)?.toInt() != round) {
+        return; // Another completion already advanced this round.
+      }
       if (format == 'round_robin') {
-        if (roundMatches.every((item) => item['status'] == 'completed')) {
-          final wins = <String, int>{};
-          for (final item in roundMatches) {
-            final winner = item['winnerUid'] as String?;
-            if (winner != null) wins[winner] = (wins[winner] ?? 0) + 1;
-          }
-          final ordered = wins.entries.toList()
-            ..sort((a, b) => b.value.compareTo(a.value));
-          final topScore = ordered.isEmpty ? 0 : ordered.first.value;
-          final leaders = ordered.where((entry) => entry.value == topScore).map((entry) => entry.key).toList();
-          tx.update(tournament, {
-            'status': 'completed',
-            'winnerUid': leaders.length == 1 ? leaders.first : null,
-            'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
-            'completedAt': FieldValue.serverTimestamp(),
-          });
+        final wins = <String, int>{};
+        for (final item in roundMatches) {
+          final winner = item['winnerUid'] as String?;
+          if (winner != null) wins[winner] = (wins[winner] ?? 0) + 1;
         }
+        final ordered = wins.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        final topScore = ordered.isEmpty ? 0 : ordered.first.value;
+        final leaders = ordered.where((entry) => entry.value == topScore).map((entry) => entry.key).toList();
+        tx.update(tournament, {
+          'status': 'completed',
+          'winnerUid': leaders.length == 1 ? leaders.first : null,
+          'tiedWinnerUids': leaders.length > 1 ? leaders : <String>[],
+          'completedAt': FieldValue.serverTimestamp(),
+        });
         return;
       }
 
-      if (roundMatches.every((item) => item['status'] == 'completed')) {
-        final winners = roundMatches
-            .map((item) => item['winnerUid'] as String?)
-            .whereType<String>()
-            .toList();
-        if (winners.length == 1) {
-          tx.update(tournament, {
-            'status': 'completed',
-            'winnerUid': winners.first,
-            'completedAt': FieldValue.serverTimestamp(),
-          });
-        } else {
-          final nextRound = round + 1;
-          var nextMatchIndex = 0;
-          for (var i = 0; i < winners.length; i += 2) {
-            nextMatchIndex++;
-            final p1 = winners[i];
-            final p2 = i + 1 < winners.length ? winners[i + 1] : null;
-            String? name1;
-            String? name2;
-            for (final item in roundMatches) {
-              if (item['player1Uid'] == p1) name1 = item['player1Name'] as String?;
-              if (item['player2Uid'] == p1) name1 = item['player2Name'] as String?;
-              if (p2 != null && item['player1Uid'] == p2) name2 = item['player1Name'] as String?;
-              if (p2 != null && item['player2Uid'] == p2) name2 = item['player2Name'] as String?;
-            }
-            tx.set(tournament.collection('matches').doc('r${nextRound}_m$nextMatchIndex'), {
-              'round': nextRound,
-              'matchIndex': nextMatchIndex,
-              'player1Uid': p1,
-              'player1Name': name1 ?? 'Oyuncu',
-              'player2Uid': p2,
-              'player2Name': p2 == null ? null : (name2 ?? 'Oyuncu'),
-              'winnerUid': p2 == null ? p1 : null,
-              'status': p2 == null ? 'completed' : 'ready',
-              'isBye': p2 == null,
-              'createdAt': FieldValue.serverTimestamp(),
-            });
-          }
-          tx.update(tournament, {'currentRound': nextRound});
-        }
+      if (winners.length == 1) {
+        tx.update(tournament, {
+          'status': 'completed',
+          'winnerUid': winners.first,
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+        return;
       }
+      var nextMatchIndex = 0;
+      for (var i = 0; i < winners.length; i += 2) {
+        nextMatchIndex++;
+        final p1 = winners[i];
+        final p2 = i + 1 < winners.length ? winners[i + 1] : null;
+        String? name1;
+        String? name2;
+        for (final item in roundMatches) {
+          if (item['player1Uid'] == p1) name1 = item['player1Name'] as String?;
+          if (item['player2Uid'] == p1) name1 = item['player2Name'] as String?;
+          if (p2 != null && item['player1Uid'] == p2) name2 = item['player1Name'] as String?;
+          if (p2 != null && item['player2Uid'] == p2) name2 = item['player2Name'] as String?;
+        }
+        tx.set(tournament.collection('matches').doc('r${round + 1}_m$nextMatchIndex'), {
+          'round': round + 1,
+          'matchIndex': nextMatchIndex,
+          'player1Uid': p1,
+          'player1Name': name1 ?? 'Oyuncu',
+          'player2Uid': p2,
+          'player2Name': p2 == null ? null : (name2 ?? 'Oyuncu'),
+          'winnerUid': p2 == null ? p1 : null,
+          'status': p2 == null ? 'completed' : 'ready',
+          'isBye': p2 == null,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      tx.update(tournament, {'currentRound': round + 1});
     });
   }
 
