@@ -260,10 +260,11 @@ test('tournament podium rewards can only be claimed once by the eligible member'
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,
-    participantIds: ['owner-a'],
+    participantIds: [],
     prizeStars: {'1': 100, '2': 60, '3': 30},
     createdAt: serverTimestamp(),
   }));
+  await assertSucceeds(updateDoc(tournament, { participantIds: arrayUnion('owner-a') }));
   await assertSucceeds(updateDoc(tournament, {
     status: 'completed',
     placements: {
