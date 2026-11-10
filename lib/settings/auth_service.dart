@@ -123,12 +123,23 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await syncProgressForCurrentUser();
+    // Oturum kapatma, Firestore erişimine bağlı olmamalı. Önce ilerlemeyi
+    // kısa süreliğine senkronize etmeyi dene; ağ/izin hatası çıkarsa çıkışı
+    // engelleme.
+    try {
+      await syncProgressForCurrentUser().timeout(const Duration(seconds: 2));
+    } catch (_) {
+      // Çevrimdışı veya Firestore erişimi yok: oturumu yine de kapat.
+    }
+
+    // Firebase oturumunu Google SDK temizliğinden önce kapat. Böylece
+    // GoogleSignIn.signOut() hata verse bile uygulama misafir durumuna geçer.
     await FirebaseAuth.instance.signOut();
     try {
       await GoogleSignIn().signOut();
     } catch (_) {
-      // E-posta hesabıyla girişte Google oturumu bulunmayabilir.
+      // Firebase oturumu zaten kapatıldı; yerel Google oturumu sonraki
+      // Google girişinde yeniden yetkilendirilebilir.
     }
   }
 }
