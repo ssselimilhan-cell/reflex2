@@ -260,9 +260,17 @@ class UserProfile extends ChangeNotifier {
 
   Future<void> _claimAccountNickname(String name) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return; // Guest names remain local until linked to an account.
     final db = FirebaseFirestore.instance;
     final newRef = db.collection('nicknames').doc(_nicknameDocumentId(name));
+    if (user == null) {
+      // Guest profiles cannot use a nickname already reserved by an account.
+      // Exact-key lookup is allowed; collection enumeration remains disabled.
+      final reserved = await newRef.get();
+      if (reserved.exists) {
+        throw StateError('Bu takma ad kayıtlı bir hesaba ait. Lütfen başka bir ad seç.');
+      }
+      return;
+    }
     final oldName = displayName?.trim();
     final oldRef = oldName == null || oldName.isEmpty
         ? null
