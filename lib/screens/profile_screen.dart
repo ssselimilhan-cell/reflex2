@@ -503,6 +503,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildAccountCard(),
+        const SizedBox(height: 10),
+        _buildNicknameIdentityNote(),
         const SizedBox(height: 20),
         Text(t('create_profile'),
             style: const TextStyle(
@@ -576,12 +578,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildNicknameIdentityNote() {
+    final isAccount = AuthService.instance.currentUser != null;
+    final message = isAccount
+        ? 'HESAP TAKMA ADI: Bu ad Firebase hesabına bağlıdır. Başka bir hesap aynı adı alamaz; hesabınla giriş yaptığın diğer cihazlarda da aynı profil kullanılır.'
+        : 'MİSAFİR TAKMA ADI: Bu ad yalnızca bu cihazdaki misafir profiline aittir. Başka cihazdaki bir misafir aynı adı seçebilir. Adını tüm cihazlarda korumak ve tek sahibi olmak için Google veya e-posta hesabıyla giriş yap.';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isAccount ? const Color(0x2234D399) : const Color(0x22FBBF24),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isAccount ? const Color(0x6634D399) : const Color(0x66FBBF24),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isAccount ? Icons.verified_user_rounded : Icons.phone_android_rounded,
+            color: isAccount ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+            size: 19,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfileView(UserProfile profile) {
     final rate = profile.onlineWinRate;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildAccountCard(),
+        const SizedBox(height: 10),
+        _buildNicknameIdentityNote(),
         const SizedBox(height: 20),
         Container(
           width: double.infinity,
