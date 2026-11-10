@@ -77,13 +77,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         description: cleanDescription,
         inviteOnly: _inviteOnly,
       );
-      if (mounted) {
-        if (_inviteOnly && mounted) {
-          final doc = await FirebaseFirestore.instance.collection('channels').doc(id).get();
-          final code = doc.data()?['inviteCode'] as String?;
-          if (code != null && mounted) _showInviteCode(code);
-        }
-      }
+      if (mounted) await _openChannel(id, joinIfNeeded: false);
     } catch (e) {
       if (mounted) setState(() => _error = 'Kanal oluşturulamadı: $e');
     } finally {
@@ -390,8 +384,31 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF101827),
       appBar: AppBar(backgroundColor: const Color(0xFF142238), foregroundColor: Colors.white,
-        title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(stream: channel.snapshots(),
-          builder: (context, snapshot) => Text(snapshot.data?.data()?['name'] as String? ?? 'Kanal'))),
+        title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
+          builder: (context, snapshot) => Text(snapshot.data?.data()?['name'] as String? ?? 'Kanal'),
+        ),
+        actions: [
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
+            builder: (context, snapshot) {
+              final data = snapshot.data?.data();
+              if (data?['ownerDeviceId'] != widget.deviceId || data?['visibility'] != 'invite_only') {
+                return const SizedBox.shrink();
+              }
+              final code = data?['inviteCode'] as String?;
+              return IconButton(
+                tooltip: 'Davet kodunu kopyala',
+                onPressed: code == null ? null : () {
+                  Clipboard.setData(ClipboardData(text: code));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Davet kodu kopyalandı.')));
+                },
+                icon: const Icon(Icons.key_rounded, color: Color(0xFFFBBF24)),
+              );
+            },
+          ),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _repo.watchChannelMembers(widget.channelId),
         builder: (context, snapshot) {
