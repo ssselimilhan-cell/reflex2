@@ -478,9 +478,9 @@ class OnlineRoomRepository {
   }
 
   Future<String?> findChannelByInviteCode(String code) async {
-    final result = await _channels.where('inviteCode', isEqualTo: code.trim().toUpperCase())
-        .where('visibility', isEqualTo: 'invite_only').limit(1).get();
-    return result.docs.isEmpty ? null : result.docs.first.id;
+    final result = await _channels.where('inviteCode', isEqualTo: code.trim().toUpperCase()).limit(1).get();
+    if (result.docs.isEmpty || result.docs.first.data()['visibility'] != 'invite_only') return null;
+    return result.docs.first.id;
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelMembers(String channelId) =>
