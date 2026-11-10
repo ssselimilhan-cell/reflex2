@@ -126,7 +126,7 @@ class Progress extends ChangeNotifier {
       ..addAll(claimedMissionIndexes);
     unlockedCardThemes
       ..clear()
-      ..addAll(unlockedCardThemeIndexes.where((i) => i >= 3 && i < 10));
+      ..addAll(unlockedCardThemeIndexes.where((i) => i >= 3 && i < 16));
     await _persist();
     notifyListeners();
   }
