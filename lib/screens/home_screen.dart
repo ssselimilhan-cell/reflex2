@@ -104,9 +104,8 @@ class HomeScreen extends StatelessWidget {
                               ? constraints.maxWidth
                               : 520.0;
                           return Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.topCenter,
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
                               child: SizedBox(
                                 width: contentWidth,
                                 child: Padding(
@@ -122,7 +121,7 @@ class HomeScreen extends StatelessWidget {
                                     label: t('menu_quick_match'),
                                     subtitle: t('tile_quick_sub'),
                                     icon: Icons.bolt_rounded,
-                                    height: 68,
+                                    height: 76,
                                     pulse: true,
                                     onTap: () => _openQuickMatch(context),
                                   ),
@@ -141,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                                             subtitle:
                                                 '${t('level')} ${ladder.unlockedLevel}',
                                             icon: Icons.smart_toy,
-                                            accent: GameUi.primary,
+                                            accent: GameUi.goldDeep,
                                             footer: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(4),
@@ -169,7 +168,7 @@ class HomeScreen extends StatelessWidget {
                                             title: t('menu_online'),
                                             subtitle: t('tile_online_sub'),
                                             icon: Icons.public,
-                                            accent: GameUi.cyan,
+                                            accent: GameUi.gold,
                                             onTap: () => _openOnline(context),
                                           ),
                                         ),
@@ -190,7 +189,7 @@ class HomeScreen extends StatelessWidget {
                                             title: t('menu_local'),
                                             subtitle: t('tile_local_sub'),
                                             icon: Icons.people,
-                                            accent: const Color(0xFF60A5FA),
+                                            accent: GameUi.goldDeep,
                                             onTap: () => Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -293,7 +292,7 @@ class _TopBar extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -450,7 +449,7 @@ class _RulesBar extends StatelessWidget {
                   t('rules_title'),
                   style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600),
                 ),
               ],
