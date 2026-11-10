@@ -1110,6 +1110,42 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                               stream: _repo.watchRoom(data['roomCode'] as String),
                               builder: (context, roomSnapshot) {
                                 final room = roomSnapshot.data?.data();
+                                if (room?['roomStatus'] == 'cancelled') {
+                                  final canRetry = data['player1Uid'] == widget.deviceId;
+                                  return Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      children: [
+                                        const Text('Önceki maç odası iptal edildi',
+                                          style: TextStyle(color: Colors.white54, fontSize: 11)),
+                                        if (canRetry)
+                                          TextButton.icon(
+                                            onPressed: _busy ? null : () async {
+                                              setState(() => _busy = true);
+                                              try {
+                                                await _repo.resetCancelledTournamentMatchRoom(
+                                                  channelId: widget.channelId,
+                                                  tournamentId: widget.tournamentId,
+                                                  matchId: doc.id,
+                                                  deviceId: widget.deviceId,
+                                                  roomCode: data['roomCode'] as String,
+                                                );
+                                              } catch (e) {
+                                                if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Yeniden deneme açılamadı: $e')));
+                                              } finally {
+                                                if (mounted) setState(() => _busy = false);
+                                              }
+                                            },
+                                            icon: const Icon(Icons.refresh_rounded, size: 17),
+                                            label: const Text('Yeniden oda aç'),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }
                                 final gameStatus = room?['status'] as String?;
                                 String? winnerUid;
                                 if (gameStatus == 'player1Wins') {
