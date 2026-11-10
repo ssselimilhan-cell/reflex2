@@ -162,7 +162,13 @@ service cloud.firestore {
         allow create: if isChannelOwner(channelId)
           && request.resource.data.creatorDeviceId == request.auth.uid
           && request.resource.data.status == 'registration'
-          && request.resource.data.participantIds is list;
+          && request.resource.data.title is string
+          && request.resource.data.title.size() >= 2
+          && request.resource.data.title.size() <= 40
+          && request.resource.data.format in ['single_elimination', 'round_robin']
+          && request.resource.data.maxPlayers in [8, 16, 32, 64]
+          && request.resource.data.participantIds is list
+          && request.resource.data.participantIds.size() == 0;
         allow update: if request.auth != null && (
           // Only the channel owner may start a tournament.
           (isChannelOwner(channelId)
@@ -178,6 +184,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantIds'])
             && request.resource.data.participantIds is list
             && request.resource.data.participantIds.size() == resource.data.participantIds.size() + 1
+            && request.resource.data.participantIds.size() <= resource.data.maxPlayers
             && request.resource.data.participantIds.hasAll(resource.data.participantIds)
             && request.auth.uid in request.resource.data.participantIds
             && !(request.auth.uid in resource.data.participantIds))
