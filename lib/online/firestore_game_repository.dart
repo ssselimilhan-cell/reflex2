@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../settings/guest_progress_snapshot.dart';
 import '../game/game_engine.dart';
 
 /// Bir online oyun odasının Firestore üzerindeki temsili.
@@ -833,9 +834,12 @@ class OnlineRoomRepository {
     final uid = _requireChannelUid(deviceId);
     final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
     final claim = tournament.collection('reward_claims').doc(uid);
+    final accountProgress = FirebaseFirestore.instance
+        .collection('users').doc(uid).collection('private').doc('progress');
     return FirebaseFirestore.instance.runTransaction<int>((tx) async {
       final tournamentSnap = await tx.get(tournament);
       final claimSnap = await tx.get(claim);
+      final progressSnap = await tx.get(accountProgress);
       if (claimSnap.exists) return 0; // Claimed on this or another device; never credit twice.
       final data = tournamentSnap.data();
       if (!tournamentSnap.exists || data?['status'] != 'completed') return 0;
@@ -845,6 +849,27 @@ class OnlineRoomRepository {
       final rank = (placement['rank'] as num?)?.toInt() ?? 0;
       final stars = (placement['stars'] as num?)?.toInt() ?? 0;
       if (rank < 1 || rank > 3 || stars <= 0) return 0;
+
+      // Credit the cloud account and create the unique claim in one atomic
+      // transaction. A process crash cannot consume a prize without saving it.
+      final progressData = progressSnap.exists
+          ? Map<String, dynamic>.from(progressSnap.data()!)
+          : GuestProgressSnapshot.empty().toMap();
+      final earned = (progressData['starsEarned'] as num?)?.toInt()
+          ?? (progressData['stars'] as num?)?.toInt() ?? 0;
+      final spent = (progressData['starsSpent'] as num?)?.toInt() ?? 0;
+      final claimed = List<String>.from(
+          progressData['claimedTournamentRewardIds'] ?? const <String>[]);
+      if (!claimed.contains(tournamentId)) claimed.add(tournamentId);
+      final newEarned = earned + stars;
+      tx.set(accountProgress, {
+        ...progressData,
+        'starsEarned': newEarned,
+        'starsSpent': spent,
+        'stars': newEarned > spent ? newEarned - spent : 0,
+        'claimedTournamentRewardIds': claimed,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       tx.set(claim, {
         'uid': uid,
         'rank': rank,
