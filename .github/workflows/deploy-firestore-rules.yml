@@ -36,6 +36,7 @@ jobs:
           set -euo pipefail
           gcloud firestore fields ttls update expiresAt --collection-group=rooms --enable-ttl --project=stres-card
           gcloud firestore fields ttls update expiresAt --collection-group=invites --enable-ttl --project=stres-card
+          gcloud firestore fields ttls update expiresAt --collection-group=room_messages --enable-ttl --project=stres-card
       - name: Eski oda ve davet kayıtlarının sürelerini güvenli biçimde düzelt
         env:
           GOOGLE_CLOUD_PROJECT: stres-card
