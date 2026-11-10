@@ -1,6 +1,14 @@
 import 'app_settings.dart';
 
 const Map<String, Map<String, String>> _strings = {
+  'star_shop_title': {'tr': 'Yıldız Mağazası', 'en': 'Star Shop', 'ru': 'Магазин звёзд', 'zh': '星星商店'},
+  'star_shop_subtitle': {'tr': 'Oynadıkça kazan, tarzını kişiselleştir.', 'en': 'Play to earn. Make the game yours.', 'ru': 'Играй, зарабатывай и настраивай стиль.', 'zh': '通过游戏赢取奖励，打造专属风格。'},
+  'star_shop_balance': {'tr': 'Yıldız bakiyen', 'en': 'Your star balance', 'ru': 'Баланс звёзд', 'zh': '星星余额'},
+  'star_shop_owned': {'tr': 'SENİN', 'en': 'OWNED', 'ru': 'КУПЛЕНО', 'zh': '已拥有'},
+  'star_shop_equip': {'tr': 'KULLAN', 'en': 'EQUIP', 'ru': 'ИСПОЛЬЗОВАТЬ', 'zh': '使用'},
+  'star_shop_buy': {'tr': 'YILDIZLA AÇ', 'en': 'UNLOCK WITH STARS', 'ru': 'ОТКРЫТЬ ЗА ЗВЁЗДЫ', 'zh': '使用星星解锁'},
+  'star_shop_not_enough': {'tr': 'Bu ödül için yeterli yıldızın yok.', 'en': 'You need more stars for this reward.', 'ru': 'Недостаточно звёзд для этой награды.', 'zh': '星星不足，无法兑换此奖励。'},
+  'star_shop_free_note': {'tr': 'Oyunlar ücretsiz ve sınırsız. Yıldızlar yalnızca kozmetik ödüller içindir.', 'en': 'Games are always free. Stars are only for cosmetic rewards.', 'ru': 'Игры всегда бесплатны. Звёзды нужны только для косметических наград.', 'zh': '游戏始终免费。星星仅用于外观奖励。'},
   'app_title': {'tr': 'STRES', 'en': 'STRES', 'ru': 'STRES', 'zh': 'STRES'},
   'app_subtitle': {
     'tr': 'Refleks Kart Oyunu',

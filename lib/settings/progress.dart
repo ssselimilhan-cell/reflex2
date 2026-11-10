@@ -36,6 +36,7 @@ class Progress extends ChangeNotifier {
   int totalWins = 0;
   bool reviewAsked = false;
   final Set<int> claimed = {};
+  final Set<int> unlockedCardThemes = {};
 
   static String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -75,6 +76,10 @@ class Progress extends ChangeNotifier {
       stars = prefs.getInt('pg_stars') ?? 0;
       totalWins = prefs.getInt('pg_totalWins') ?? 0;
       reviewAsked = prefs.getBool('pg_reviewAsked') ?? false;
+      unlockedCardThemes
+        ..clear()
+        ..addAll((prefs.getStringList('pg_unlockedCardThemes') ?? const <String>[])
+            .map(int.tryParse).whereType<int>().where((i) => i >= 3 && i < 10));
       claimed
         ..clear()
         ..addAll((prefs.getStringList('pg_claimed') ?? const <String>[])
@@ -95,6 +100,7 @@ class Progress extends ChangeNotifier {
     required int totalWins,
     required bool reviewAsked,
     required List<int> claimedMissionIndexes,
+    List<int> unlockedCardThemeIndexes = const [],
   }) async {
     this.streakDays = streakDays;
     this.lastPlayDay = lastPlayDay;
@@ -108,8 +114,28 @@ class Progress extends ChangeNotifier {
     claimed
       ..clear()
       ..addAll(claimedMissionIndexes);
+    unlockedCardThemes
+      ..clear()
+      ..addAll(unlockedCardThemeIndexes.where((i) => i >= 3 && i < 10));
     await _persist();
     notifyListeners();
+  }
+
+  bool isCardThemeUnlocked(int index) => index < 3 || unlockedCardThemes.contains(index);
+
+  static const Map<int, int> cardThemePrices = {
+    3: 45, 4: 55, 5: 55, 6: 65, 7: 70, 8: 70, 9: 80,
+  };
+
+  bool purchaseCardTheme(int index) {
+    final price = cardThemePrices[index];
+    if (price == null || isCardThemeUnlocked(index) || stars < price) return false;
+    stars -= price;
+    unlockedCardThemes.add(index);
+    _persist();
+    notifyListeners();
+    Telemetry.log('star_shop_purchase', {'item': 'card_theme_$index', 'price': price});
+    return true;
   }
 
   /// Dışarıdan (ör. Bot Yolu) yıldız eklemek için.
@@ -132,6 +158,8 @@ class Progress extends ChangeNotifier {
       await prefs.setInt('pg_stars', stars);
       await prefs.setInt('pg_totalWins', totalWins);
       await prefs.setBool('pg_reviewAsked', reviewAsked);
+      await prefs.setStringList('pg_unlockedCardThemes',
+          unlockedCardThemes.map((e) => '$e').toList()..sort());
       await prefs.setStringList(
           'pg_claimed', claimed.map((e) => '$e').toList());
     } catch (_) {}

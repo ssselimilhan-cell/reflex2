@@ -5,6 +5,8 @@ import '../settings/moderation.dart';
 import '../settings/share_helper.dart';
 import '../settings/feedback.dart';
 import '../settings/telemetry.dart';
+import '../settings/progress.dart';
+import 'star_shop_screen.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -566,6 +568,7 @@ class _SwatchRow extends StatelessWidget {
 class _Swatch extends StatelessWidget {
   final Color color;
   final bool selected;
+  final bool locked;
   final VoidCallback onTap;
 
   const _Swatch(
@@ -792,8 +795,14 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                                     label: _labelFor(theme),
                                     theme: theme,
                                     selected: theme == _pending,
-                                    onTap: () =>
-                                        setState(() => _pending = theme),
+                                    locked: !Progress.instance.isCardThemeUnlocked(theme.index),
+                                    onTap: () {
+                                      if (!Progress.instance.isCardThemeUnlocked(theme.index)) {
+                                        Navigator.push(context, MaterialPageRoute(builder: (_) => const StarShopScreen()));
+                                        return;
+                                      }
+                                      setState(() => _pending = theme);
+                                    },
                                   ),
                                 ),
                             ],
@@ -841,6 +850,7 @@ class _ThemeTile extends StatelessWidget {
     required this.label,
     required this.theme,
     required this.selected,
+    required this.locked,
     required this.onTap,
   });
 
@@ -872,6 +882,7 @@ class _ThemeTile extends StatelessWidget {
                     card: _demoCard, themeOverride: theme, width: 44, height: 62),
               ),
               const SizedBox(height: 6),
+              if (locked) const Icon(Icons.lock_rounded, color: Colors.amber, size: 15),
               Text(
                 label,
                 textAlign: TextAlign.center,

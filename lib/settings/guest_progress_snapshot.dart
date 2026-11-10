@@ -31,6 +31,7 @@ class GuestProgressSnapshot {
   final bool reviewAsked;
   final List<int> claimedMissionIndexes;
   final int highestClearedLevel;
+  final List<int> unlockedCardThemeIndexes;
 
   const GuestProgressSnapshot({
     this.schemaVersion = currentSchemaVersion,
@@ -52,6 +53,7 @@ class GuestProgressSnapshot {
     required this.reviewAsked,
     required this.claimedMissionIndexes,
     required this.highestClearedLevel,
+    this.unlockedCardThemeIndexes = const [],
   });
 
   /// Captures the current local profile and progression after app startup has
@@ -79,6 +81,7 @@ class GuestProgressSnapshot {
       reviewAsked: progress.reviewAsked,
       claimedMissionIndexes: progress.claimed.toList()..sort(),
       highestClearedLevel: ladder.highestCleared,
+      unlockedCardThemeIndexes: progress.unlockedCardThemes.toList()..sort(),
     );
   }
 
@@ -102,6 +105,7 @@ class GuestProgressSnapshot {
       reviewAsked: false,
       claimedMissionIndexes: const [],
       highestClearedLevel: 0,
+      unlockedCardThemeIndexes: const [],
     );
   }
 
@@ -151,6 +155,7 @@ class GuestProgressSnapshot {
       claimedMissionIndexes: claimed.toList()..sort(),
       highestClearedLevel: local.highestClearedLevel > remote.highestClearedLevel
           ? local.highestClearedLevel : remote.highestClearedLevel,
+      unlockedCardThemeIndexes: {...local.unlockedCardThemeIndexes, ...remote.unlockedCardThemeIndexes}.toList()..sort(),
     );
   }
 
@@ -174,6 +179,7 @@ class GuestProgressSnapshot {
       totalWins: totalWins,
       reviewAsked: reviewAsked,
       claimedMissionIndexes: claimedMissionIndexes,
+      unlockedCardThemeIndexes: unlockedCardThemeIndexes,
     );
     await LadderProgress.instance.restoreAccountData(highestClearedLevel);
   }
@@ -208,6 +214,7 @@ class GuestProgressSnapshot {
         'reviewAsked': reviewAsked,
         'claimedMissionIndexes': List<int>.from(claimedMissionIndexes),
         'highestClearedLevel': highestClearedLevel,
+        'unlockedCardThemeIndexes': List<int>.from(unlockedCardThemeIndexes),
       };
 
   factory GuestProgressSnapshot.fromMap(Map<String, dynamic> map) {
@@ -277,6 +284,10 @@ class GuestProgressSnapshot {
       return value;
     }
 
+    final rawUnlockedThemes = map['unlockedCardThemeIndexes'] ?? const <int>[];
+    if (rawUnlockedThemes is! List || rawUnlockedThemes.any((value) => value is! int || value < 3 || value > 9) || rawUnlockedThemes.toSet().length != rawUnlockedThemes.length) {
+      throw const FormatException('Invalid unlocked card themes');
+    }
     final rawClaimed = map['claimedMissionIndexes'];
     if (rawClaimed is! List ||
         rawClaimed.any((value) => value is! int || value < 0 || value > 2)) {
@@ -319,6 +330,7 @@ class GuestProgressSnapshot {
           : throw const FormatException('Invalid snapshot field: reviewAsked'),
       claimedMissionIndexes: List<int>.unmodifiable(claimed),
       highestClearedLevel: integer('highestClearedLevel', max: 100),
+      unlockedCardThemeIndexes: List<int>.unmodifiable(rawUnlockedThemes.cast<int>()),
     );
   }
 }

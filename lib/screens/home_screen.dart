@@ -9,6 +9,7 @@ import 'leaderboard_screen.dart';
 import 'quick_match_screen.dart';
 import 'onboarding_screen.dart';
 import 'ladder_screen.dart';
+import 'star_shop_screen.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/daily_card.dart';
@@ -85,6 +86,7 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _TopBar(
+                      onShop: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StarShopScreen())),
                       onProfile: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -230,8 +232,9 @@ class HomeScreen extends StatelessWidget {
 class _TopBar extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onSettings;
+  final VoidCallback onShop;
 
-  const _TopBar({required this.onProfile, required this.onSettings});
+  const _TopBar({required this.onProfile, required this.onSettings, required this.onShop});
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +302,7 @@ class _TopBar extends StatelessWidget {
             leading:
                 const Icon(Icons.star_rounded, color: GameUi.gold, size: 20),
             text: '${Progress.instance.stars}',
+            onTap: onShop,
           ),
           const SizedBox(width: 10),
           GameIconButton(
