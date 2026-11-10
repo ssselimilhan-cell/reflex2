@@ -78,12 +78,14 @@ service cloud.firestore {
         // Owner edits channel metadata / manages the channel.
         (resource.data.ownerDeviceId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt', 'inviteCode']))
+            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt']))
         ||
         // New member joins: their membership is created in the same batch.
         (existsAfter(channelMemberPath(channelId, request.auth.uid))
           && !exists(channelMemberPath(channelId, request.auth.uid))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+          && resource.data.status == 'open'
+          && resource.data.visibility == 'public'
           && request.resource.data.memberCount == resource.data.memberCount + 1)
         ||
         // Member leaves: their membership is deleted in the same transaction.
@@ -123,12 +125,15 @@ service cloud.firestore {
               && getAfter(/databases/$(database)/documents/channels/$(channelId)).data.ownerDeviceId == request.auth.uid)
             ||
             // Public channel join.
-            get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'public'
+            (get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'public'
+              && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
             ||
             // Private channel join: the supplied code must resolve to this channel.
             (request.resource.data.inviteCode is string
               && exists(channelInvitePath(request.resource.data.inviteCode))
-              && get(channelInvitePath(request.resource.data.inviteCode)).data.channelId == channelId)
+              && get(channelInvitePath(request.resource.data.inviteCode)).data.channelId == channelId
+              && get(/databases/$(database)/documents/channels/$(channelId)).data.visibility == 'invite_only'
+              && get(/databases/$(database)/documents/channels/$(channelId)).data.status == 'open')
           );
 
         allow update: if isChannelOwner(channelId)
