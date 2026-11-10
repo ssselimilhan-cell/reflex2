@@ -15,6 +15,7 @@ import '../settings/progress.dart';
 import '../settings/ladder.dart';
 import '../widgets/level_result_overlay.dart';
 import '../widgets/table_felt.dart';
+import '../widgets/game_ui.dart';
 import '../settings/telemetry.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -238,8 +239,11 @@ class _VsBotScreenState extends State<VsBotScreen> {
         final difficultyColor =
             Color.lerp(Colors.greenAccent, Colors.redAccent, difficulty)!;
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: GameUi.background,
           appBar: AppBar(
+            backgroundColor: GameUi.surface,
+            foregroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
             title: Text(widget.level != null
                 ? '${t('level')} ${widget.level}'
                 : t('menu_bot')),

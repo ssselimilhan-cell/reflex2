@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'game_ui.dart';
 
 /// Oyuncu bilgisini (avatar + isim) kartların ÜSTÜNDE, geniş ve belirgin
 /// bir başlık olarak gösterir. Kalan kart sayısı artık burada DEĞİL —
@@ -22,7 +23,15 @@ class PlayerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: GameUi.surface.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: GameUi.hairline),
+      ),
+      child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         avatar,
@@ -44,6 +53,7 @@ class PlayerHeader extends StatelessWidget {
           StockCountBadge(count: stockCount),
         ],
       ],
+      ),
     );
   }
 }
@@ -61,9 +71,9 @@ class StockCountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black38,
+        color: GameUi.primary.withOpacity(0.22),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24, width: 1),
+        border: Border.all(color: GameUi.cyan.withOpacity(0.35), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -106,8 +116,9 @@ class StockCountsBar extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(10),
+        color: GameUi.surface.withOpacity(0.88),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: GameUi.hairline),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

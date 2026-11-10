@@ -15,6 +15,7 @@ import '../settings/sound_manager.dart';
 import '../settings/progress.dart';
 import '../settings/share_helper.dart';
 import '../widgets/table_felt.dart';
+import '../widgets/game_ui.dart';
 import '../settings/moderation.dart';
 import '../settings/score_board.dart';
 import '../settings/user_profile.dart';
@@ -364,8 +365,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         final cardW = 100.0 * scale;
         final cardH = 142.0 * scale;
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: GameUi.background,
           appBar: AppBar(
+            backgroundColor: GameUi.surface,
+            foregroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
             title: Text('${t('room')}: ${widget.roomCode}'),
             actions: [
               PopupMenuButton<String>(

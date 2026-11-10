@@ -129,7 +129,7 @@ class HomeScreen extends StatelessWidget {
                                             subtitle:
                                                 '${t('level')} ${ladder.unlockedLevel}',
                                             icon: Icons.smart_toy,
-                                            accent: const Color(0xFFFF8A65),
+                                            accent: GameUi.primary,
                                             footer: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(4),
@@ -157,7 +157,7 @@ class HomeScreen extends StatelessWidget {
                                             title: t('menu_online'),
                                             subtitle: t('tile_online_sub'),
                                             icon: Icons.public,
-                                            accent: const Color(0xFF4FC3F7),
+                                            accent: GameUi.cyan,
                                             onTap: () => _openOnline(context),
                                           ),
                                         ),
@@ -178,7 +178,7 @@ class HomeScreen extends StatelessWidget {
                                             title: t('menu_local'),
                                             subtitle: t('tile_local_sub'),
                                             icon: Icons.people,
-                                            accent: const Color(0xFF81C784),
+                                            accent: const Color(0xFF60A5FA),
                                             onTap: () => Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -192,7 +192,7 @@ class HomeScreen extends StatelessWidget {
                                             title: t('menu_leaderboard'),
                                             subtitle: t('tile_board_sub'),
                                             icon: Icons.leaderboard,
-                                            accent: const Color(0xFFFFD54F),
+                                            accent: GameUi.rewardGold,
                                             onTap: () =>
                                                 _openLeaderboard(context),
                                           ),

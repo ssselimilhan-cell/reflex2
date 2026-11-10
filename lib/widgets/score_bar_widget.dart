@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../settings/strings.dart';
 import '../settings/user_profile.dart';
 import 'profile_avatar.dart';
+import 'game_ui.dart';
 
 class ScoreBarWidget extends StatelessWidget {
   final String leftLabel;
@@ -29,8 +30,9 @@ class ScoreBarWidget extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black26,
-            borderRadius: BorderRadius.circular(10),
+            color: GameUi.surface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: GameUi.hairline),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

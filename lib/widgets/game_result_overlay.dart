@@ -22,7 +22,7 @@ class GameResultOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isWin ? const Color(0xFFFFD54F) : const Color(0xFFEF5350);
+    final accent = isWin ? GameUi.rewardGold : const Color(0xFFFB7185);
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -42,17 +42,21 @@ class GameResultOverlay extends StatelessWidget {
                     Transform.scale(scale: scale, child: child),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B1B1B),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: accent, width: 2.5),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF24364F), Color(0xFF111C2D)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: accent.withOpacity(0.85), width: 1.6),
                     boxShadow: [
                       BoxShadow(
                         color: accent.withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 4,
+                        blurRadius: 28,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
