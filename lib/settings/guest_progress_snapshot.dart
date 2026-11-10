@@ -159,8 +159,62 @@ class GuestProgressSnapshot {
 
     String day(String key) {
       final value = string(key);
-      if (value.isNotEmpty &&
-          !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+      if (value.isEmpty) return value;
+      if (!RegExp(r'^\d{4}-\d{2}-\d{2}
+
+    final rawClaimed = map['claimedMissionIndexes'];
+    if (rawClaimed is! List ||
+        rawClaimed.any((value) => value is! int || value < 0 || value > 2)) {
+      throw const FormatException('Invalid claimed mission indexes');
+    }
+    final claimed = rawClaimed.cast<int>();
+    if (claimed.toSet().length != claimed.length) {
+      throw const FormatException('Duplicate claimed mission indexes');
+    }
+
+    final wins = integer('todayWins');
+    final games = integer('todayGames');
+    final bonuses = integer('todayBonuses');
+    final onlineWins = integer('onlineWins');
+    final onlineLosses = integer('onlineLosses');
+    final totalWins = integer('totalWins');
+    if (wins > games || totalWins < wins || bonuses > games) {
+      throw const FormatException('Inconsistent snapshot counters');
+    }
+
+    return GuestProgressSnapshot(
+      schemaVersion: version,
+      exportedAtUtc: exportedAt,
+      displayName: name as String?,
+      onlineWins: onlineWins,
+      onlineLosses: onlineLosses,
+      avatarIconIndex: integer('avatarIconIndex', max: 11),
+      avatarColorValue: integer('avatarColorValue', max: 0xFFFFFFFF),
+      photoBase64: photo as String?,
+      streakDays: integer('streakDays'),
+      lastPlayDay: day('lastPlayDay'),
+      missionDay: day('missionDay'),
+      todayGames: games,
+      todayWins: wins,
+      todayBonuses: bonuses,
+      stars: integer('stars'),
+      totalWins: totalWins,
+      reviewAsked: map['reviewAsked'] is bool
+          ? map['reviewAsked'] as bool
+          : throw const FormatException('Invalid snapshot field: reviewAsked'),
+      claimedMissionIndexes: List<int>.unmodifiable(claimed),
+      highestClearedLevel: integer('highestClearedLevel', max: 100),
+    );
+  }
+}
+).hasMatch(value)) {
+        throw FormatException('Invalid snapshot date: $key');
+      }
+      final parts = value.split('-').map(int.parse).toList();
+      final parsed = DateTime.utc(parts[0], parts[1], parts[2]);
+      if (parsed.year != parts[0] ||
+          parsed.month != parts[1] ||
+          parsed.day != parts[2]) {
         throw FormatException('Invalid snapshot date: $key');
       }
       return value;
