@@ -431,6 +431,9 @@ class OnlineRoomRepository {
       _channels.doc(channelId).collection('tournaments')
           .orderBy('createdAt', descending: true).snapshots();
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchChannelTournamentStats(String channelId) =>
+      _channels.doc(channelId).collection('tournament_stats').snapshots();
+
   /// A match participant links the official game room to their bracket match.
   /// Only player 1 may open the room, preventing duplicate simultaneous rooms.
   Future<void> linkTournamentMatchRoom({
