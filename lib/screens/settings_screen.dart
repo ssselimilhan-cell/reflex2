@@ -781,7 +781,10 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return const Text('Temalar şu anda yüklenemiyor.', style: TextStyle(color: Colors.white70));
+                        return Text(
+                          'Temalar yüklenemedi: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                        );
                       }
                       if (!snapshot.hasData) {
                         return const Padding(
