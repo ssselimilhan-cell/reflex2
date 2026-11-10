@@ -48,10 +48,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final profile = UserProfile.instance;
         return Scaffold(
           backgroundColor: AppSettings.instance.themeColor,
-          appBar: AppBar(title: Text(t('profile'))),
+          appBar: AppBar(
+            title: Text(t('profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            backgroundColor: const Color(0xFF142238),
+            foregroundColor: Colors.white,
+          ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
               child: profile.hasProfile
                   ? _buildProfileView(profile)
                   : _buildCreateView(),
@@ -75,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF1B293D),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x553B82F6)),
+            border: Border.all(color: const Color(0x55FBBF24)),
           ),
           child: user != null
               ? Row(
@@ -127,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: Text(t('continue_google')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white30),
+                        side: const BorderSide(color: Color(0x88FBBF24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -137,8 +141,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: const Icon(Icons.email_outlined),
                       label: Text(t('continue_email')),
                       style: FilledButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: const Color(0xFF3B82F6),
+                        foregroundColor: const Color(0xFF101827),
+                        backgroundColor: const Color(0xFFFBBF24),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -386,61 +390,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         _buildAccountCard(),
         const SizedBox(height: 20),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => _showAvatarPicker(context),
-              child: Stack(
-                children: [
-                  const ProfileAvatar(radius: 28),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF29415F), Color(0xFF17263A), Color(0xFF111D2E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0x66FBBF24)),
+            boxShadow: const [
+              BoxShadow(color: Color(0x33000000), blurRadius: 18, offset: Offset(0, 9)),
+            ],
+          ),
+          child: Column(children: [
+            Row(children: [
+              GestureDetector(
+                onTap: () => _showAvatarPicker(context),
+                child: Stack(clipBehavior: Clip.none, children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xCCFBBF24), width: 2),
+                    ),
+                    child: const ProfileAvatar(radius: 34),
+                  ),
                   Positioned(
-                    bottom: -2,
-                    right: -2,
+                    bottom: 0, right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.edit,
-                          size: 12, color: profile.avatarColor),
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(color: Color(0xFFFBBF24), shape: BoxShape.circle),
+                      child: const Icon(Icons.edit_rounded, size: 12, color: Color(0xFF101827)),
                     ),
                   ),
+                ]),
+              ),
+              const SizedBox(width: 15),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(profile.displayName!,
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 5),
+                  Text(t('online_win_rate').toUpperCase(),
+                    style: const TextStyle(color: Colors.white60, fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(rate == null ? t('no_games_yet') : '${rate.round()}%',
+                    style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 30, fontWeight: FontWeight.w900)),
                 ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                profile.displayName!,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+              )),
+            ]),
+            const SizedBox(height: 18),
+            Container(height: 1, color: Colors.white12),
+            const SizedBox(height: 13),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+              _ProfileMetric(label: t('games_played'), value: profile.onlineGamesPlayed, icon: Icons.style_rounded),
+              _ProfileMetric(label: t('wins'), value: profile.onlineWins, icon: Icons.emoji_events_rounded),
+              _ProfileMetric(label: t('losses'), value: profile.onlineLosses, icon: Icons.trending_down_rounded),
+            ]),
+          ]),
         ),
-        const SizedBox(height: 32),
-        Text(t('online_win_rate'),
-            style: const TextStyle(color: Colors.white70, fontSize: 14)),
-        const SizedBox(height: 4),
-        Text(
-          rate == null ? t('no_games_yet') : '${rate.round()}%',
-          style: const TextStyle(
-              color: Colors.amber, fontSize: 40, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            _StatBox(label: t('games_played'), value: profile.onlineGamesPlayed),
-            const SizedBox(width: 12),
-            _StatBox(label: t('wins'), value: profile.onlineWins),
-            const SizedBox(width: 12),
-            _StatBox(label: t('losses'), value: profile.onlineLosses),
-          ],
-        ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
+        
         _RankCard(wins: profile.onlineWins),
         const SizedBox(height: 28),
         Padding(
@@ -590,6 +605,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+}
+
+class _ProfileMetric extends StatelessWidget {
+  final String label;
+  final int value;
+  final IconData icon;
+
+  const _ProfileMetric({required this.label, required this.value, required this.icon});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(children: [
+      Icon(icon, color: const Color(0xFFFBBF24), size: 17),
+      const SizedBox(height: 5),
+      Text('$value', style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900)),
+      const SizedBox(height: 2),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: FittedBox(fit: BoxFit.scaleDown, child: Text(label,
+          style: const TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w600))),
+      ),
+    ]),
+  );
 }
 
 class _StatBox extends StatelessWidget {
