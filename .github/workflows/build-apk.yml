@@ -59,11 +59,16 @@ jobs:
           } > android/key.properties
           source release.config
           bash tools/prepare_android_release.sh "$APP_NAME" "$APP_ID"
-          trap 'rm -f android/upload-keystore.jks android/key.properties' EXIT
 
       - run: flutter pub get
 
-      - run: flutter build apk --release
+      - name: İmzalı önizleme APK'sını oluştur ve geçici anahtarları temizle
+        run: |
+          set -euo pipefail
+          trap 'rm -f android/upload-keystore.jks android/key.properties' EXIT
+          test -s android/key.properties
+          test -s android/upload-keystore.jks
+          flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
