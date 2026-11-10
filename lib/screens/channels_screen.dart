@@ -1133,6 +1133,18 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
     try {
       final profile = UserProfile.instance;
       final name = profile.hasProfile ? profile.displayName : 'Oyuncu';
+      var opponentDeviceId = match['player2DeviceId'] as String?;
+      if (opponentDeviceId == null || opponentDeviceId.isEmpty) {
+        // Existing tournaments created before device IDs were stored in the
+        // bracket are upgraded from the member record on demand.
+        final opponent = await FirebaseFirestore.instance.collection('channels')
+            .doc(widget.channelId).collection('members')
+            .doc(match['player2Uid'] as String).get();
+        opponentDeviceId = opponent.data()?['playerDeviceId'] as String?;
+      }
+      if (opponentDeviceId == null || opponentDeviceId.isEmpty) {
+        throw StateError('Rakibin oyun cihazı bulunamadı. Kanal üyeliğini yenileyip tekrar dene.');
+      }
       roomCode = await _repo.createRoom(
         widget.deviceId,
         hostDisplayName: name,
@@ -1140,7 +1152,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
         hostAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
         hostPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
-        inviteToDeviceId: match['player2DeviceId'] as String? ?? match['player2Uid'] as String,
+        inviteToDeviceId: opponentDeviceId,
         tournamentChannelId: widget.channelId,
         tournamentId: widget.tournamentId,
         tournamentMatchId: matchId,
