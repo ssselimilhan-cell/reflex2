@@ -353,6 +353,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
 
   Future<void> _startTournament(String id) async {
     if (!_startingTournamentIds.add(id)) return;
+    if (mounted) setState(() {});
     try {
       await _repo.startChannelTournament(
         channelId: widget.channelId, tournamentId: id, creatorDeviceId: widget.deviceId,
@@ -371,6 +372,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       }
     } finally {
       _startingTournamentIds.remove(id);
+      if (mounted) setState(() {});
     }
   }
 
