@@ -141,6 +141,22 @@ void main() {
       );
     });
 
+    test('rejects malformed dates and avatar image encoding', () {
+      final impossibleDate = sampleSnapshot().toMap()
+        ..['lastPlayDay'] = '2026-02-30';
+      final invalidPhoto = sampleSnapshot().toMap()
+        ..['photoBase64'] = 'not-base64!';
+
+      expect(
+        () => GuestProgressSnapshot.fromMap(impossibleDate),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => GuestProgressSnapshot.fromMap(invalidPhoto),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('rejects negative counters and invalid avatar indexes', () {
       final negative = sampleSnapshot().toMap()..['stars'] = -1;
       final avatar = sampleSnapshot().toMap()..['avatarIconIndex'] = 12;
