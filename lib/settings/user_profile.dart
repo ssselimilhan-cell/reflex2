@@ -364,6 +364,9 @@ class UserProfile extends ChangeNotifier {
       final nicknameRef = oldName == null || oldName.isEmpty
           ? null
           : db.collection('nicknames').doc(_nicknameDocumentId(oldName));
+      final publicProfileRef = oldId == null
+          ? null
+          : db.collection('profiles').doc(oldId);
       await db.runTransaction((tx) async {
         if (nicknameRef != null) {
           final nickname = await tx.get(nicknameRef);
@@ -376,10 +379,9 @@ class UserProfile extends ChangeNotifier {
           'photoBase64': null,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+        if (publicProfileRef != null) tx.delete(publicProfileRef);
       });
-    }
-
-    if (oldId != null) {
+    } else if (oldId != null) {
       await db.collection('profiles').doc(oldId).delete();
     }
 
