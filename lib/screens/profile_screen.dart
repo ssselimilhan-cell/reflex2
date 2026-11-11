@@ -658,6 +658,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _confirmDeleteProfile() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Profili sil?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Takma adın ve profil fotoğrafın kaldırılacak. Oynadığın maçların istatistikleri korunur.',
+          style: TextStyle(color: Colors.white70, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF9B3434),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Profili sil'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await UserProfile.instance.deleteProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profilin silindi. Maç istatistiklerin korundu.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profil silinemedi: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Widget _buildProfileView(UserProfile profile) {
     final rate = profile.onlineWinRate;
     return Column(
@@ -747,16 +793,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 28),
         Padding(
-          // Buton tam ekran kenarına yapışmasın diye biraz yukarı alındı.
-          // (Spacer() yerine sabit boşluk — kaydırılabilir ekranla uyumlu
-          // olsun diye; Spacer sınırsız yükseklikte hataya yol açardı.)
           padding: const EdgeInsets.only(bottom: 8),
-          child: OutlinedButton(
-            onPressed: () async {
-              await UserProfile.instance.deleteProfile();
-            },
-            style: OutlinedButton.styleFrom(foregroundColor: Colors.white70),
-            child: Text(t('delete_profile')),
+          child: OutlinedButton.icon(
+            onPressed: _saving ? null : _confirmDeleteProfile,
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: Text(t('delete_profile')),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFFF8A80),
+              side: const BorderSide(color: Color(0x66FF8A80)),
+              padding: const EdgeInsets.symmetric(vertical: 13),
+            ),
           ),
         ),
       ],
