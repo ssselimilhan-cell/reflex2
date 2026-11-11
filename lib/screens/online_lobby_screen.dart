@@ -11,6 +11,7 @@ import '../settings/moderation.dart';
 import '../settings/ranks.dart';
 import 'online_game_screen.dart';
 import 'channels_screen.dart';
+import 'quick_match_session.dart';
 
 enum _PlayerSort { alphabetical, gamesPlayed, winRate }
 
@@ -844,6 +845,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 final isInvitee = invitedDeviceId != null &&
                     invitedDeviceId == _myDeviceId;
                 return data['tournamentMatchId'] == null &&
+                    quickMatchRoomVisibleInPublicLobby(data) &&
                     (invitedDeviceId == null || isHost || isInvitee);
               }).toList();
               docs.removeWhere((d) => Moderation.instance

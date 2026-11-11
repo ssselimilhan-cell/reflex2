@@ -183,37 +183,21 @@ class HomeScreen extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Reveal(
                                   index: 3,
-                                  child: IntrinsicHeight(
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Expanded(
-                                          child: GameTile(
-                                            title: t('menu_local'),
-                                            subtitle: t('tile_local_sub'),
-                                            icon: Icons.people,
-                                            accent: GameUi.goldDeep,
-                                            onTap: () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        const LocalPvpScreen())),
-                                          ),
+                                  child: Column(
+                                    children: [
+                                      GameTile(
+                                        title: t('menu_local'),
+                                        subtitle: t('tile_local_sub'),
+                                        icon: Icons.people,
+                                        accent: GameUi.goldDeep,
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const LocalPvpScreen()),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: GameTile(
-                                            title: t('menu_leaderboard'),
-                                            subtitle: t('tile_board_sub'),
-                                            icon: Icons.leaderboard,
-                                            accent: GameUi.rewardGold,
-                                            onTap: () =>
-                                                _openLeaderboard(context),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _LeaderboardShortcut(onTap: () => _openLeaderboard(context)),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -244,6 +228,48 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
+
+class _LeaderboardShortcut extends StatelessWidget {
+  final VoidCallback onTap;
+  const _LeaderboardShortcut({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFF202B3D).withOpacity(.88),
+    borderRadius: BorderRadius.circular(14),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                color: GameUi.gold.withOpacity(.13),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.leaderboard_rounded, color: GameUi.gold, size: 19),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(t('menu_leaderboard'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
+                  Text(t('tile_board_sub'), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 21),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Üst çubuk: solda profil hapı, sağda yıldız sayısı ve ayarlar.

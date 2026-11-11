@@ -706,6 +706,30 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Если соперник не найден, через {n} с начнётся игра с ботом.',
     'zh': '若未找到对手，{n} 秒后将与机器人对战。'
   },
+  'qm_waiting_hint': {
+    'tr': 'Gerçek bir oyuncu bulununca maç otomatik başlayacak. Bu sırada botla oynamak istersen aşağıdan seçebilirsin.',
+    'en': 'Your match starts automatically when a real player is found. You can choose to play a bot below instead.',
+    'ru': 'Игра начнётся автоматически, когда найдётся реальный игрок. Ниже можно выбрать игру с ботом.',
+    'zh': '找到真实玩家后将自动开始比赛。你也可以在下方选择与机器人对战。'
+  },
+  'qm_search_failed': {
+    'tr': 'Eşleşme bağlantısı kurulamadı',
+    'en': 'Could not connect to matchmaking',
+    'ru': 'Не удалось подключиться к поиску игры',
+    'zh': '无法连接匹配服务'
+  },
+  'qm_search_failed_hint': {
+    'tr': 'Bağlantını kontrol edip yeniden deneyebilirsin.',
+    'en': 'Check your connection and try again.',
+    'ru': 'Проверьте подключение и попробуйте снова.',
+    'zh': '请检查网络连接后重试。'
+  },
+  'qm_cancel': {
+    'tr': 'Aramayı iptal et',
+    'en': 'Cancel search',
+    'ru': 'Отменить поиск',
+    'zh': '取消匹配'
+  },
   'qm_play_bot_now': {
     'tr': 'Şimdi bota karşı oyna',
     'en': 'Play the bot now',
@@ -877,10 +901,10 @@ const Map<String, Map<String, String>> _strings = {
     'zh': '支持'
   },
   'menu_ladder': {
-    'tr': 'Bot Yolu',
-    'en': 'Bot Ladder',
-    'ru': 'Лестница ботов',
-    'zh': '机器人天梯'
+    'tr': 'Refleks Serüveni',
+    'en': 'Reflex Journey',
+    'ru': 'Путь рефлекса',
+    'zh': '反应力之旅'
   },
   'level': {
     'tr': 'Seviye',
@@ -943,7 +967,7 @@ const Map<String, Map<String, String>> _strings = {
     'zh': '再试一次'
   },
   'level_back': {
-    'tr': 'Yola Dön',
+    'tr': 'Serüvene Dön',
     'en': 'Back to Path',
     'ru': 'К карте',
     'zh': '返回关卡'

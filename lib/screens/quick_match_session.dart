@@ -42,7 +42,15 @@ class QuickMatchSession {
   String? _roomCode;
   QuickMatchResult? _match;
   bool _finished = false;
+  final Completer<QuickMatchResult?> _matchCompleter = Completer<QuickMatchResult?>();
   Future<void>? _running;
+
+  Future<QuickMatchResult?> get matchFound => _matchCompleter.future;
+
+  void _publishMatch(QuickMatchResult result) {
+    _match = result;
+    if (!_matchCompleter.isCompleted) _matchCompleter.complete(result);
+  }
 
   Future<void> start() {
     return _running ??= _run();
@@ -62,7 +70,7 @@ class QuickMatchSession {
         final room = await _repo.watchRoom(code).first;
         final data = room.data();
         if (room.exists && data?['guestDeviceId'] != null) {
-          _match = QuickMatchResult(code, id, true);
+          _publishMatch(QuickMatchResult(code, id, true));
           break;
         }
 
@@ -87,7 +95,9 @@ class QuickMatchSession {
         }
       }
     } catch (_) {
-      // Ağ sorunu bot maçını engellemez; sadece çevrim içi eşleşme kapanır.
+      // Ağ hatasında ekranın sonsuza kadar beklemesi yerine kullanıcıya
+      // yeniden deneme fırsatı verilir.
+      if (!_matchCompleter.isCompleted) _matchCompleter.complete(null);
     }
   }
 
@@ -129,12 +139,12 @@ class QuickMatchSession {
           guestPhotoBase64: p.hasProfile ? p.photoBase64 : null,
         );
         if (!joined) continue;
-        await _repo.requestStart(d.id, PlayerSide.player2);
+        _publishMatch(QuickMatchResult(d.id, id, false));
+        try { await _repo.requestStart(d.id, PlayerSide.player2); } catch (_) {}
         if (ownCode != null) {
           try { await _repo.leaveRoom(ownCode, id, isHost: true); } catch (_) {}
           _roomCode = null;
         }
-        _match = QuickMatchResult(d.id, id, false);
         return true;
       }
     } catch (_) {}
@@ -143,13 +153,14 @@ class QuickMatchSession {
 
   Future<QuickMatchResult?> finish() async {
     _finished = true;
+    if (!_matchCompleter.isCompleted) _matchCompleter.complete(null);
     try { await _running; } catch (_) {}
     final code = _roomCode;
     if (_match == null && code != null && _deviceId != null) {
       try {
         final snap = await _repo.watchRoom(code).first;
         if (snap.data()?['guestDeviceId'] != null) {
-          _match = QuickMatchResult(code, _deviceId!, true);
+          _publishMatch(QuickMatchResult(code, _deviceId!, true));
         }
       } catch (_) {}
     }
@@ -161,6 +172,7 @@ class QuickMatchSession {
 
   Future<void> cancel() async {
     _finished = true;
+    if (!_matchCompleter.isCompleted) _matchCompleter.complete(null);
     try { await _running; } catch (_) {}
     final code = _roomCode;
     if (code != null && _match == null) {
@@ -168,3 +180,8 @@ class QuickMatchSession {
     }
   }
 }
+
+/// Quick-match queue rooms are discoverable by other quick-match clients,
+/// but are not advertised as ordinary public tables in the manual lobby.
+bool quickMatchRoomVisibleInPublicLobby(Map<String, dynamic> data) =>
+    data['quickMatch'] != true;

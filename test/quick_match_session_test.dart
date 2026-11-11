@@ -81,4 +81,14 @@ void main() {
       );
     });
   });
+  group('quickMatchRoomVisibleInPublicLobby', () {
+    test('hides queue rooms from the manual public room list', () {
+      expect(quickMatchRoomVisibleInPublicLobby({'quickMatch': true}), isFalse);
+    });
+
+    test('keeps normal public rooms visible', () {
+      expect(quickMatchRoomVisibleInPublicLobby({'quickMatch': false}), isTrue);
+    });
+  });
+
 }
