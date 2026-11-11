@@ -8,6 +8,7 @@ import '../settings/feedback.dart';
 import '../settings/telemetry.dart';
 import '../settings/progress.dart';
 import 'star_shop_screen.dart';
+import 'profile_screen.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
@@ -32,181 +33,137 @@ class SettingsScreen extends StatelessWidget {
       animation: Listenable.merge([settings, Moderation.instance, Progress.instance]),
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: settings.themeColor,
-          appBar: AppBar(title: Text(t('settings_title'))),
+          backgroundColor: const Color(0xFF101827),
+          appBar: AppBar(
+            title: Text(t('settings_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
+            backgroundColor: const Color(0xFF142238),
+            foregroundColor: Colors.white,
+            elevation: 0,
+          ),
           body: SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                   children: [
-                    _CardPreview(
-                      scale: settings.cardScale,
-                      theme: settings.cardTheme,
-                      tableColor: settings.themeColor,
-                    ),
-                    const SizedBox(height: 20),
-                    _Group(
-                      title: t('settings_group_cards'),
-                      children: [
-                        _CardDesignRow(),
-                        _SettingRow(
-                          icon: Icons.flip,
-                          title: t('settings_card_back'),
-                          belowPadding: const EdgeInsets.fromLTRB(58, 12, 14, 0),
-                          below: _SwatchRow(
-                            colors: AppSettings.cardBackPresets,
-                            selected: settings.cardBackColor,
-                            onPick: settings.setCardBackColor,
-                          ),
+                    const Text('HESABIN VE KISAYOLLAR',
+                      style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                    const SizedBox(height: 10),
+                    _QuickActionGrid(children: [
+                      _QuickAction(icon: Icons.person_outline_rounded, title: t('profile'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+                      _QuickAction(icon: Icons.group_add_outlined, title: t('invite_friends'), onTap: shareApp),
+                      _QuickAction(icon: Icons.chat_bubble_outline_rounded, title: t('feedback_title'),
+                        onTap: () => showFeedbackDialog(context)),
+                      _QuickAction(icon: Icons.language_rounded, title: _languageName(settings.language),
+                        subtitle: 'Dil seçimi', onTap: () => _pickLanguage(context)),
+                    ]),
+                    const SizedBox(height: 16),
+                    Material(
+                      color: const Color(0xFF202D42),
+                      borderRadius: BorderRadius.circular(18),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StarShopScreen())),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                          child: Row(children: [
+                            Container(width: 44, height: 44,
+                              decoration: BoxDecoration(color: Colors.amber.withOpacity(.14), borderRadius: BorderRadius.circular(13)),
+                              child: const Icon(Icons.storefront_rounded, color: Colors.amber, size: 25)),
+                            const SizedBox(width: 13),
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              const Text('TEMA MAĞAZASI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                              const SizedBox(height: 3),
+                              Text('Kart tasarımlarını keşfet • ${Progress.instance.stars} ⭐',
+                                style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                            ])),
+                            const Icon(Icons.chevron_right_rounded, color: Colors.amber, size: 26),
+                          ]),
                         ),
-                        _SettingRow(
-                          icon: Icons.aspect_ratio,
-                          title: t('settings_card_size'),
-                          trailing:
-                              _ValuePill('${(settings.cardScale * 100).round()}%'),
-                          belowPadding: const EdgeInsets.only(top: 4),
-                          below: _StyledSlider(
-                            value: settings.cardScale,
-                            min: 0.7,
-                            max: 2.0,
-                            divisions: 13,
-                            onChanged: settings.setCardScale,
-                          ),
-                        ),
-                      ],
-                    ),
-                    _Group(
-                      title: t('settings_group_look'),
-                      children: [
-                        _SettingRow(
-                          icon: Icons.palette_outlined,
-                          title: t('settings_color'),
-                          belowPadding: const EdgeInsets.fromLTRB(58, 12, 14, 0),
-                          below: _SwatchRow(
-                            colors: AppSettings.presetColors,
-                            selected: settings.themeColor,
-                            onPick: settings.setThemeColor,
-                          ),
-                        ),
-                        _SettingRow(
-                          icon: Icons.text_fields,
-                          title: t('settings_font_size'),
-                          trailing:
-                              _ValuePill('${(settings.fontScale * 100).round()}%'),
-                          belowPadding: const EdgeInsets.only(top: 4),
-                          below: _StyledSlider(
-                            value: settings.fontScale,
-                            min: 0.8,
-                            max: 1.6,
-                            divisions: 8,
-                            onChanged: settings.setFontScale,
-                          ),
-                        ),
-                        _switchRow(
-                          icon: Icons.contrast,
-                          title: t('settings_high_contrast'),
-                          value: settings.highContrast,
-                          onChanged: settings.setHighContrast,
-                        ),
-                        _SettingRow(
-                          icon: Icons.language,
-                          title: t('settings_language'),
-                          trailing: _ValueWithChevron(
-                              _languageName(settings.language)),
-                          onTap: () => _pickLanguage(context),
-                        ),
-                      ],
-                    ),
-                    _Group(
-                      title: t('settings_group_game'),
-                      children: [
-                        _SettingRow(
-                          icon: Icons.speed,
-                          title: t('settings_animation_speed'),
-                          below: _Segmented<double>(
-                            values: const [0.5, 1.0, 1.6],
-                            labels: [
-                              t('speed_fast'),
-                              t('speed_normal'),
-                              t('speed_slow'),
-                            ],
-                            selected: settings.animationSpeed,
-                            onChanged: settings.setAnimationSpeed,
-                          ),
-                        ),
-                        _switchRow(
-                          icon: Icons.tips_and_updates_outlined,
-                          title: t('assisted_mode'),
-                          value: settings.assistedMode,
-                          onChanged: settings.setAssistedMode,
-                        ),
-                      ],
-                    ),
-                    _Group(
-                      title: t('settings_group_audio'),
-                      children: [
-                        _switchRow(
-                          icon: Icons.volume_up_outlined,
-                          title: t('settings_sound'),
-                          value: settings.soundEnabled,
-                          onChanged: settings.setSoundEnabled,
-                        ),
-                        _switchRow(
-                          icon: Icons.vibration,
-                          title: t('settings_haptics'),
-                          value: settings.hapticsEnabled,
-                          onChanged: settings.setHapticsEnabled,
-                        ),
-                      ],
-                    ),
-                    _Group(
-                      title: t('settings_group_privacy'),
-                      children: [
-                        _switchRow(
-                          icon: Icons.analytics_outlined,
-                          title: t('settings_telemetry'),
-                          value: settings.telemetryEnabled,
-                          onChanged: settings.setTelemetryEnabled,
-                        ),
-                        _SettingRow(
-                          icon: Icons.block,
-                          title: t('blocked_players'),
-                          trailing: _ValueWithChevron(
-                              '${Moderation.instance.blocked.length}'),
-                          onTap: () => showBlockedPlayersDialog(context),
-                        ),
-                      ],
-                    ),
-                    _Group(
-                      title: t('settings_group_support'),
-                      children: [
-                        _SettingRow(
-                          icon: Icons.share_outlined,
-                          title: t('invite_friends'),
-                          onTap: shareApp,
-                        ),
-                        _SettingRow(
-                          icon: Icons.star_border_rounded,
-                          title: t('rate_app'),
-                          onTap: openStoreReview,
-                        ),
-                        _SettingRow(
-                          icon: Icons.chat_bubble_outline,
-                          title: t('feedback_title'),
-                          onTap: () => showFeedbackDialog(context),
-                        ),
-                      ],
-                    ),
-                    Center(
-                      child: Text(
-                        '${t('app_title')} ${Telemetry.appVersion}',
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 12),
                       ),
                     ),
+                    const SizedBox(height: 22),
+                    const Text('KİŞİSELLEŞTİRME',
+                      style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                    const SizedBox(height: 8),
+                    _SettingsExpansion(
+                      icon: Icons.style_outlined,
+                      title: 'Kart ve görünüm',
+                      subtitle: 'Kart teması, arka yüz, masa rengi ve yazı boyutu',
+                      children: [
+                        _CardDesignRow(),
+                        _SettingRow(icon: Icons.flip, title: t('settings_card_back'),
+                          belowPadding: const EdgeInsets.fromLTRB(58, 8, 14, 0),
+                          below: _SwatchRow(colors: AppSettings.cardBackPresets,
+                            selected: settings.cardBackColor, onPick: settings.setCardBackColor)),
+                        _SettingRow(icon: Icons.aspect_ratio, title: t('settings_card_size'),
+                          trailing: _ValuePill('${(settings.cardScale * 100).round()}%'),
+                          belowPadding: const EdgeInsets.only(top: 2),
+                          below: _StyledSlider(value: settings.cardScale, min: .7, max: 2, divisions: 13, onChanged: settings.setCardScale)),
+                        _SettingRow(icon: Icons.palette_outlined, title: t('settings_color'),
+                          belowPadding: const EdgeInsets.fromLTRB(58, 8, 14, 0),
+                          below: _SwatchRow(colors: AppSettings.presetColors,
+                            selected: settings.themeColor, onPick: settings.setThemeColor)),
+                        _SettingRow(icon: Icons.text_fields_rounded, title: t('settings_font_size'),
+                          trailing: _ValuePill('${(settings.fontScale * 100).round()}%'),
+                          belowPadding: const EdgeInsets.only(top: 2),
+                          below: _StyledSlider(value: settings.fontScale, min: .8, max: 1.6, divisions: 8, onChanged: settings.setFontScale)),
+                        _switchRow(icon: Icons.contrast, title: t('settings_high_contrast'),
+                          value: settings.highContrast, onChanged: settings.setHighContrast),
+                      ],
+                    ),
+                    _SettingsExpansion(
+                      icon: Icons.sports_esports_outlined,
+                      title: 'Oyun tercihleri',
+                      subtitle: 'Animasyon ve oyun içi yardımcılar',
+                      children: [
+                        _SettingRow(icon: Icons.speed, title: t('settings_animation_speed'),
+                          below: _Segmented<double>(values: const [.5, 1, 1.6],
+                            labels: [t('speed_fast'), t('speed_normal'), t('speed_slow')],
+                            selected: settings.animationSpeed, onChanged: settings.setAnimationSpeed)),
+                        _switchRow(icon: Icons.tips_and_updates_outlined, title: t('assisted_mode'),
+                          value: settings.assistedMode, onChanged: settings.setAssistedMode),
+                      ],
+                    ),
+                    _SettingsExpansion(
+                      icon: Icons.volume_up_outlined,
+                      title: 'Ses ve dokunma',
+                      subtitle: 'Ses efektleri ve titreşim',
+                      children: [
+                        _switchRow(icon: Icons.volume_up_outlined, title: t('settings_sound'),
+                          value: settings.soundEnabled, onChanged: settings.setSoundEnabled),
+                        _switchRow(icon: Icons.vibration, title: t('settings_haptics'),
+                          value: settings.hapticsEnabled, onChanged: settings.setHapticsEnabled),
+                      ],
+                    ),
+                    _SettingsExpansion(
+                      icon: Icons.shield_outlined,
+                      title: 'Gizlilik ve güvenlik',
+                      subtitle: 'Veri tercihleri ve engellenen oyuncular',
+                      children: [
+                        _switchRow(icon: Icons.analytics_outlined, title: t('settings_telemetry'),
+                          value: settings.telemetryEnabled, onChanged: settings.setTelemetryEnabled),
+                        _SettingRow(icon: Icons.block, title: t('blocked_players'),
+                          trailing: _ValueWithChevron('${Moderation.instance.blocked.length}'),
+                          onTap: () => showBlockedPlayersDialog(context)),
+                      ],
+                    ),
+                    _SettingsExpansion(
+                      icon: Icons.help_outline_rounded,
+                      title: 'Destek ve uygulama',
+                      subtitle: 'Uygulamayı değerlendir ve yardım al',
+                      children: [
+                        _SettingRow(icon: Icons.star_border_rounded, title: t('rate_app'), onTap: openStoreReview),
+                        _SettingRow(icon: Icons.chat_bubble_outline, title: t('feedback_title'),
+                          onTap: () => showFeedbackDialog(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Center(child: Text('${t('app_title')}  •  ${Telemetry.appVersion}',
+                      style: const TextStyle(color: Colors.white38, fontSize: 11))),
                   ],
                 ),
               ),
@@ -216,6 +173,79 @@ class SettingsScreen extends StatelessWidget {
       },
     );
   }
+}
+
+class _QuickActionGrid extends StatelessWidget {
+  final List<Widget> children;
+  const _QuickActionGrid({required this.children});
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
+    final width = (constraints.maxWidth - 10) / 2;
+    return Wrap(spacing: 10, runSpacing: 10,
+      children: [for (final child in children) SizedBox(width: width, child: child)]);
+  });
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+  const _QuickAction({required this.icon, required this.title, this.subtitle, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFF202D42),
+    borderRadius: BorderRadius.circular(15),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: SizedBox(height: 76,
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(children: [
+            Icon(icon, color: Colors.amber, size: 22),
+            const SizedBox(width: 9),
+            Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+              if (subtitle != null) Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white54, fontSize: 10)),
+            ])),
+            const Icon(Icons.chevron_right, color: Colors.white38, size: 18),
+          ]),
+        ),
+      ),
+    ),
+  );
+}
+
+class _SettingsExpansion extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+  const _SettingsExpansion({required this.icon, required this.title, required this.subtitle, required this.children});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 9),
+    decoration: BoxDecoration(color: const Color(0xFF1A273A), borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: Colors.white.withOpacity(.07))),
+    child: Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent, splashColor: Colors.white10),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
+        childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+        leading: Icon(icon, color: Colors.amber, size: 22),
+        title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+        iconColor: Colors.amber,
+        collapsedIconColor: Colors.white54,
+        children: children,
+      ),
+    ),
+  );
 }
 
 String _languageName(AppLanguage lang) {
