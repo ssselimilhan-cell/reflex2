@@ -5,7 +5,6 @@ import '../online/firestore_game_repository.dart';
 import '../online/persistent_device_id.dart';
 import '../settings/app_settings.dart';
 import '../settings/user_profile.dart';
-import '../settings/progress.dart';
 import '../settings/strings.dart';
 import '../widgets/profile_avatar.dart';
 import '../settings/moderation.dart';
