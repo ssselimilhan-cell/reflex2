@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:reflex2/screens/quick_match_session.dart';
+import 'package:stres_kart/screens/quick_match_session.dart';
 
 void main() {
   group('quickMatchRoomNeedsReplacement', () {
