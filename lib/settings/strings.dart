@@ -298,6 +298,36 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Удалить профиль (стать гостем)',
     'zh': '删除资料（变为访客）'
   },
+  'delete_profile_confirm_title': {
+    'tr': 'Profili sil?',
+    'en': 'Delete your profile?',
+    'ru': 'Удалить профиль?',
+    'zh': '删除个人资料？'
+  },
+  'delete_profile_confirm_body': {
+    'tr': 'Takma adın ve profil fotoğrafın kaldırılacak. Oynadığın maçların istatistikleri korunur.',
+    'en': 'Your nickname and profile photo will be removed. Your match statistics will be kept.',
+    'ru': 'Твой псевдоним и фотография профиля будут удалены. Статистика матчей сохранится.',
+    'zh': '你的昵称和头像将被删除，比赛统计数据会保留。'
+  },
+  'delete_profile_confirm_action': {
+    'tr': 'Profili sil',
+    'en': 'Delete profile',
+    'ru': 'Удалить профиль',
+    'zh': '删除资料'
+  },
+  'profile_deleted_preserved_stats': {
+    'tr': 'Profilin silindi. Maç istatistiklerin korundu.',
+    'en': 'Your profile was deleted. Your match statistics were kept.',
+    'ru': 'Профиль удалён. Статистика матчей сохранена.',
+    'zh': '个人资料已删除，比赛统计数据已保留。'
+  },
+  'profile_delete_failed': {
+    'tr': 'Profil silinemedi',
+    'en': 'Could not delete profile',
+    'ru': 'Не удалось удалить профиль',
+    'zh': '无法删除个人资料'
+  },
   'enter_name_hint': {
     'tr': 'Adını yaz',
     'en': 'Enter your name',
