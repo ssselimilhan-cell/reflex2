@@ -306,10 +306,10 @@ class _TopBar extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (profile.hasProfile)
-                          const ProfileAvatar(radius: 20)
+                          const ProfileAvatar(radius: 24)
                         else
                           const CircleAvatar(
-                            radius: 15,
+                            radius: 24,
                             backgroundColor: Color(0x33FFFFFF),
                             child: Icon(Icons.person,
                                 color: Colors.white, size: 18),
@@ -319,14 +319,14 @@ class _TopBar extends StatelessWidget {
                           child: Text(
                             profile.hasProfile
                                 ? profile.displayName!
-                                : t('create_profile'),
-                            maxLines: 2,
-                            softWrap: true,
-                            overflow: TextOverflow.fade,
+                                : t('profile'),
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 17,
-                                height: 1.12,
+                                fontSize: 15,
+                                height: 1.1,
                                 fontWeight: FontWeight.w800),
                           ),
                         ),
