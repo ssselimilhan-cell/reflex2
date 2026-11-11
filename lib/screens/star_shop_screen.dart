@@ -96,9 +96,10 @@ class StarShopScreen extends StatelessWidget {
                       'Bağlantınla gelen yeni oyuncu uygulamaya katılır', 100),
                     const SizedBox(height: 9),
                     const Text(
-                      'Her davet ve ödül tekil olarak doğrulanır. Yeni oyuncu ödülü, '
-                      'gerçek bir yeni hesap katılımı tamamlandığında verilir.',
-                      style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.35)),
+                      'Yeni davet ödülleri hazırlanıyor. Bu yıldız tutarları hedeflenen '
+                      'ödül planını gösterir; doğrulama ve güvenli hesap bakiyesi '
+                      'tamamlanmadan henüz etkin değildir.',
+                      style: TextStyle(color: Colors.amberAccent, fontSize: 12, height: 1.35)),
                   ]),
                 ),
                 const SizedBox(height: 22),
