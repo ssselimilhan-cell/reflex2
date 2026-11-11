@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A brighter, textured felt surface with a restrained edge vignette.
+/// Premium warm felt: a brighter terracotta table with amber light and subtle suit texture.
 class TableFelt extends StatelessWidget {
   const TableFelt({super.key});
 
@@ -20,22 +20,42 @@ class _FeltPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
+
+    // The table itself is now visibly warm and luminous, not a dark overlay
+    // on top of the old navy scaffold background.
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFD98243),
+            Color(0xFFC66A35),
+            Color(0xFFAA512D),
+            Color(0xFF8E4028),
+          ],
+          stops: [0.0, 0.38, 0.76, 1.0],
+        ).createShader(rect),
+    );
+
+    // Soft amber light in the centre gives the felt depth without obscuring cards.
     canvas.drawRect(
       rect,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(0, -0.2),
-          radius: 0.95,
+          center: const Alignment(0, -0.18),
+          radius: 0.92,
           colors: [
-            const Color(0xFF526B70).withOpacity(0.30),
-            const Color(0xFF253B43).withOpacity(0.10),
+            const Color(0xFFFFD18A).withOpacity(0.30),
+            const Color(0xFFF4A45E).withOpacity(0.10),
             Colors.transparent,
           ],
-          stops: const [0, 0.62, 1],
+          stops: const [0.0, 0.58, 1.0],
         ).createShader(rect),
     );
 
-    final style = TextStyle(fontSize: 30, color: Colors.white.withOpacity(0.055));
+    final style = TextStyle(fontSize: 30, color: Colors.white.withOpacity(0.075));
     final painters = <TextPainter>[
       for (final suit in _suits)
         TextPainter(
@@ -58,13 +78,15 @@ class _FeltPainter extends CustomPainter {
       row++;
     }
 
+    // Keep only a gentle edge falloff; the previous heavy black vignette
+    // was making the whole play area feel muddy and underexposed.
     canvas.drawRect(
       rect,
       Paint()
         ..shader = RadialGradient(
-          radius: 1.0,
-          colors: [Colors.transparent, Colors.black.withOpacity(0.18)],
-          stops: const [0.64, 1.0],
+          radius: 1.12,
+          colors: [Colors.transparent, const Color(0x33000000)],
+          stops: const [0.70, 1.0],
         ).createShader(rect),
     );
   }
