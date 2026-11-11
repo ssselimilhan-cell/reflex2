@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../models/playing_card.dart';
-import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/auth_service.dart';
 import '../settings/progress.dart';
@@ -107,7 +107,7 @@ class StarShopScreen extends StatelessWidget {
                 Text(t('settings_group_cards').toUpperCase(), style: GameUi.display(13, color: GameUi.gold)),
                 const SizedBox(height: 12),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: firebaseAvailable
+                  stream: Firebase.apps.isNotEmpty
                       ? FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots()
                       : const Stream<QuerySnapshot<Map<String, dynamic>>>.empty(),
                   builder: (context, snapshot) {
