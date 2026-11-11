@@ -37,7 +37,8 @@ bool _fileExists(String path) =>
 ///   UserProfile değiştikçe otomatik güncellenir).
 /// - `ProfileAvatar.remote(...)` — Firestore'dan gelen BAŞKA bir
 ///   oyuncunun (rakip, lobideki bir oyuncu) verisiyle statik gösterim
-///   yapar.
+///   yapar. Hesap fotoğrafları, cihazlar arası görünürlük için base64
+///   yedeğinden de yüklenebilir.
 class ProfileAvatar extends StatelessWidget {
   final double radius;
   final bool _isRemote;
