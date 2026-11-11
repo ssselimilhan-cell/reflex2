@@ -749,7 +749,7 @@ const Map<String, Map<String, String>> _strings = {
     'zh': '观察8列牌最上面的牌。数值相同的牌会发光。点击发光的牌列！'
   },
   'ob2_title': {
-    'tr': 'Desteni ilk bitiren kazanır',
+    'tr': 'Destesini ilk bitiren kazanır',
     'en': 'Empty your deck first',
     'ru': 'Первым избавьтесь от колоды',
     'zh': '最先出完牌堆者获胜'
