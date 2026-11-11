@@ -1,6 +1,7 @@
 name: Flutter Testleri
 
 on:
+  # Preview APK: run this workflow manually and enable build_preview_apk.
   push:
   workflow_dispatch:
     inputs:
