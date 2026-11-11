@@ -113,7 +113,16 @@ class AppSettings extends ChangeNotifier {
       assistedMode = prefs.getBool('assistedMode') ?? true;
       soundEnabled = prefs.getBool('soundEnabled') ?? true;
       hapticsEnabled = prefs.getBool('hapticsEnabled') ?? true;
-      telemetryEnabled = prefs.getBool('telemetryEnabled') ?? false;
+      // Prior releases enabled telemetry by default without a distinct opt-in.
+      // Reset that implicit default once; players can explicitly enable it again.
+      final telemetryConsentVersion = prefs.getInt('telemetryConsentVersion') ?? 0;
+      if (telemetryConsentVersion < 1) {
+        telemetryEnabled = false;
+        await prefs.setBool('telemetryEnabled', false);
+        await prefs.setInt('telemetryConsentVersion', 1);
+      } else {
+        telemetryEnabled = prefs.getBool('telemetryEnabled') ?? false;
+      }
       onboardingDone = prefs.getBool('onboardingDone') ?? false;
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
