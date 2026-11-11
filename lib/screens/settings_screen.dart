@@ -12,9 +12,8 @@ import 'profile_screen.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 
-// Tasarım dili: kullanıcının seçtiği tema rengi zemin olarak kalır; gruplar
-// yarı saydam koyu paneller, ince çizgilerle ayrılan satırlar. Vurgu rengi
-// (amber) yalnızca "açık/seçili" durumlarda kullanılır.
+// Settings are organized around frequent account actions first; infrequent
+// visual/game preferences stay collapsed until the player asks for them.
 const Color _panelColor = Color(0x40000000);
 const Color _hairline = Color(0x1FFFFFFF);
 const Color _chipFill = Color(0x24FFFFFF);
@@ -48,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                   children: [
-                    const Text('HESABIN VE KISAYOLLAR',
+                    const Text('HESAP VE PROFİL',
                       style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                     const SizedBox(height: 10),
                     _QuickActionGrid(children: [
@@ -157,8 +156,6 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: 'Uygulamayı değerlendir ve yardım al',
                       children: [
                         _SettingRow(icon: Icons.star_border_rounded, title: t('rate_app'), onTap: openStoreReview),
-                        _SettingRow(icon: Icons.chat_bubble_outline, title: t('feedback_title'),
-                          onTap: () => showFeedbackDialog(context)),
                       ],
                     ),
                     const SizedBox(height: 12),
