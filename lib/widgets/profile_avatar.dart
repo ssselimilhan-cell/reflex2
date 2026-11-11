@@ -82,11 +82,20 @@ class ProfileAvatar extends StatelessWidget {
     if (path != null && _fileExists(path)) {
       return CircleAvatar(radius: radius, backgroundImage: FileImage(File(path)));
     }
+    // Hesap başka bir cihazda açıldığında fotoğrafın yerel dosya yolu
+    // bulunmaz; hesap profiliyle gelen base64 kopyasını kullan.
+    final bytes = profile.photoBase64 == null
+        ? null
+        : _decodePhoto(profile.photoBase64!);
+    if (bytes != null) {
+      return CircleAvatar(radius: radius, backgroundImage: MemoryImage(bytes));
+    }
+    final safeIndex = profile.avatarIconIndex.clamp(0, kAvatarIcons.length - 1);
     return CircleAvatar(
       radius: radius,
       backgroundColor: profile.avatarColor,
       child: Icon(
-        kAvatarIcons[profile.avatarIconIndex],
+        kAvatarIcons[safeIndex],
         color: Colors.white,
         size: radius * 1.1,
       ),
