@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Oyun masasına "kadife" hissi veren, hareketsiz (ucuz) bir katman:
-/// ortada yumuşak bir ışık, kenarlara doğru koyulaşan vinyet ve çok silik,
-/// eğik duran iskambil sembolleri (♠ ♥ ♦ ♣) deseni. Altındaki zemin rengini
-/// (tema rengi) değiştirmez, sadece üstüne ince katmanlar ekler.
+/// A brighter, textured felt surface with a restrained edge vignette.
 class TableFelt extends StatelessWidget {
   const TableFelt({super.key});
 
@@ -23,24 +20,26 @@ class _FeltPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-
-    // 1) Masanın ortasında yumuşak ışık.
     canvas.drawRect(
       rect,
       Paint()
         ..shader = RadialGradient(
           center: const Alignment(0, -0.2),
-          radius: 0.85,
-          colors: [Colors.white.withOpacity(0.08), Colors.transparent],
+          radius: 0.95,
+          colors: [
+            const Color(0xFF526B70).withOpacity(0.30),
+            const Color(0xFF253B43).withOpacity(0.10),
+            Colors.transparent,
+          ],
+          stops: const [0, 0.62, 1],
         ).createShader(rect),
     );
 
-    // 2) Silik iskambil sembolü deseni.
-    final style = TextStyle(fontSize: 30, color: Colors.white.withOpacity(0.04));
+    final style = TextStyle(fontSize: 30, color: Colors.white.withOpacity(0.055));
     final painters = <TextPainter>[
-      for (final s in _suits)
+      for (final suit in _suits)
         TextPainter(
-          text: TextSpan(text: s, style: style),
+          text: TextSpan(text: suit, style: style),
           textDirection: TextDirection.ltr,
         )..layout(),
     ];
@@ -49,24 +48,23 @@ class _FeltPainter extends CustomPainter {
     for (double y = 18; y < size.height; y += step) {
       final startX = row.isEven ? 18.0 : 18.0 + step / 2;
       for (double x = startX; x < size.width; x += step) {
-        final tp = painters[(row * 2 + (x ~/ step)) % 4];
+        final painter = painters[(row * 2 + (x ~/ step)) % 4];
         canvas.save();
         canvas.translate(x, y);
         canvas.rotate(-0.21);
-        tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
+        painter.paint(canvas, Offset(-painter.width / 2, -painter.height / 2));
         canvas.restore();
       }
       row++;
     }
 
-    // 3) Kenarlarda koyulaşan vinyet.
     canvas.drawRect(
       rect,
       Paint()
         ..shader = RadialGradient(
-          radius: 0.95,
-          colors: [Colors.transparent, Colors.black.withOpacity(0.38)],
-          stops: const [0.55, 1.0],
+          radius: 1.0,
+          colors: [Colors.transparent, Colors.black.withOpacity(0.18)],
+          stops: const [0.64, 1.0],
         ).createShader(rect),
     );
   }
