@@ -162,8 +162,14 @@ class OnlineRoomRepository {
       final data = snap.data()!;
       if (data['roomStatus'] != 'waiting') return false;
       if (data['guestDeviceId'] != null) return false;
+      // Name-invited tables are private: only the exact invited device may
+      // take the guest seat, even if another player discovers the room code.
+      final invitedDeviceId = data['inviteToDeviceId'] as String?;
+      if (invitedDeviceId != null && invitedDeviceId != guestDeviceId) {
+        return false;
+      }
       if (data['tournamentMatchId'] is String &&
-          data['inviteToDeviceId'] != guestDeviceId) return false;
+          invitedDeviceId != guestDeviceId) return false;
 
       // NOT: Katılan oyuncu direkt oyunu başlatmaz — "ready" durumuna
       // geçer, oyun ancak taraflardan biri başlatıp diğeri kabul edince
