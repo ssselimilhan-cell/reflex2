@@ -506,6 +506,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 10),
         _buildNicknameIdentityNote(),
         const SizedBox(height: 20),
+        Center(
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: () => _showAvatarPicker(context),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xCCFBBF24), width: 2),
+                      ),
+                      child: const ProfileAvatar(radius: 42),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFBBF24),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            size: 17, color: Color(0xFF101827)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => _showAvatarPicker(context),
+                icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                label: const Text('Profil fotoğrafı veya avatar seç'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFFBBF24),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         Text(t('create_profile'),
             style: const TextStyle(
                 color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
@@ -751,7 +797,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showAvatarPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B1B1B),
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1B293D),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -760,9 +807,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           animation: UserProfile.instance,
           builder: (context, _) {
             final profile = UserProfile.instance;
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  24, 24, 24, 24 + MediaQuery.of(sheetContext).viewInsets.bottom,
+                ),
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -840,6 +890,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
+                ),
               ),
             );
           },
