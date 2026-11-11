@@ -14,8 +14,6 @@ import '../widgets/card_widget.dart';
 
 // Settings are organized around frequent account actions first; infrequent
 // visual/game preferences stay collapsed until the player asks for them.
-const Color _panelColor = Color(0x40000000);
-const Color _hairline = Color(0x1FFFFFFF);
 const Color _chipFill = Color(0x24FFFFFF);
 const PlayingCard _demoCard = PlayingCard(Suit.hearts, 7);
 
@@ -326,105 +324,6 @@ Widget _switchRow({
           const WidgetStatePropertyAll<Color>(Colors.transparent),
     ),
   );
-}
-
-/// Üstteki canlı önizleme: kart tasarımı, arka yüz rengi ve boyut anında
-/// görünür. Yükseklik sabit, böylece slider sürüklenirken sayfa kaymaz.
-class _CardPreview extends StatelessWidget {
-  final double scale;
-  final CardFaceTheme theme;
-  final Color tableColor;
-
-  const _CardPreview(
-      {required this.scale, required this.theme, required this.tableColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = (scale > 2.2 ? 2.2 : scale) * 0.75;
-    final w = 64 * s;
-    final h = 92 * s;
-    return Container(
-      height: 184,
-      decoration: BoxDecoration(
-        color: Color.lerp(tableColor, Colors.black, 0.28),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _hairline),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.translate(
-            offset: Offset(-w * 0.38, 0),
-            child: Transform.rotate(
-              angle: -0.09,
-              child: CardWidget(
-                  card: _demoCard, faceDown: true, width: w, height: h),
-            ),
-          ),
-          Transform.translate(
-            offset: Offset(w * 0.38, 0),
-            child: Transform.rotate(
-              angle: 0.07,
-              child: CardWidget(
-                  card: _demoCard,
-                  themeOverride: theme,
-                  width: w,
-                  height: h),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Başlık + yuvarlatılmış panel; satırlar ince çizgilerle ayrılır.
-class _Group extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _Group({required this.title, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    for (var i = 0; i < children.length; i++) {
-      if (i > 0) {
-        rows.add(const Padding(
-          padding: EdgeInsets.only(left: 58),
-          child: Divider(height: 1, thickness: 1, color: _hairline),
-        ));
-      }
-      rows.add(children[i]);
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-            child: Text(
-              title,
-              style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-          Material(
-            color: _panelColor,
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: _hairline),
-            ),
-            child: Column(children: rows),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Tek ayar satırı: simge, başlık, sağda isteğe bağlı değer/anahtar ve
