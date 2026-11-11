@@ -188,3 +188,4 @@ service cloud.firestore {
 - Firebase Anonymous Auth ile daha güvenli oyuncu kimliği
 - Ses efektleri, animasyonlar, skor tablosu
 - Uygulama ikonu ve splash screen
+
