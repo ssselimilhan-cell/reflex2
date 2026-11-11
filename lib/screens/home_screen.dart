@@ -293,20 +293,20 @@ class _TopBar extends StatelessWidget {
               color: Colors.transparent,
               child: Ink(
                 decoration: BoxDecoration(
-                  color: GameUi.glass,
-                  borderRadius: BorderRadius.circular(24),
+                  color: const Color(0xDD26384D),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: GameUi.hairline),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(24),
                   onTap: onProfile,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 6, 14, 6),
+                    padding: const EdgeInsets.fromLTRB(10, 9, 14, 9),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (profile.hasProfile)
-                          const ProfileAvatar(radius: 15)
+                          const ProfileAvatar(radius: 20)
                         else
                           const CircleAvatar(
                             radius: 15,
@@ -315,17 +315,19 @@ class _TopBar extends StatelessWidget {
                                 color: Colors.white, size: 18),
                           ),
                         const SizedBox(width: 8),
-                        Flexible(
+                        Expanded(
                           child: Text(
                             profile.hasProfile
                                 ? profile.displayName!
                                 : t('create_profile'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            softWrap: true,
+                            overflow: TextOverflow.fade,
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600),
+                                fontSize: 17,
+                                height: 1.12,
+                                fontWeight: FontWeight.w800),
                           ),
                         ),
                         if (profile.hasProfile && rate != null) ...[
