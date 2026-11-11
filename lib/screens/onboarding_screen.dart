@@ -62,31 +62,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-          Text(emoji, style: const TextStyle(fontSize: 56)),
-          const SizedBox(height: 14),
-          Text(
-            t(titleKey),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            t(bodyKey),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 15,
-              height: 1.45,
-            ),
-          ),
-          if (extra != null) ...[
-            const SizedBox(height: 18),
-            extra,
-          ],
+                Text(emoji, style: const TextStyle(fontSize: 56)),
+                const SizedBox(height: 14),
+                Text(
+                  t(titleKey),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  t(bodyKey),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    height: 1.45,
+                  ),
+                ),
+                if (extra != null) ...[
+                  const SizedBox(height: 18),
+                  extra,
+                ],
               ],
             ),
           ),
