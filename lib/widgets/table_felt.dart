@@ -89,6 +89,16 @@ class _FeltPainter extends CustomPainter {
           stops: const [0.70, 1.0],
         ).createShader(rect),
     );
+
+    // A restrained inset seam makes the surface read as a finished game table.
+    final inset = rect.deflate(10);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(inset, const Radius.circular(22)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = const Color(0x35FFE4BD),
+    );
   }
 
   @override
