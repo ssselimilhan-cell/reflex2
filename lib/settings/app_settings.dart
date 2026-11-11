@@ -51,7 +51,7 @@ class AppSettings extends ChangeNotifier {
   /// Hamle/kazanma anlarında hafif titreşim.
   bool hapticsEnabled = true;
   /// Anonim kullanım ve hata verisi gönderimi.
-  bool telemetryEnabled = true;
+  bool telemetryEnabled = false;
   /// İlk açılış eğitimi gösterildi mi.
   bool onboardingDone = false;
 
@@ -113,7 +113,7 @@ class AppSettings extends ChangeNotifier {
       assistedMode = prefs.getBool('assistedMode') ?? true;
       soundEnabled = prefs.getBool('soundEnabled') ?? true;
       hapticsEnabled = prefs.getBool('hapticsEnabled') ?? true;
-      telemetryEnabled = prefs.getBool('telemetryEnabled') ?? true;
+      telemetryEnabled = prefs.getBool('telemetryEnabled') ?? false;
       onboardingDone = prefs.getBool('onboardingDone') ?? false;
     } catch (_) {
       // SharedPreferences kullanılamıyorsa varsayılanlarla devam et.
