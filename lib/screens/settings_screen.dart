@@ -11,6 +11,7 @@ import 'star_shop_screen.dart';
 import 'profile_screen.dart';
 import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
+import '../widgets/profile_avatar.dart';
 
 // Settings are organized around frequent account actions first; infrequent
 // visual/game preferences stay collapsed until the player asks for them.
@@ -51,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                     const SizedBox(height: 10),
                     _QuickActionGrid(children: [
-                      _QuickAction(icon: Icons.person_outline_rounded, title: t('profile'),
+                      _QuickAction(icon: Icons.person_outline_rounded, leading: const ProfileAvatar(radius: 18), title: t('profile'), subtitle: 'Fotoğrafını ve profilini düzenle',
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
                       _QuickAction(icon: Icons.group_add_outlined, title: t('invite_friends'), onTap: shareApp),
                       _QuickAction(icon: Icons.chat_bubble_outline_rounded, title: t('feedback_title'),
@@ -186,10 +187,11 @@ class _QuickActionGrid extends StatelessWidget {
 
 class _QuickAction extends StatelessWidget {
   final IconData icon;
+  final Widget? leading;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
-  const _QuickAction({required this.icon, required this.title, this.subtitle, required this.onTap});
+  const _QuickAction({required this.icon, this.leading, required this.title, this.subtitle, required this.onTap});
 
   @override
   Widget build(BuildContext context) => Material(
@@ -201,7 +203,7 @@ class _QuickAction extends StatelessWidget {
       child: SizedBox(height: 76,
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(children: [
-            Icon(icon, color: Colors.amber, size: 22),
+            leading ?? Icon(icon, color: Colors.amber, size: 22),
             const SizedBox(width: 9),
             Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
