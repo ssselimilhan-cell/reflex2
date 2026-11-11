@@ -1013,7 +1013,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
             child: Text(t('players_title'),
                 style: const TextStyle(
                     color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
@@ -1107,19 +1107,19 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                           _showPlayerDetail(context, docs[i].id, data),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             ProfileAvatar.remote(
-                              radius: 12,
+                              radius: 18,
                               photoBase64: photoBase64,
                               iconIndex: iconIndex,
                               color: colorValue != null
                                   ? Color(colorValue)
                                   : Colors.white24,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1135,7 +1135,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 14,
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.bold)),
                                       ),
                                       if (_friendIds.contains(docs[i].id))
@@ -1149,7 +1149,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                   Text(
                                     '$played · ${rate == null ? "—" : "${rate.round()}%"}',
                                     style: const TextStyle(
-                                        color: Colors.white54, fontSize: 14),
+                                        color: Colors.white60, fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -1169,19 +1169,31 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   }
 
   Widget _friendsToggleButton() {
-    return Tooltip(
-      message: t('friends_filter'),
-      child: GestureDetector(
-        onTap: () => setState(() => _friendsOnly = !_friendsOnly),
-        child: Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: _friendsOnly ? Colors.white24 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+    final selected = _friendsOnly;
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: t('friends_filter'),
+        child: InkWell(
+          onTap: () => setState(() => _friendsOnly = !_friendsOnly),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0x33F472B6) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.favorite_rounded, size: 19,
+                  color: selected ? Colors.pinkAccent : Colors.white60),
+              const SizedBox(height: 3),
+              Text('Arkadaşlar', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
+                      color: selected ? Colors.pinkAccent : Colors.white60)),
+            ]),
           ),
-          child: Icon(Icons.favorite,
-              size: 16,
-              color: _friendsOnly ? Colors.pinkAccent : Colors.white54),
         ),
       ),
     );
@@ -1189,18 +1201,35 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
 
   Widget _sortIconButton(IconData icon, _PlayerSort sort, String tooltip) {
     final selected = _playerSort == sort;
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: () => setState(() => _playerSort = sort),
-        child: Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: selected ? Colors.white24 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+    final label = switch (sort) {
+      _PlayerSort.alphabetical => 'İsim',
+      _PlayerSort.gamesPlayed => 'Maç',
+      _PlayerSort.winRate => 'Başarı',
+    };
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: tooltip,
+        child: InkWell(
+          onTap: () => setState(() => _playerSort = sort),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0x33FBBF24) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 19,
+                  color: selected ? const Color(0xFFFBBF24) : Colors.white60),
+              const SizedBox(height: 3),
+              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
+                      color: selected ? const Color(0xFFFBBF24) : Colors.white60)),
+            ]),
           ),
-          child: Icon(icon,
-              size: 16, color: selected ? Colors.amber : Colors.white54),
         ),
       ),
     );
