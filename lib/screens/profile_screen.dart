@@ -664,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
         title: Text(t('delete_profile_confirm_title'), style: const TextStyle(color: Colors.white)),
-        content: const Text(
+        content: Text(
           t('delete_profile_confirm_body'),
           style: TextStyle(color: Colors.white70, height: 1.4),
         ),
