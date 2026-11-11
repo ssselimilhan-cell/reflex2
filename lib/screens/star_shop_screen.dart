@@ -9,6 +9,16 @@ import '../widgets/card_widget.dart';
 import '../widgets/game_ui.dart';
 import 'admin_theme_screen.dart';
 
+Widget _inviteRewardRow(IconData icon, String label, int stars) {
+  return Row(children: [
+    Icon(icon, color: Colors.white70, size: 21),
+    const SizedBox(width: 9),
+    Expanded(child: Text(label,
+      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
+    Text('+$stars ⭐', style: GameUi.display(18, color: GameUi.gold)),
+  ]);
+}
+
 class StarShopScreen extends StatelessWidget {
   const StarShopScreen({super.key});
 
@@ -73,23 +83,21 @@ class StarShopScreen extends StatelessWidget {
                         style: GameUi.display(15, color: GameUi.gold))),
                     ]),
                     const SizedBox(height: 12),
-                    Row(children: [
-                      const Icon(Icons.send_rounded, color: Colors.white70, size: 21),
-                      const SizedBox(width: 9),
-                      const Expanded(child: Text('Oyun daveti gönderdiğinde',
-                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
-                      Text('+3 ⭐', style: GameUi.display(18, color: GameUi.gold)),
-                    ]),
+                    _inviteRewardRow(Icons.person_add_alt_1_rounded,
+                      'Kayıtlı oyuncuya oyun içinden davet gönder', 1),
                     const SizedBox(height: 9),
-                    Row(children: [
-                      const Icon(Icons.sports_esports_rounded, color: Colors.white70, size: 21),
-                      const SizedBox(width: 9),
-                      const Expanded(child: Text('Davet ettiğin arkadaşın masaya katıldığında',
-                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
-                      Text('+30 ⭐', style: GameUi.display(18, color: GameUi.gold)),
-                    ]),
-                    const SizedBox(height: 8),
-                    const Text('Katılım ödülü aynı davet masası için yalnızca bir kez verilir.',
+                    _inviteRewardRow(Icons.sports_esports_rounded,
+                      'Davet edilen kayıtlı oyuncu masaya katılır', 3),
+                    const SizedBox(height: 9),
+                    _inviteRewardRow(Icons.link_rounded,
+                      'Kişisel davet bağlantısı oluştur ve paylaş', 10),
+                    const SizedBox(height: 9),
+                    _inviteRewardRow(Icons.person_add_alt_rounded,
+                      'Bağlantınla gelen yeni oyuncu uygulamaya katılır', 100),
+                    const SizedBox(height: 9),
+                    const Text(
+                      'Her davet ve ödül tekil olarak doğrulanır. Yeni oyuncu ödülü, '
+                      'gerçek bir yeni hesap katılımı tamamlandığında verilir.',
                       style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.35)),
                   ]),
                 ),
