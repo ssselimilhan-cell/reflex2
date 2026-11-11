@@ -8,3 +8,5 @@ Bu dalda önizleme APK'sı `.github/workflows/build-apk.yml` iş akışıyla ür
 - Manuel çalıştırmada GitHub Actions > Flutter Testleri > Run workflow bölümünden `build_preview_apk` seçeneği etkinleştirilebilir.
 
 Önizleme derlemesi yalnızca `redesign/modern-competitive` geliştirme dalı içindir; `main` dalına yayın yapmaz.
+
+Son lobi davet-masası düzeltmesi dahil önizleme derlemesi.
