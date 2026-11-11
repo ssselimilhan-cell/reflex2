@@ -663,9 +663,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
-        title: const Text('Profili sil?', style: TextStyle(color: Colors.white)),
+        title: Text(t('delete_profile_confirm_title'), style: const TextStyle(color: Colors.white)),
         content: const Text(
-          'Takma adın ve profil fotoğrafın kaldırılacak. Oynadığın maçların istatistikleri korunur.',
+          t('delete_profile_confirm_body'),
           style: TextStyle(color: Colors.white70, height: 1.4),
         ),
         actions: [
@@ -679,7 +679,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Profili sil'),
+            child: Text(t('delete_profile_confirm_action')),
           ),
         ],
       ),
@@ -690,13 +690,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await UserProfile.instance.deleteProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profilin silindi. Maç istatistiklerin korundu.')),
+          SnackBar(content: Text(t('profile_deleted_preserved_stats'))),
         );
       }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profil silinemedi: $error')),
+          SnackBar(content: Text('${t('profile_delete_failed')}: $error')),
         );
       }
     } finally {
