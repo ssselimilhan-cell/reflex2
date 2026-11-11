@@ -223,6 +223,24 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Комната не найдена или закрыта.',
     'zh': '未找到房间或房间已关闭。'
   },
+  'room_connection_error_title': {
+    'tr': 'Bağlantı geçici olarak kesildi',
+    'en': 'Connection temporarily lost',
+    'ru': 'Соединение временно потеряно',
+    'zh': '连接暂时中断'
+  },
+  'room_connection_error_body': {
+    'tr': 'Maç odasına ulaşılamıyor. İnternet bağlantını kontrol edip yeniden deneyebilirsin.',
+    'en': 'The match room is unavailable. Check your internet connection and try again.',
+    'ru': 'Комната матча недоступна. Проверьте подключение к интернету и повторите попытку.',
+    'zh': '暂时无法连接比赛房间。请检查网络连接后重试。'
+  },
+  'retry': {
+    'tr': 'Yeniden dene',
+    'en': 'Try again',
+    'ru': 'Повторить',
+    'zh': '重试'
+  },
   'opponent': {'tr': 'Rakip', 'en': 'Opponent', 'ru': 'Соперник', 'zh': '对手'},
   'start_game': {
     'tr': 'Oyunu Başlat',
