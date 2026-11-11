@@ -1029,27 +1029,39 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                       ],
                     ),
                     if (isDeadlocked && !_revealing && !finished)
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            t('no_match'),
-                            style: const TextStyle(
-                                color: Colors.amber,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold),
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xEE263A50),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: GameUi.gold.withOpacity(0.55)),
+                              boxShadow: const [BoxShadow(color: Color(0x44000000), blurRadius: 12)],
+                            ),
+                            child: Text(
+                              t('no_match'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: GameUi.gold, fontSize: 14, fontWeight: FontWeight.w800),
+                            ),
                           ),
                         ),
                       ),
                     if (_celebrationBonus != null)
-                      StreakCelebrationOverlay(
-                        bonus: _celebrationBonus!,
-                        onDone: () => setState(() => _celebrationBonus = null),
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: StreakCelebrationOverlay(
+                            bonus: _celebrationBonus!,
+                            onDone: () => setState(() => _celebrationBonus = null),
+                          ),
+                        ),
                       ),
                     if (finished && !_resultDismissed)
                       GameResultOverlay(
