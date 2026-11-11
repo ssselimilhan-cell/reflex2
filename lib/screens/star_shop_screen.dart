@@ -111,7 +111,7 @@ class StarShopScreen extends StatelessWidget {
                       ? FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots()
                       : const Stream<QuerySnapshot<Map<String, dynamic>>>.empty(),
                   builder: (context, snapshot) {
-                    if (!firebaseAvailable) {
+                    if (Firebase.apps.isEmpty) {
                       return Container(
                         padding: const EdgeInsets.all(22),
                         decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
