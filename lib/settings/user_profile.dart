@@ -352,19 +352,42 @@ class UserProfile extends ChangeNotifier {
 
   Future<void> deleteProfile() async {
     final oldId = deviceId;
+    final oldName = displayName?.trim();
+    final user = FirebaseAuth.instance.currentUser;
+    final db = FirebaseFirestore.instance;
+
+    // Account profile and its nickname reservation must be cleared together.
+    // Keep match totals so deleting a public profile does not erase progress.
+    if (user != null) {
+      final profileRef = db.collection('users').doc(user.uid)
+          .collection('private').doc('profile');
+      final nicknameRef = oldName == null || oldName.isEmpty
+          ? null
+          : db.collection('nicknames').doc(_nicknameDocumentId(oldName));
+      await db.runTransaction((tx) async {
+        if (nicknameRef != null) {
+          final nickname = await tx.get(nicknameRef);
+          if (nickname.exists && nickname.data()?['uid'] == user.uid) {
+            tx.delete(nicknameRef);
+          }
+        }
+        tx.set(profileRef, {
+          'displayName': null,
+          'photoBase64': null,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      });
+    }
+
+    if (oldId != null) {
+      await db.collection('profiles').doc(oldId).delete();
+    }
+
     displayName = null;
     photoPath = null;
     photoBase64 = null;
     notifyListeners();
     await _persistLocal();
-    if (oldId != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('profiles')
-            .doc(oldId)
-            .delete();
-      } catch (_) {}
-    }
   }
 
   Future<void> recordOnlineResult(bool won) async {
