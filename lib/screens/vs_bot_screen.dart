@@ -404,8 +404,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
                         rightLabel: t('bot'),
                         rightCount: engine.player2Stock.length,
                       ),
-                      // Zorluk çubuğu artık başlangıç ekranında —
-                      // buradaki eski yerine duraklat çubuğu geldi.
+                      // Keep the compact pause control above the cards on every screen size.
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 6),
