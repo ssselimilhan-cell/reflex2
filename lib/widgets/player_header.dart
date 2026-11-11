@@ -19,7 +19,7 @@ class PlayerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
@@ -37,13 +37,15 @@ class PlayerHeader extends StatelessWidget {
           Flexible(
             child: Text(
               name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              softWrap: true,
+              overflow: TextOverflow.fade,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 16,
+                height: 1.12,
                 letterSpacing: 0.25,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
