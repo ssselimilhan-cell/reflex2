@@ -558,28 +558,6 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     ));
                   });
                 }
-                if (widget.isHost &&
-                    data['guestDeviceId'] != null &&
-                    data['inviteJoinRewarded'] != true &&
-                    data['inviteToDeviceId'] == data['guestDeviceId']) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    if (!mounted) return;
-                    try {
-                      final claimed = await _repo.claimInviteJoinReward(
-                        widget.roomCode,
-                        widget.deviceId,
-                      );
-                      if (claimed) {
-                        Progress.instance.addStars(30);
-                        rootMessengerKey.currentState?.showSnackBar(
-                          const SnackBar(content: Text('Arkadaşın katıldı: +30 ⭐')),
-                        );
-                      }
-                    } catch (_) {
-                      // Ağ geçici olarak kesilirse sonraki oda güncellemesinde yeniden denenir.
-                    }
-                  });
-                }
               _opponentDeviceId = (mySide == PlayerSide.player1
                   ? data['guestDeviceId']
                   : data['hostDeviceId']) as String?;
