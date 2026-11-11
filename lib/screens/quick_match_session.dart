@@ -36,23 +36,36 @@ class QuickMatchSession {
       if (await _tryJoinExisting(id, null)) return;
       if (_finished) return;
 
-      final p = UserProfile.instance;
-      final code = await _repo.createRoom(
-        id,
-        hostDisplayName: p.hasProfile ? p.displayName : null,
-        hostWinRate: p.hasProfile ? p.onlineWinRate : null,
-        hostAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
-        hostAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
-        hostPhotoBase64: p.hasProfile ? p.photoBase64 : null,
-        quickMatch: true,
-      );
+      var code = await _createWaitingRoom(id);
       _roomCode = code;
       while (!_finished && _match == null) {
         final room = await _repo.watchRoom(code).first;
-        if (room.data()?['guestDeviceId'] != null) {
+        final data = room.data();
+        if (room.exists && data?['guestDeviceId'] != null) {
           _match = QuickMatchResult(code, id, true);
           break;
         }
+
+        final status = data?['roomStatus'] as String?;
+        final expiry = data?['expiresAt'];
+        final createdAt = data?['createdAt'];
+        final deadline = expiry is Timestamp
+            ? expiry.toDate()
+            : createdAt is Timestamp
+                ? createdAt.toDate().add(const Duration(minutes: 5))
+                : null;
+        final expired = deadline != null && !DateTime.now().isBefore(deadline);
+        if (!room.exists || status != 'waiting' || expired) {
+          // Bot maçı 5 dakikadan uzun sürerse eski bekleme odası kapanabilir.
+          // Eski oda yerine yeni bir kuyruk odası açarak eşleşmeyi sürdür.
+          _roomCode = null;
+          if (await _tryJoinExisting(id, null)) return;
+          if (_finished) return;
+          code = await _createWaitingRoom(id);
+          _roomCode = code;
+          continue;
+        }
+
         await _tryJoinExisting(id, code);
         if (!_finished && _match == null) {
           await Future<void>.delayed(const Duration(seconds: 2));
@@ -61,6 +74,19 @@ class QuickMatchSession {
     } catch (_) {
       // Ağ sorunu bot maçını engellemez; sadece çevrim içi eşleşme kapanır.
     }
+  }
+
+  Future<String> _createWaitingRoom(String id) {
+    final p = UserProfile.instance;
+    return _repo.createRoom(
+      id,
+      hostDisplayName: p.hasProfile ? p.displayName : null,
+      hostWinRate: p.hasProfile ? p.onlineWinRate : null,
+      hostAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
+      hostAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
+      hostPhotoBase64: p.hasProfile ? p.photoBase64 : null,
+      quickMatch: true,
+    );
   }
 
   Future<bool> _tryJoinExisting(String id, String? ownCode) async {
