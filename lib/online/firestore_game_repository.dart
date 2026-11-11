@@ -1432,15 +1432,13 @@ class OnlineRoomRepository {
     required String? reportedDeviceId,
     required String reason,
   }) async {
-    try {
-      await FirebaseFirestore.instance.collection('reports').add({
-        'roomCode': roomCode,
-        'reporterDeviceId': reporterDeviceId,
-        'reportedDeviceId': reportedDeviceId,
-        'reason': reason,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {}
+    await FirebaseFirestore.instance.collection('reports').add({
+      'roomCode': roomCode,
+      'reporterDeviceId': reporterDeviceId,
+      'reportedDeviceId': reportedDeviceId,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // ---- Arkadaşlar ----
