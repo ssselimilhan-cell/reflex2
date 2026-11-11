@@ -53,11 +53,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     String bodyKey,
     Widget? extra,
   ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
           Text(emoji, style: const TextStyle(fontSize: 56)),
           const SizedBox(height: 14),
           Text(
@@ -83,7 +87,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 18),
             extra,
           ],
-        ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -139,9 +146,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     'ob3_body',
                     Column(
                       children: [
-                        _streakRow('3', '🔥 +1'),
-                        _streakRow('5', '🎉 +2'),
-                        _streakRow('8', '🏆 +3'),
+                        _streakRow('3  •  ${t('mission_play3')}', '⭐ +1'),
+                        _streakRow('1  •  ${t('mission_win1')}', '⭐ +1'),
+                        _streakRow('1  •  ${t('mission_bonus1')}', '⭐ +1'),
                       ],
                     ),
                   ),
