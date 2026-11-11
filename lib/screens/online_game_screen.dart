@@ -541,10 +541,67 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
               child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: _repo.watchRoom(widget.roomCode),
               builder: (context, snapshot) {
-                if (!snapshot.hasData || !snapshot.data!.exists) {
+                if (snapshot.hasError) {
                   return Center(
-                    child: Text(t('not_found_closed'),
-                        style: const TextStyle(color: Colors.white)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.wifi_off_rounded,
+                              color: Color(0xFFFBBF24), size: 46),
+                          const SizedBox(height: 16),
+                          Text(
+                            t('room_connection_error_title'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            t('room_connection_error_body'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          FilledButton.icon(
+                            onPressed: () => setState(() {}),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: Text(t('retry')),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFFBBF24),
+                              foregroundColor: const Color(0xFF101827),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFBBF24),
+                    ),
+                  );
+                }
+                if (!snapshot.data!.exists) {
+                  return Center(
+                    child: Text(
+                      t('not_found_closed'),
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   );
                 }
                 final data = snapshot.data!.data()!;
