@@ -98,7 +98,7 @@ class GameResultOverlay extends StatelessWidget {
                                   const SizedBox(height: 10),
                                   TextButton(
                                     onPressed: onDismiss,
-                                    child: Text(t('close'), style: const TextStyle(color: Colors.white70, fontSize: 15)),
+                                    child: Text(t('close_invite'), style: const TextStyle(color: Colors.white70, fontSize: 15)),
                                   ),
                                 ],
                               ],
