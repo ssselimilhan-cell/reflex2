@@ -893,7 +893,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: Text(t('choose_from_gallery')),
                     ),
                   ),
-                  if (profile.photoPath != null)
+                  if (profile.photoPath != null || profile.photoBase64 != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: TextButton(
