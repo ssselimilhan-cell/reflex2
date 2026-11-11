@@ -1074,10 +1074,10 @@ const Map<String, Map<String, String>> _strings = {
     'zh': '下一段位：{name} — 还差 {n} 场胜利'
   },
   'settings_telemetry': {
-    'tr': 'Anonim kullanım ve hata verisi gönder',
-    'en': 'Send anonymous usage and error data',
-    'ru': 'Отправлять анонимные данные об использовании и ошибках',
-    'zh': '发送匿名使用与错误数据'
+    'tr': 'Kullanım ve hata verisi gönder',
+    'en': 'Send usage and error data',
+    'ru': 'Отправлять данные об использовании и ошибках',
+    'zh': '发送使用与错误数据'
   },
   'streak_bonus_label': {
     'tr': 'Kart!',
