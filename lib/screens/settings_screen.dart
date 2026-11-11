@@ -142,7 +142,7 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsExpansion(
                       icon: Icons.shield_outlined,
                       title: 'Gizlilik ve güvenlik',
-                      subtitle: 'Veri tercihleri ve engellenen oyuncular',
+                      subtitle: 'İsteğe bağlı kullanım ve hata ölçümü • varsayılan kapalı',
                       children: [
                         _switchRow(icon: Icons.analytics_outlined, title: t('settings_telemetry'),
                           value: settings.telemetryEnabled, onChanged: settings.setTelemetryEnabled),
