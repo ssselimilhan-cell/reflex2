@@ -834,12 +834,20 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   ),
                 );
               }
-              // Private friend invites and tournament match rooms must never
-              // appear in the public table directory.
+              // Normal public tables are visible to everyone. A name-invite table
+              // is visible only to its host and the specifically invited player,
+              // so the host can reopen it from the lobby and the invitee can
+              // find the seat without exposing it to unrelated players.
               _updateWaitingRoomDeadlines(snapshot.data!.docs);
-              final docs = snapshot.data!.docs.where((d) =>
-                d.data()['inviteToDeviceId'] == null &&
-                d.data()['tournamentMatchId'] == null).toList();
+              final docs = snapshot.data!.docs.where((d) {
+                final data = d.data();
+                final invitedDeviceId = data['inviteToDeviceId'] as String?;
+                final isHost = data['hostDeviceId'] == _myDeviceId;
+                final isInvitee = invitedDeviceId != null &&
+                    invitedDeviceId == _myDeviceId;
+                return data['tournamentMatchId'] == null &&
+                    (invitedDeviceId == null || isHost || isInvitee);
+              }).toList();
               docs.removeWhere((d) => Moderation.instance
                   .isBlocked(d.data()['hostDeviceId'] as String?));
               // Kazanma oranına göre azalan sırala (misafirler/oranı
