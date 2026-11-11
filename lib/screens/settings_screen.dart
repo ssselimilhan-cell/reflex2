@@ -15,6 +15,7 @@ import '../widgets/card_widget.dart';
 // Settings are organized around frequent account actions first; infrequent
 // visual/game preferences stay collapsed until the player asks for them.
 const Color _chipFill = Color(0x24FFFFFF);
+const Color _hairline = Color(0x26FFFFFF);
 const PlayingCard _demoCard = PlayingCard(Suit.hearts, 7);
 
 const TextStyle _titleStyle =
