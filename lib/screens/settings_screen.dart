@@ -13,6 +13,7 @@ import '../models/playing_card.dart';
 import '../widgets/card_widget.dart';
 import '../widgets/profile_avatar.dart';
 
+// Preview milestone: privacy controls now require explicit telemetry opt-in.
 // Settings are organized around frequent account actions first; infrequent
 // visual/game preferences stay collapsed until the player asks for them.
 const Color _chipFill = Color(0x24FFFFFF);
