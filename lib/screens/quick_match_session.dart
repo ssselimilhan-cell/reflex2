@@ -13,6 +13,26 @@ class QuickMatchResult {
   const QuickMatchResult(this.roomCode, this.deviceId, this.isHost);
 }
 
+/// A quick-match queue room must be replaced if it disappeared, was closed,
+/// or reached its expiry time. Occupied rooms are handled as matches instead.
+bool quickMatchRoomNeedsReplacement({
+  required bool exists,
+  required Map<String, dynamic>? data,
+  required DateTime now,
+}) {
+  if (!exists) return true;
+  if (data?['guestDeviceId'] != null) return false;
+  if (data?['roomStatus'] != 'waiting') return true;
+  final expiry = data?['expiresAt'];
+  final createdAt = data?['createdAt'];
+  final deadline = expiry is Timestamp
+      ? expiry.toDate()
+      : createdAt is Timestamp
+          ? createdAt.toDate().add(const Duration(minutes: 5))
+          : null;
+  return deadline != null && !now.isBefore(deadline);
+}
+
 /// Eşleşmeyi bot maçı boyunca arka planda sürdürür. Bot maçı bitince
 /// bulunan rakip döndürülür; bulunamadıysa kendi bekleme odası kapatılır.
 class QuickMatchSession {
@@ -46,16 +66,11 @@ class QuickMatchSession {
           break;
         }
 
-        final status = data?['roomStatus'] as String?;
-        final expiry = data?['expiresAt'];
-        final createdAt = data?['createdAt'];
-        final deadline = expiry is Timestamp
-            ? expiry.toDate()
-            : createdAt is Timestamp
-                ? createdAt.toDate().add(const Duration(minutes: 5))
-                : null;
-        final expired = deadline != null && !DateTime.now().isBefore(deadline);
-        if (!room.exists || status != 'waiting' || expired) {
+        if (quickMatchRoomNeedsReplacement(
+          exists: room.exists,
+          data: data,
+          now: DateTime.now(),
+        )) {
           // Bot maçı 5 dakikadan uzun sürerse eski bekleme odası kapanabilir.
           // Eski oda yerine yeni bir kuyruk odası açarak eşleşmeyi sürdür.
           _roomCode = null;
