@@ -351,8 +351,8 @@ class GameIconButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: Ink(
-          width: 42,
-          height: 42,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: GameUi.glass,
             shape: BoxShape.circle,
@@ -361,7 +361,7 @@ class GameIconButton extends StatelessWidget {
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: Colors.white, size: 26),
           ),
         ),
       ),
