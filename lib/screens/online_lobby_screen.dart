@@ -149,10 +149,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         fromPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
         fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
       );
-      Progress.instance.addStars(3);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Davet gönderildi: +3 ⭐. Arkadaşın katılırsa +30 ⭐ daha kazanacaksın.')),
+        const SnackBar(content: Text('Davet gönderildi. Arkadaşın katıldığında masaya birlikte başlayabilirsiniz.')),
       );
       // Davet gönderen de kendi bekleme masasına oturur. Oda, davetli
       // katılana kadar waiting durumunda kalır ve aynı ekrandan ready olur.
