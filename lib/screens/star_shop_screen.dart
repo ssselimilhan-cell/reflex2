@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/playing_card.dart';
+import '../main.dart';
 import '../settings/app_settings.dart';
 import '../settings/auth_service.dart';
 import '../settings/progress.dart';
@@ -106,8 +107,23 @@ class StarShopScreen extends StatelessWidget {
                 Text(t('settings_group_cards').toUpperCase(), style: GameUi.display(13, color: GameUi.gold)),
                 const SizedBox(height: 12),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots(),
+                  stream: firebaseAvailable
+                      ? FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots()
+                      : const Stream<QuerySnapshot<Map<String, dynamic>>>.empty(),
                   builder: (context, snapshot) {
+                    if (!firebaseAvailable) {
+                      return Container(
+                        padding: const EdgeInsets.all(22),
+                        decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
+                        child: const Column(children: [
+                          Icon(Icons.cloud_off_rounded, color: GameUi.gold, size: 34),
+                          SizedBox(height: 10),
+                          Text('Tema mağazası çevrimdışı kullanılamıyor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                          SizedBox(height: 5),
+                          Text('Yayınlanan yeni temaları görmek için internet bağlantısı kurulduğunda yeniden dene.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, height: 1.4)),
+                        ]),
+                      );
+                    }
                     if (snapshot.hasError) return Padding(padding: const EdgeInsets.all(18), child: Text('Tema mağazası yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)));
                     if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
                     final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && (d.data()['visualStyleIndex'] is int || d.data()['themeIndex'] is int)).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
