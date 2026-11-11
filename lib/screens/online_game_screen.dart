@@ -300,21 +300,37 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             .map((r) => SimpleDialogOption(
                   onPressed: () {
                     Navigator.pop(dialogContext);
-                    _repo.reportUser(
-                      roomCode: widget.roomCode,
-                      reporterDeviceId:
-                          UserProfile.instance.deviceId ?? widget.deviceId,
-                      reportedDeviceId: _opponentDeviceId,
-                      reason: r,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(t('report_sent'))));
+                    _submitUserReport(r);
                   },
                   child: Text(r),
                 ))
             .toList(),
       ),
     );
+  }
+
+  Future<void> _submitUserReport(String reason) async {
+    try {
+      await _repo.reportUser(
+        roomCode: widget.roomCode,
+        reporterDeviceId: UserProfile.instance.deviceId ?? widget.deviceId,
+        reportedDeviceId: _opponentDeviceId,
+        reason: reason,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(t('report_sent'))),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bildirim gönderilemedi. Bağlantını kontrol edip yeniden dene.'),
+          ),
+        );
+      }
+    }
   }
 
   /// Sunucu (Firestore transaction) tarafında uygulanan art arda hamle
