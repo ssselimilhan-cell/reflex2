@@ -97,8 +97,9 @@ class _ScoreSide extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(label.toUpperCase(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
+            softWrap: true,
+            overflow: TextOverflow.visible,
             style: const TextStyle(color: Colors.white60, fontSize: 9, letterSpacing: 1.0, fontWeight: FontWeight.w700)),
         const SizedBox(height: 1),
         Text('$score',

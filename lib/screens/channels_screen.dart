@@ -1094,7 +1094,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                           )),
                           Expanded(child: Text(
                             memberNames[stats[i].id] ?? 'Oyuncu',
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
                           Text('${stats[i].data()['championships'] ?? 0} şamp.  ·  '
                             '${stats[i].data()['podiums'] ?? 0} podyum',
@@ -1887,7 +1887,8 @@ class _TournamentStatPill extends StatelessWidget {
         Text(value, style: const TextStyle(color: Colors.white, fontSize: 14,
           fontWeight: FontWeight.w900)),
         const SizedBox(height: 2),
-        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+        Text(label, maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
+          textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white70, fontSize: 12,
             fontWeight: FontWeight.w800)),
       ]),

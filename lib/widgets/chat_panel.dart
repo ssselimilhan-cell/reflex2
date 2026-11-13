@@ -99,8 +99,9 @@ class _ChatPanelState extends State<ChatPanel> {
                         (lastText == null || lastText.isEmpty)
                             ? t('chat_title')
                             : lastText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
                         style: TextStyle(
                             color: lastText == null
                                 ? Colors.white54

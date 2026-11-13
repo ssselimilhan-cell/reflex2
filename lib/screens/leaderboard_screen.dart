@@ -106,8 +106,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   const SizedBox(height: 10),
                   Text('${snapshot.error}',
                       textAlign: TextAlign.center,
-                      maxLines: 6,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 8,
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
                       style: const TextStyle(
                           color: Colors.white54, fontSize: 10)),
                 ],
@@ -380,8 +381,9 @@ class _LeaderboardRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                softWrap: true,
+                overflow: TextOverflow.visible,
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ),
