@@ -85,8 +85,7 @@ class StresApp extends StatelessWidget {
             // açık renkli yazı (ör. liderlik sekmeleri) okunmaz hale
             // geliyordu.
             appBarTheme: AppBarTheme(
-              backgroundColor:
-                  Color.lerp(AppSettings.instance.themeColor, Colors.black, 0.45),
+              backgroundColor: const Color(0xFF713116),
               foregroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
               centerTitle: true,

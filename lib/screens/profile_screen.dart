@@ -67,10 +67,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, _) {
         final profile = UserProfile.instance;
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
             title: Text(t('profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
-            backgroundColor: const Color(0xFF142238),
+            backgroundColor: const Color(0xFF713116),
             foregroundColor: Colors.white,
           ),
           body: SafeArea(

@@ -51,7 +51,7 @@ class _LadderScreenState extends State<LadderScreen> {
         final next = ladder.unlockedLevel;
         final cleared = ladder.highestCleared;
         return Scaffold(
-          backgroundColor: settings.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(title: Text(t('menu_ladder'))),
           body: SafeArea(
             child: Align(

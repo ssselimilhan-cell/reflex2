@@ -68,7 +68,7 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF101827),
+      backgroundColor: const Color(0xFFB94E20),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

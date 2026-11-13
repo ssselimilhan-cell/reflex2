@@ -166,7 +166,7 @@ class _LocalPvpScreenState extends State<LocalPvpScreen> {
       animation: AppSettings.instance,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
             title: Text(t('menu_local')),
             actions: [

@@ -557,9 +557,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       animation: AppSettings.instance,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
-            backgroundColor: const Color(0xFF142238),
+            backgroundColor: const Color(0xFF713116),
             foregroundColor: Colors.white,
             title: Row(children: [
               const Icon(Icons.public_rounded, color: Color(0xFFFBBF24), size: 23),

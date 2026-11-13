@@ -167,8 +167,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFF101827),
-    appBar: AppBar(backgroundColor: const Color(0xFF142238), foregroundColor: Colors.white,
+    backgroundColor: const Color(0xFFB94E20),
+    appBar: AppBar(backgroundColor: const Color(0xFF713116), foregroundColor: Colors.white,
       title: const Text('Oyuncu Kanalları')),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: _busy || _deviceId == null ? null : _createChannel,
@@ -550,8 +550,8 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   Widget build(BuildContext context) {
     final channel = FirebaseFirestore.instance.collection('channels').doc(widget.channelId);
     return Scaffold(
-      backgroundColor: const Color(0xFF101827),
-      appBar: AppBar(backgroundColor: const Color(0xFF142238), foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFFB94E20),
+      appBar: AppBar(backgroundColor: const Color(0xFF713116), foregroundColor: Colors.white,
         title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
           builder: (context, snapshot) => Text(snapshot.data?.data()?['name'] as String? ?? 'Kanal'),
@@ -990,9 +990,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   Widget build(BuildContext context) {
     final channel = FirebaseFirestore.instance.collection('channels').doc(widget.channelId);
     return Scaffold(
-      backgroundColor: const Color(0xFF101827),
+      backgroundColor: const Color(0xFFB94E20),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF142238),
+        backgroundColor: const Color(0xFF713116),
         foregroundColor: Colors.white,
         title: const Text('Kanal sohbeti'),
       ),
@@ -1262,9 +1262,9 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
     final tournamentRef = FirebaseFirestore.instance.collection('channels')
         .doc(widget.channelId).collection('tournaments').doc(widget.tournamentId);
     return Scaffold(
-      backgroundColor: const Color(0xFF101827),
+      backgroundColor: const Color(0xFFB94E20),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF142238),
+        backgroundColor: const Color(0xFF713116),
         foregroundColor: Colors.white,
         title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: tournamentRef.snapshots(),

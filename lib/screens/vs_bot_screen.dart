@@ -261,7 +261,7 @@ class _VsBotScreenState extends State<VsBotScreen> {
         final difficultyColor =
             Color.lerp(Colors.greenAccent, Colors.redAccent, difficulty)!;
         return Scaffold(
-          backgroundColor: GameUi.background,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
             backgroundColor: GameUi.surface,
             foregroundColor: Colors.white,

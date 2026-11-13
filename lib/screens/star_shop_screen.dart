@@ -13,143 +13,122 @@ import 'admin_theme_screen.dart';
 class StarShopScreen extends StatelessWidget {
   const StarShopScreen({super.key});
 
+  // Temel koleksiyon uygulamayla birlikte gelir; Firestore boş veya çevrimdışı olsa da görünür.
+  static const List<Map<String, dynamic>> _builtInCatalog = [
+    {'id':'card_theme_5','themeIndex':5,'visualStyleIndex':5,'name':'Roma','description':'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.','priceStars':100,'sortOrder':1},
+    {'id':'card_theme_11','themeIndex':11,'visualStyleIndex':11,'name':'Almanya','description':'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.','priceStars':100,'sortOrder':2},
+    {'id':'card_theme_12','themeIndex':12,'visualStyleIndex':12,'name':'Fransa','description':'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.','priceStars':100,'sortOrder':3},
+    {'id':'card_theme_10','themeIndex':10,'visualStyleIndex':10,'name':'Hindistan','description':'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.','priceStars':150,'sortOrder':4},
+    {'id':'card_theme_15','themeIndex':15,'visualStyleIndex':15,'name':'Rusya','description':'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.','priceStars':150,'sortOrder':5},
+    {'id':'card_theme_4','themeIndex':4,'visualStyleIndex':4,'name':'Firavun','description':'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.','priceStars':200,'sortOrder':6},
+    {'id':'card_theme_14','themeIndex':14,'visualStyleIndex':14,'name':'Pers','description':'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.','priceStars':200,'sortOrder':7},
+    {'id':'card_theme_3','themeIndex':3,'visualStyleIndex':3,'name':'Osmanlı','description':'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.','priceStars':250,'sortOrder':8},
+    {'id':'card_theme_13','themeIndex':13,'visualStyleIndex':13,'name':'Japonya','description':'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.','priceStars':250,'sortOrder':9},
+  ];
+
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([Progress.instance, AppSettings.instance]),
-      builder: (context, _) {
-        final progress = Progress.instance;
-        return Scaffold(
-          backgroundColor: const Color(0xFF101827),
-          appBar: AppBar(
-            title: Text(t('star_shop_title'), style: GameUi.display(19)),
-            backgroundColor: const Color(0xFF142238),
-            foregroundColor: Colors.white,
-            actions: [
-              if (AuthService.instance.isAdmin)
-                IconButton(
-                  tooltip: 'Tema yönetimi',
-                  icon: const Icon(Icons.admin_panel_settings_outlined, color: GameUi.gold),
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminThemeScreen())),
-                ),
-            ],
-          ),
-          body: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF3B2B12), Color(0xFF1B293D)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: GameUi.gold.withOpacity(0.55)),
-                  ),
-                  child: Row(children: [
-                    const Icon(Icons.stars_rounded, color: GameUi.gold, size: 38),
-                    const SizedBox(width: 13),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(t('star_shop_balance'), style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                      const SizedBox(height: 3),
-                      Text('${progress.stars}', style: GameUi.display(27, color: GameUi.gold)),
-                    ])),
-                    const Icon(Icons.auto_awesome, color: GameUi.goldLight, size: 25),
-                  ]),
-                ),
-                const SizedBox(height: 14),
-                Text(t('star_shop_subtitle'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                const SizedBox(height: 16),
-                Text(t('settings_group_cards').toUpperCase(), style: GameUi.display(13, color: GameUi.gold)),
-                const SizedBox(height: 12),
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: Firebase.apps.isNotEmpty
-                      ? FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished', isEqualTo: true).snapshots()
-                      : const Stream<QuerySnapshot<Map<String, dynamic>>>.empty(),
-                  builder: (context, snapshot) {
-                    if (Firebase.apps.isEmpty) {
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: Listenable.merge([Progress.instance, AppSettings.instance]),
+    builder: (context, _) {
+      final progress = Progress.instance;
+      return Scaffold(
+        backgroundColor: GameUi.background,
+        appBar: AppBar(
+          title: Text(t('star_shop_title'), style: GameUi.display(19)),
+          backgroundColor: const Color(0xFF713116),
+          foregroundColor: Colors.white,
+          actions: [if (AuthService.instance.isAdmin) IconButton(
+            tooltip: 'Tema yönetimi',
+            icon: const Icon(Icons.admin_panel_settings_outlined, color: GameUi.gold),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminThemeScreen())),
+          )],
+        ),
+        body: SafeArea(child: ListView(
+          padding: const EdgeInsets.fromLTRB(16,16,16,28),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors:[Color(0xFF713116),Color(0xFF34251F)],begin:Alignment.topLeft,end:Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(20), border: Border.all(color:GameUi.gold.withOpacity(.65)),
+              ),
+              child: Row(children:[
+                const Icon(Icons.stars_rounded,color:GameUi.gold,size:38), const SizedBox(width:13),
+                Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+                  Text(t('star_shop_balance'),style:const TextStyle(color:Colors.white70,fontSize:16)),
+                  const SizedBox(height:3), Text('${progress.stars}',style:GameUi.display(27,color:GameUi.gold)),
+                ])),
+                const Icon(Icons.auto_awesome,color:GameUi.goldLight,size:25),
+              ]),
+            ),
+            const SizedBox(height:14),
+            Text(t('star_shop_subtitle'),style:const TextStyle(color:Colors.white,fontSize:14,fontWeight:FontWeight.w600)),
+            const SizedBox(height:16),
+            Text(t('settings_group_cards').toUpperCase(),style:GameUi.display(13,color:const Color(0xFFFFD18A))),
+            const SizedBox(height:12),
+            StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
+              stream: Firebase.apps.isNotEmpty
+                ? FirebaseFirestore.instance.collection('cosmetic_catalog').where('isPublished',isEqualTo:true).snapshots()
+                : const Stream<QuerySnapshot<Map<String,dynamic>>>.empty(),
+              builder:(context,snapshot){
+                final catalog=<String,Map<String,dynamic>>{for(final item in _builtInCatalog) item['id'] as String:item};
+                if(snapshot.hasData){for(final doc in snapshot.data!.docs){catalog[doc.id]=doc.data();}}
+                final entries=catalog.entries.where((entry){
+                  final d=entry.value;
+                  final i=d['visualStyleIndex'] is int ? d['visualStyleIndex'] as int : d['themeIndex'];
+                  return d['priceStars'] is int && (d['priceStars'] as int)>0 && i is int && i>=0 && i<CardFaceTheme.values.length;
+                }).toList()..sort((a,b)=>((a.value['sortOrder'] as int?)??0).compareTo((b.value['sortOrder'] as int?)??0));
+                if(!snapshot.hasData && !snapshot.hasError && snapshot.connectionState!=ConnectionState.done){
+                  return const Padding(padding:EdgeInsets.all(24),child:Center(child:CircularProgressIndicator()));
+                }
+                return Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+                  if(snapshot.hasError) const Padding(padding:EdgeInsets.only(bottom:10),child:Text('Çevrimiçi katalog yüklenemedi. Hazır temalar kullanılabilir.',style:TextStyle(color:Colors.white70,fontSize:12))),
+                  GridView.builder(
+                    shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:entries.length,
+                    gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:.78),
+                    itemBuilder:(context,index){
+                      final entry=entries[index]; final data=entry.value;
+                      final styleIndex=data['visualStyleIndex'] is int ? data['visualStyleIndex'] as int : data['themeIndex'] as int;
+                      final theme=CardFaceTheme.values[styleIndex]; final price=data['priceStars'] as int;
+                      final id=entry.key; final name=data['name'] as String? ?? 'Tema';
+                      final owned=progress.isCatalogThemeUnlocked(id,styleIndex);
+                      final equipped=AppSettings.instance.selectedThemeId==id || (AppSettings.instance.selectedThemeId.startsWith('builtin_') && AppSettings.instance.cardTheme==theme);
                       return Container(
-                        padding: const EdgeInsets.all(22),
-                        decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
-                        child: const Column(children: [
-                          Icon(Icons.cloud_off_rounded, color: GameUi.gold, size: 34),
-                          SizedBox(height: 10),
-                          Text('Tema mağazası çevrimdışı kullanılamıyor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-                          SizedBox(height: 5),
-                          Text('Yayınlanan yeni temaları görmek için internet bağlantısı kurulduğunda yeniden dene.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, height: 1.4)),
+                        padding:const EdgeInsets.all(12),
+                        decoration:BoxDecoration(color:const Color(0xFF26313A),borderRadius:BorderRadius.circular(18),
+                          border:Border.all(color:equipped?GameUi.gold:Colors.white24,width:equipped?1.8:1),
+                          boxShadow:[BoxShadow(color:Colors.black.withOpacity(.16),blurRadius:10,offset:const Offset(0,4))]),
+                        child:Column(children:[
+                          Expanded(child:Center(child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
+                            CardWidget(card:const PlayingCard(Suit.hearts,7),themeOverride:theme,width:54,height:78),
+                            const SizedBox(width:7),
+                            CardWidget(card:const PlayingCard(Suit.spades,12),faceDown:true,themeOverride:theme,width:54,height:78),
+                          ]))),
+                          const SizedBox(height:8),
+                          Text(name,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:16)),
+                          if((data['description'] as String? ?? '').isNotEmpty) Padding(padding:const EdgeInsets.only(top:3),child:Text(data['description'] as String,maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12,height:1.3))),
+                          const SizedBox(height:8),
+                          SizedBox(width:double.infinity,height:36,child:owned
+                            ? OutlinedButton(onPressed:equipped?null:()=>AppSettings.instance.setCatalogTheme(id:id,name:name,visualStyle:theme),
+                                style:OutlinedButton.styleFrom(foregroundColor:GameUi.gold,side:const BorderSide(color:GameUi.gold)),
+                                child:Text(equipped?'Kullanılıyor':t('star_shop_equip'),style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900)))
+                            : FilledButton(onPressed:progress.stars>=price?(){
+                                final ok=progress.purchaseCatalogTheme(id,styleIndex,price);
+                                if(!ok) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('star_shop_not_enough'))));
+                              }:null,
+                                style:FilledButton.styleFrom(backgroundColor:GameUi.gold,foregroundColor:const Color(0xFF201707),disabledBackgroundColor:Colors.white24,disabledForegroundColor:Colors.white60),
+                                child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[const Icon(Icons.star_rounded,size:15),const SizedBox(width:4),Text('$price',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:14))])),
+                          ),
                         ]),
                       );
-                    }
-                    if (snapshot.hasError) return Padding(padding: const EdgeInsets.all(18), child: Text('Tema mağazası yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)));
-                    if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()));
-                    final docs = snapshot.data!.docs.where((d) => d.data()['priceStars'] is int && (d.data()['priceStars'] as int) > 0 && (d.data()['visualStyleIndex'] is int || d.data()['themeIndex'] is int)).toList()..sort((a, b) => ((a.data()['sortOrder'] as int?) ?? 0).compareTo((b.data()['sortOrder'] as int?) ?? 0));
-                    if (docs.isEmpty) return Container(
-                      padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
-                      child: const Column(children: [
-                        Icon(Icons.auto_awesome, color: GameUi.gold, size: 34),
-                        SizedBox(height: 10),
-                        Text('Yeni temalar hazırlanıyor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-                        SizedBox(height: 5),
-                        Text('Yeni tasarımlar mağazada yayınlandığında burada görünecek.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, height: 1.4)),
-                      ]),
-                    );
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: docs.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.78),
-                      itemBuilder: (context, index) {
-                        final data = docs[index].data();
-                        final themeIndex = (data['visualStyleIndex'] as int?) ?? (data['themeIndex'] as int? ?? 3);
-                        if (themeIndex < 0 || themeIndex >= CardFaceTheme.values.length) return const SizedBox.shrink();
-                        final theme = CardFaceTheme.values[themeIndex];
-                        final price = data['priceStars'] as int;
-                        final themeId = docs[index].id;
-                        final owned = progress.isCatalogThemeUnlocked(themeId, themeIndex);
-                        final equipped = AppSettings.instance.selectedThemeId == themeId || (AppSettings.instance.selectedThemeId.startsWith('builtin_') && AppSettings.instance.cardTheme == theme);
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(18), border: Border.all(color: equipped ? GameUi.gold : Colors.white12, width: equipped ? 1.8 : 1)),
-                          child: Column(children: [
-                            Expanded(
-                              child: Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    CardWidget(card: const PlayingCard(Suit.hearts, 7), themeOverride: theme, width: 54, height: 78),
-                                    const SizedBox(width: 7),
-                                    CardWidget(card: const PlayingCard(Suit.spades, 12), faceDown: true, themeOverride: theme, width: 54, height: 78),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(data['name'] as String? ?? 'Tema', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-                            if ((data['description'] as String? ?? '').isNotEmpty)
-                              Padding(padding: const EdgeInsets.only(top: 3), child: Text(data['description'] as String, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.35))),
-                            const SizedBox(height: 8),
-                            SizedBox(width: double.infinity, height: 36, child: owned
-                              ? OutlinedButton(onPressed: equipped ? null : () => AppSettings.instance.setCatalogTheme(id: themeId, name: (data['name'] as String?) ?? 'Tema', visualStyle: theme), style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)), child: Text(equipped ? 'Kullanılıyor' : t('star_shop_equip'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)))
-                              : FilledButton(
-                                  onPressed: progress.stars >= price ? () {
-                                    final ok = progress.purchaseCatalogTheme(themeId, themeIndex, price);
-                                    if (!ok) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('star_shop_not_enough'))));
-                                  } : null,
-                                  style: FilledButton.styleFrom(backgroundColor: GameUi.gold, foregroundColor: const Color(0xFF201707), disabledBackgroundColor: Colors.white12, disabledForegroundColor: Colors.white38),
-                                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.star_rounded, size: 15), const SizedBox(width: 4), Text('$price', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14))]),
-                                )),
-                          ]),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
+                    },
+                  ),
+                ]);
+              },
             ),
-          ),
-        );
-      },
-    );
-  }
+          ],
+        )),
+      );
+    },
+  );
 }

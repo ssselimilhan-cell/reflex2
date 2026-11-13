@@ -10,7 +10,7 @@ class GameUi {
 
   // Modern competitive palette. Existing aliases remain stable so this
   // foundation can be adopted screen-by-screen without changing game logic.
-  static const Color background = Color(0xFF101827);
+  static const Color background = Color(0xFFB94E20);
   static const Color surface = Color(0xFF1B293D);
   static const Color primary = Color(0xFFFBBF24);
   static const Color cyan = Color(0xFFFFE08A);

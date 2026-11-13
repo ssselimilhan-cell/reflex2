@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final last = _page == _pageCount - 1;
 
     return Scaffold(
-      backgroundColor: AppSettings.instance.themeColor,
+      backgroundColor: const Color(0xFFB94E20),
       body: SafeArea(
         child: Column(
           children: [

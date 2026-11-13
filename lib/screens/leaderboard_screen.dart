@@ -53,7 +53,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       animation: AppSettings.instance,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
             title: Text(t('leaderboard_title')),
             bottom: TabBar(

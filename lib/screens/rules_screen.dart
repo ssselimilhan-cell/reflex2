@@ -13,7 +13,7 @@ class RulesScreen extends StatelessWidget {
       animation: AppSettings.instance,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppSettings.instance.themeColor,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(title: Text(t('rules_title'))),
           body: SafeArea(
             child: SingleChildScrollView(

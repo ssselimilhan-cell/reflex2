@@ -474,7 +474,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         final cardW = 100.0 * scale;
         final cardH = 142.0 * scale;
         return Scaffold(
-          backgroundColor: GameUi.background,
+          backgroundColor: const Color(0xFFB94E20),
           appBar: AppBar(
             backgroundColor: GameUi.surface,
             foregroundColor: Colors.white,
