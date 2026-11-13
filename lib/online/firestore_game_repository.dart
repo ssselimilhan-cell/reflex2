@@ -204,13 +204,17 @@ class OnlineRoomRepository {
   }
 
   /// Bir taraf oyunu başlatmak ister. Sadece "ready" durumunda geçerlidir.
-  Future<bool> requestStart(String code, PlayerSide side) async {
+  Future<bool> requestStart(String code, PlayerSide side, String deviceId) async {
     final ref = _rooms.doc(code);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
-      if (data['roomStatus'] != 'ready') return false;
+      final seatedDevice = side == PlayerSide.player1
+          ? data['hostDeviceId'] as String?
+          : data['guestDeviceId'] as String?;
+      if (data['roomStatus'] != 'ready' || seatedDevice != deviceId ||
+          data['hostDeviceId'] == null || data['guestDeviceId'] == null) return false;
 
       tx.update(ref, {
         'roomStatus': 'start_requested',
@@ -221,13 +225,18 @@ class OnlineRoomRepository {
   }
 
   /// Karşı taraf başlatma isteğini kabul eder — oyun gerçekten başlar.
-  Future<bool> acceptStart(String code) async {
+  Future<bool> acceptStart(String code, PlayerSide acceptingSide, String deviceId) async {
     final ref = _rooms.doc(code);
     return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
-      if (data['roomStatus'] != 'start_requested') return false;
+      final acceptingDevice = acceptingSide == PlayerSide.player1
+          ? data['hostDeviceId'] as String?
+          : data['guestDeviceId'] as String?;
+      if (data['roomStatus'] != 'start_requested' || acceptingDevice != deviceId ||
+          data['startRequestedBy'] == acceptingSide.name ||
+          data['hostDeviceId'] == null || data['guestDeviceId'] == null) return false;
 
       tx.update(ref, {'roomStatus': 'active'});
       return true;

@@ -624,9 +624,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     data['guestDeviceId'] != null && !_opponentArrivalNotified) {
                   _opponentArrivalNotified = true;
                   final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
-                  final arrivalMessage = data['tournamentMatchId'] is String
-                      ? '$arrivedName masaya oturdu! Maçı başlatmak için iki oyuncunun da onayı gerekiyor.'
-                      : '$arrivedName masaya oturdu! Oyunu başlatabilirsin.';
+                  final arrivalMessage = data['quickMatch'] == true
+                      ? '$arrivedName ile hızlı eşleştin. Oyun, biriniz başlatma isteği gönderip diğeri kabul edince başlayacak.'
+                      : data['tournamentMatchId'] is String
+                          ? '$arrivedName masaya oturdu! Maçı başlatmak için iki oyuncunun da onayı gerekiyor.'
+                          : '$arrivedName masaya oturdu! Oyunu başlatabilirsin.';
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -752,23 +754,27 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         const Icon(Icons.check_circle,
                             color: Colors.greenAccent, size: 48),
                         const SizedBox(height: 12),
-                        Text(widget.isHost
-                                ? '${data['guestDisplayName'] as String? ?? 'Rakibin'} MASAYA OTURDU!'
-                                : t('opponent_connected'),
+                        Text(data['quickMatch'] == true
+                                ? 'RAKİP BULUNDU!'
+                                : widget.isHost
+                                    ? '${data['guestDisplayName'] as String? ?? 'Rakibin'} MASAYA OTURDU!'
+                                    : t('opponent_connected'),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                                 color: Color(0xFFFFD76A),
                                 fontSize: 25,
                                 fontWeight: FontWeight.w900)),
                         const SizedBox(height: 10),
-                        const Text('İkiniz de masadasınız. Oyunu başlatmak için aşağıdaki düğmeye dokunun.',
+                        Text(data['quickMatch'] == true
+                            ? 'Eşleşme tamamlandı. İkiniz de hazırsınız. Oyunculardan biri başlatma isteği gönderecek, diğeri kabul ettiğinde oyun başlayacak.'
+                            : 'İkiniz de masadasınız. Oyunu başlatmak için aşağıdaki düğmeye dokunun.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Colors.white, fontSize: 18, height: 1.35)),
                         const SizedBox(height: 28),
                         ElevatedButton.icon(
                           onPressed: () =>
-                              _repo.requestStart(widget.roomCode, mySide),
+                              _repo.requestStart(widget.roomCode, mySide, widget.deviceId),
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('OYUNU BAŞLAT',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
@@ -832,7 +838,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                                   const SizedBox(width: 16),
                                   ElevatedButton(
                                     onPressed: () =>
-                                        _repo.acceptStart(widget.roomCode),
+                                        _repo.acceptStart(widget.roomCode, mySide, widget.deviceId),
                                     child: Text(t('accept')),
                                   ),
                                 ],

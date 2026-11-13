@@ -7,28 +7,28 @@ import '../settings/app_settings.dart';
 /// arka plan rengi korunur; koleksiyon desteleri kendi sanat yönetimini kullanır.
 class CardThemePalette {
   static Color primary(CardFaceTheme theme) => switch (theme) {
-    CardFaceTheme.ottoman => const Color(0xFFB58A35),
-    CardFaceTheme.egypt => const Color(0xFFD7A83E),
-    CardFaceTheme.rome => const Color(0xFFC28A55),
-    CardFaceTheme.india => const Color(0xFFE19A45),
-    CardFaceTheme.germany => const Color(0xFFC6A45A),
-    CardFaceTheme.france => const Color(0xFFD28BA7),
-    CardFaceTheme.japan => const Color(0xFFE58B91),
-    CardFaceTheme.persia => const Color(0xFF55B8AD),
-    CardFaceTheme.russia => const Color(0xFF80A9D5),
+    CardFaceTheme.ottoman => const Color(0xFFE5AE35),
+    CardFaceTheme.egypt => const Color(0xFFFFC247),
+    CardFaceTheme.rome => const Color(0xFFD88945),
+    CardFaceTheme.india => const Color(0xFFFF8A32),
+    CardFaceTheme.germany => const Color(0xFFE2B64C),
+    CardFaceTheme.france => const Color(0xFFE58AB2),
+    CardFaceTheme.japan => const Color(0xFFFF7890),
+    CardFaceTheme.persia => const Color(0xFF39BDB0),
+    CardFaceTheme.russia => const Color(0xFF6FADEB),
     _ => const Color(0xFFD5B46A),
   };
 
   static Color background(CardFaceTheme theme) => switch (theme) {
-    CardFaceTheme.ottoman => const Color(0xFF172B35),
-    CardFaceTheme.egypt => const Color(0xFF183A49),
-    CardFaceTheme.rome => const Color(0xFF3A2020),
-    CardFaceTheme.india => const Color(0xFF45251F),
-    CardFaceTheme.germany => const Color(0xFF242B36),
-    CardFaceTheme.france => const Color(0xFF34243C),
-    CardFaceTheme.japan => const Color(0xFF3B202B),
-    CardFaceTheme.persia => const Color(0xFF123C3B),
-    CardFaceTheme.russia => const Color(0xFF20324D),
+    CardFaceTheme.ottoman => const Color(0xFF102F45),
+    CardFaceTheme.egypt => const Color(0xFF123B55),
+    CardFaceTheme.rome => const Color(0xFF4B2028),
+    CardFaceTheme.india => const Color(0xFF5B241F),
+    CardFaceTheme.germany => const Color(0xFF25283B),
+    CardFaceTheme.france => const Color(0xFF45213C),
+    CardFaceTheme.japan => const Color(0xFF4A1F32),
+    CardFaceTheme.persia => const Color(0xFF0E4647),
+    CardFaceTheme.russia => const Color(0xFF1C3558),
     _ => const Color(0xFF1E4D8C),
   };
 }
@@ -267,7 +267,7 @@ class _CardWidgetState extends State<CardWidget>
     final theme = widget.themeOverride ?? AppSettings.instance.cardTheme;
     final centerSize = switch (theme) {
       CardFaceTheme.classic => widget.height * 0.30,
-      _ => widget.height * 0.36,
+      _ => widget.height * 0.43,
     };
 
     Widget corner() {
@@ -323,8 +323,8 @@ class _CardWidgetState extends State<CardWidget>
               ),
               Center(
                 child: Container(
-                  width: centerSize * 1.42,
-                  height: centerSize * 1.42,
+                  width: centerSize * 1.68,
+                  height: centerSize * 1.68,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -358,7 +358,7 @@ class _CardWidgetState extends State<CardWidget>
           backdropColor: color.withOpacity(0.10));
     }
     return CustomPaint(
-      size: Size.square(size * 1.48),
+      size: Size.square(size * 1.70),
       painter: _CivilizationEmblemPainter(theme: theme, suit: c.suit, ink: color),
     );
   }
@@ -404,12 +404,16 @@ class _CivilizationEmblemPainter extends CustomPainter {
     final c = Offset(size.width / 2, size.height / 2);
     final r = size.shortestSide * 0.43;
     final gold = _palette();
-    final line = Paint()..style = PaintingStyle.stroke..strokeWidth = size.shortestSide * 0.025..color = gold;
-    final fill = Paint()..style = PaintingStyle.fill..color = gold.withOpacity(0.13);
+    final line = Paint()..style = PaintingStyle.stroke..strokeWidth = size.shortestSide * 0.032..strokeCap = StrokeCap.round..color = gold;
+    final fill = Paint()..style = PaintingStyle.fill..color = gold.withOpacity(0.22);
     final solid = Paint()..style = PaintingStyle.fill..color = gold;
+    final halo = Paint()..shader = RadialGradient(colors:[gold.withOpacity(0.25),gold.withOpacity(0.015)]).createShader(Rect.fromCircle(center:c,radius:r*1.12));
+    canvas.drawCircle(c,r*1.10,halo);
     canvas.drawCircle(c, r, line);
-    canvas.drawCircle(c, r * 0.83, line..strokeWidth *= 0.55);
-    canvas.drawCircle(c, r * 0.68, fill);
+    canvas.drawCircle(c, r * 0.88, Paint()..style=PaintingStyle.stroke..strokeWidth=size.shortestSide*0.012..color=gold.withOpacity(.75));
+    canvas.drawCircle(c, r * 0.72, fill);
+    for(var i=0;i<16;i++){final a=i*math.pi/8;final inner=r*.94;final outer=r*1.08;canvas.drawLine(Offset(c.dx+math.cos(a)*inner,c.dy+math.sin(a)*inner),Offset(c.dx+math.cos(a)*outer,c.dy+math.sin(a)*outer),line);}
+    _rosette(canvas,c,r*.48,12,solid,line);
     for (var i = 0; i < 8; i++) {
       final a = i * math.pi / 4;
       final p = Offset(c.dx + math.cos(a) * r * 0.91, c.dy + math.sin(a) * r * 0.91);
@@ -417,12 +421,12 @@ class _CivilizationEmblemPainter extends CustomPainter {
     }
     switch (theme) {
       case CardFaceTheme.ottoman:
-        _crescent(canvas, c, r * 0.40, gold);
+        _crescent(canvas, c, r * 0.52, gold);
         _star(canvas, Offset(c.dx + r * 0.25, c.dy - r * 0.23), r * 0.13, solid);
         _arabesque(canvas, c, r, line);
         break;
       case CardFaceTheme.egypt:
-        _sun(canvas, c, r * 0.26, gold);
+        _sun(canvas, c, r * 0.34, gold);
         final pyramid = Path()..moveTo(c.dx-r*0.52,c.dy+r*0.38)..lineTo(c.dx,c.dy-r*0.34)..lineTo(c.dx+r*0.52,c.dy+r*0.38)..close();
         canvas.drawPath(pyramid, fill); canvas.drawPath(pyramid, line);
         canvas.drawLine(Offset(c.dx,c.dy-r*0.34), Offset(c.dx,c.dy+r*0.38), line);
@@ -438,7 +442,7 @@ class _CivilizationEmblemPainter extends CustomPainter {
         canvas.drawLine(Offset(c.dx-r*0.5,c.dy+r*0.45),Offset(c.dx+r*0.5,c.dy+r*0.45),line);
         break;
       case CardFaceTheme.india:
-        _lotus(canvas,c,r*0.48,gold);
+        _lotus(canvas,c,r*0.58,gold);
         _dotRing(canvas,c,r*0.62,solid,12);
         break;
       case CardFaceTheme.germany:
@@ -448,7 +452,7 @@ class _CivilizationEmblemPainter extends CustomPainter {
         canvas.drawLine(Offset(c.dx-r*0.24,c.dy),Offset(c.dx+r*0.24,c.dy),line);
         break;
       case CardFaceTheme.france:
-        _fleur(canvas,c,r*0.48,gold);
+        _fleur(canvas,c,r*0.58,gold);
         break;
       case CardFaceTheme.japan:
         final torii=Path()..moveTo(c.dx-r*0.48,c.dy-r*0.18)..lineTo(c.dx+r*0.48,c.dy-r*0.18)..lineTo(c.dx+r*0.38,c.dy-r*0.30)..lineTo(c.dx-r*0.38,c.dy-r*0.30)..close();
@@ -459,7 +463,7 @@ class _CivilizationEmblemPainter extends CustomPainter {
         _sakura(canvas,Offset(c.dx,c.dy-r*0.52),r*0.16,gold);
         break;
       case CardFaceTheme.persia:
-        _star(canvas,c,r*0.42,solid,8);
+        _star(canvas,c,r*0.52,solid,8);
         _dotRing(canvas,c,r*0.58,solid,16);
         break;
       case CardFaceTheme.russia:
@@ -475,15 +479,15 @@ class _CivilizationEmblemPainter extends CustomPainter {
   }
 
   Color _palette() => switch(theme) {
-    CardFaceTheme.ottoman => const Color(0xFFB58A35),
-    CardFaceTheme.egypt => const Color(0xFFB78B28),
-    CardFaceTheme.rome => const Color(0xFF9A6A38),
-    CardFaceTheme.india => const Color(0xFFB56B35),
-    CardFaceTheme.germany => const Color(0xFF9B783F),
-    CardFaceTheme.france => const Color(0xFF9D6B8C),
-    CardFaceTheme.japan => const Color(0xFFB45C58),
-    CardFaceTheme.persia => const Color(0xFF348B83),
-    CardFaceTheme.russia => const Color(0xFF527A9B),
+    CardFaceTheme.ottoman => const Color(0xFFFFC247),
+    CardFaceTheme.egypt => const Color(0xFFFFD166),
+    CardFaceTheme.rome => const Color(0xFFFFA85C),
+    CardFaceTheme.india => const Color(0xFFFF8B3D),
+    CardFaceTheme.germany => const Color(0xFFFFD166),
+    CardFaceTheme.france => const Color(0xFFFF9EC5),
+    CardFaceTheme.japan => const Color(0xFFFF8FA3),
+    CardFaceTheme.persia => const Color(0xFF54D4C5),
+    CardFaceTheme.russia => const Color(0xFF8CC5FF),
     _ => const Color(0xFFB58A35),
   };
 
