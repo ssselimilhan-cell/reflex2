@@ -72,3 +72,5 @@ flutter_launcher_icons:
 # [build-preview-apk] Build preview for verified waiting-room expiry fix
 
 # [build-preview-apk] Verify adaptive labels and no-clipping layout pass
+
+# [build-preview-apk] Verify word-safe multilingual labels and full UI regression pass
