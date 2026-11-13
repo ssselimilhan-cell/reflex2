@@ -22,8 +22,10 @@ class GameUi {
   static const Color goldEdge = Color(0xFF8F5B0A);
   static const Color ink = Color(0xFF1A1208);
 
-  /// Keeps button labels readable on narrow layouts and larger system text sizes.
-  static Widget fitLabel(String value, {TextStyle? style, int maxLines = 2}) {
+  /// Fits a compact label without ever breaking a word across lines.
+  /// The parent should provide enough width; if not, the complete label scales
+  /// down as one unit instead of splitting a word (independent of locale).
+  static Widget fitLabel(String value, {TextStyle? style, int maxLines = 1}) {
     return LayoutBuilder(builder: (context, constraints) {
       final maxWidth = constraints.hasBoundedWidth ? constraints.maxWidth : 480.0;
       return FittedBox(
@@ -31,7 +33,7 @@ class GameUi {
         alignment: Alignment.center,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Text(value, maxLines: maxLines, softWrap: true,
+          child: Text(value, maxLines: 1, softWrap: false,
             textAlign: TextAlign.center, overflow: TextOverflow.visible, style: style),
         ),
       );

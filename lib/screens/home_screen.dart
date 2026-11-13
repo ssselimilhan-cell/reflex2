@@ -311,19 +311,23 @@ class _TopBar extends StatelessWidget {
                                 color: Colors.white, size: 18),
                           ),
                         const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            profile.hasProfile
-                                ? profile.displayName!
-                                : t('profile'),
-                            maxLines: 2,
-                            softWrap: true,
-                            overflow: TextOverflow.visible,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                height: 1.1,
-                                fontWeight: FontWeight.w800),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              profile.hasProfile
+                                  ? profile.displayName!
+                                  : t('profile'),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  height: 1.1,
+                                  fontWeight: FontWeight.w800),
+                            ),
                           ),
                         ),
                         if (profile.hasProfile && rate != null) ...[
