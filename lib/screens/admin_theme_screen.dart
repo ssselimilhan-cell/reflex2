@@ -13,19 +13,23 @@ class AdminThemeScreen extends StatefulWidget {
 
 class _AdminThemeScreenState extends State<AdminThemeScreen> {
   static const _themes = <int, String>{
-    3: 'Osmanlı', 4: 'Mısır', 5: 'Roma', 10: 'Hindistan',
+    3: 'Osmanlı', 4: 'Firavun', 5: 'Roma', 10: 'Hindistan',
     11: 'Almanya', 12: 'Fransa', 13: 'Japonya', 14: 'Pers', 15: 'Rusya',
   };
+  static const _prices = <int, int>{
+    3: 250, 4: 200, 5: 100, 10: 150,
+    11: 100, 12: 100, 13: 250, 14: 200, 15: 150,
+  };
   static const _descriptions = <int, String>{
-    3: 'Osmanlı çini geometrisi, rumi kıvrımları ve zarif tezhip bordürlerinden ilham alan tasarım.',
-    4: 'Nil mavisi, lotus çiçeği, güneş diski ve piramit siluetleriyle Antik Mısır estetiği.',
-    5: 'Roma mermer mimarisi, sütun ritmi, defne ve mozaik detaylarından oluşan klasik tema.',
-    10: 'Hint mandalaları, lotus katmanları ve tavus kuşu tüylerinin zengin renk ritmi.',
-    11: 'Gotik mimari çizgileri, vitray geometrisi ve meşe yaprağı bezemelerinden ilham.',
-    12: 'Fransız fleur-de-lis motifleri, zarif simetri ve Art Nouveau çizgileri.',
-    13: 'Japon torii silueti, seigaiha dalga deseni ve sakura çiçekleri.',
-    14: 'Pers girih geometrisi, yıldız rozetleri ve turkuaz çini bezemeleri.',
-    15: 'Rus mimarisinin kubbe formları, mine renkleri ve geleneksel geometrik bordürler.',
+    3: 'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.',
+    4: 'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.',
+    5: 'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.',
+    10: 'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.',
+    11: 'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.',
+    12: 'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.',
+    13: 'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.',
+    14: 'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.',
+    15: 'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.',
   };
 
   final _db = FirebaseFirestore.instance;
@@ -43,9 +47,11 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
   // Başlangıç kataloğu yalnızca bir kez hazırlanır. Yönetici tarafından
   // kaldırılan bir tema sonraki açılışta otomatik olarak geri eklenmez.
   Future<void> _seedCatalogOnce() async {
-    final marker = _db.collection('app_config').doc('theme_catalog_initialized');
-    final markerSnapshot = await marker.get();
-    if (markerSnapshot.exists) return;
+    // Yeni sürümde ilk koleksiyon otomatik fiyatlandırılır. Önceden satın
+    // alınmış tema kayıtlarına ve yönetici tarafından fiyatlandırılmış
+    // katalog öğelerine dokunulmaz.
+    final marker = _db.collection('app_config').doc('theme_catalog_pricing_v1');
+    if ((await marker.get()).exists) return;
 
     final batch = _db.batch();
     for (final entry in _themes.entries) {
@@ -57,11 +63,22 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
           'visualStyleIndex': entry.key,
           'name': entry.value,
           'description': _descriptions[entry.key] ?? '',
-          'priceStars': null,
-          'isPublished': false,
+          'priceStars': _prices[entry.key],
+          'isPublished': true,
           'sortOrder': entry.key,
           'updatedAt': FieldValue.serverTimestamp(),
         });
+      } else {
+        final data = existing.data() ?? <String, dynamic>{};
+        if (data['priceStars'] == null && data['isPublished'] != true) {
+          batch.set(ref, {
+            'name': entry.value,
+            'description': _descriptions[entry.key] ?? '',
+            'priceStars': _prices[entry.key],
+            'isPublished': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
       }
     }
     batch.set(marker, {'initializedAt': FieldValue.serverTimestamp()});
