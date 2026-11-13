@@ -77,13 +77,19 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
         ),
       ),
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     width: 112,
@@ -120,7 +126,14 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
                         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QuickMatchScreen()));
                       } : _playBotInstead,
                       icon: Icon(_failed ? Icons.refresh_rounded : Icons.smart_toy_outlined),
-                      label: Text(_failed ? t('retry') : t('qm_play_bot_now')),
+                      label: Flexible(
+                        child: Text(
+                          _failed ? t('retry') : t('qm_play_bot_now'),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          softWrap: true,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFBBF24),
                         foregroundColor: const Color(0xFF101827),
@@ -135,7 +148,9 @@ class _QuickMatchScreenState extends State<QuickMatchScreen> {
                     onPressed: _cancelSearch,
                     child: Text(t('qm_cancel'), style: const TextStyle(color: Colors.white70, fontSize: 15)),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
