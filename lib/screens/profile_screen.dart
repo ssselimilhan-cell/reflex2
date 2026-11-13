@@ -67,10 +67,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, _) {
         final profile = UserProfile.instance;
         return Scaffold(
-          backgroundColor: const Color(0xFFEA8545),
+          backgroundColor: const Color(0xFFFF5A1F),
           appBar: AppBar(
             title: Text(t('profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
-            backgroundColor: const Color(0xFFD96C32),
+            backgroundColor: const Color(0xFFE94712),
             foregroundColor: Colors.white,
             actions: profile.hasProfile ? [
               PopupMenuButton<String>(

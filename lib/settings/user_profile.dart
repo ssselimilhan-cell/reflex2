@@ -126,7 +126,7 @@ class UserProfile extends ChangeNotifier {
           FirebaseAuth.instance.currentUser?.uid != user.uid) return;
       if (snap.exists) {
         final data = snap.data()!;
-        displayName = (data['displayName'] as String?) ?? guestName;
+        displayName = (data['displayName'] as String?) ?? displayName ?? guestName;
         onlineWins = (data['onlineWins'] as num?)?.toInt() ?? 0;
         onlineLosses = (data['onlineLosses'] as num?)?.toInt() ?? 0;
         avatarIconIndex = (data['avatarIconIndex'] as num?)?.toInt() ?? 0;

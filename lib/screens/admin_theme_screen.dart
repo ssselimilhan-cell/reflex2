@@ -254,7 +254,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
       return const Scaffold(body: Center(child: Text('Bu alan yalnızca yetkili yönetici hesabına açıktır.')));
     }
     return Scaffold(
-      backgroundColor: const Color(0xFFB94E20),
+      backgroundColor: const Color(0xFFFF5A1F),
       appBar: AppBar(
         title: const Text('Tema Yönetimi'),
         actions: [
