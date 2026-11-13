@@ -778,6 +778,12 @@ const Map<String, Map<String, String>> _strings = {
     'ru': 'Вибрация',
     'zh': '振动'
   },
+  'haptics_test': {
+    'tr': 'Dene',
+    'en': 'Test',
+    'ru': 'Тест',
+    'zh': '测试'
+  },
   'ob_skip': {
     'tr': 'Atla',
     'en': 'Skip',
