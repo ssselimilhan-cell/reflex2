@@ -17,27 +17,43 @@ class SoundManager {
   final Map<Sfx, List<AudioPlayer>> _pools = {};
   final Map<Sfx, int> _next = {};
 
-  void _haptic(Sfx sfx) {
+  Future<void> _haptic(Sfx sfx) async {
     try {
       switch (sfx) {
         case Sfx.play:
-          HapticFeedback.lightImpact();
+          await HapticFeedback.lightImpact();
+          break;
         case Sfx.streak:
         case Sfx.win:
-          HapticFeedback.heavyImpact();
+          await HapticFeedback.heavyImpact();
+          break;
         case Sfx.lose:
         case Sfx.nomatch:
-          HapticFeedback.mediumImpact();
+          await HapticFeedback.mediumImpact();
+          break;
         case Sfx.deal:
           break;
         case Sfx.message:
-          HapticFeedback.selectionClick();
+          await HapticFeedback.selectionClick();
+          break;
       }
-    } catch (_) {}
+    } catch (_) {
+      // Desteklenmeyen cihaz/kanal hatası oyunu etkilemesin.
+    }
+  }
+
+  /// Ayarlar ekranındaki "Dene" düğmesi için doğrudan cihaz titreşimi.
+  Future<void> testHaptics() async {
+    if (!AppSettings.instance.hapticsEnabled) return;
+    try {
+      await HapticFeedback.mediumImpact();
+    } catch (_) {
+      // Bazı cihazlar sistem titreşim geri bildirimini devre dışı bırakabilir.
+    }
   }
 
   Future<void> play(Sfx sfx) async {
-    if (AppSettings.instance.hapticsEnabled) _haptic(sfx);
+    if (AppSettings.instance.hapticsEnabled) await _haptic(sfx);
     if (!AppSettings.instance.soundEnabled) return;
     try {
       final pool = _pools.putIfAbsent(
