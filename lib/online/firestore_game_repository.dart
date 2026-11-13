@@ -1164,6 +1164,7 @@ class OnlineRoomRepository {
       'name': name.trim(),
       'description': description.trim(),
       'ownerDeviceId': uid,
+      'creatorUid': uid,
       'ownerDisplayName': ownerDisplayName,
       'memberCount': 1,
       'createdAt': now,
@@ -1416,10 +1417,14 @@ class OnlineRoomRepository {
       }
       tx.update(channel, {
         'memberCount': (((data['memberCount'] as num?) ?? 1).toInt() - 1).clamp(0, 999999),
-        if (isOwner) ...{
-          'ownerDeviceId': nextOwner?.id,
-          'ownerDisplayName': nextOwner?.data()['displayName'],
-          if (nextOwner == null) 'status': 'closed',
+        if (isOwner && nextOwner != null) ...{
+          'ownerDeviceId': nextOwner.id,
+          'ownerDisplayName': nextOwner.data()['displayName'],
+        },
+        if (isOwner && nextOwner == null) ...{
+          'ownerDeviceId': uid,
+          'ownerDisplayName': data['ownerDisplayName'],
+          'status': 'closed',
         },
         'updatedAt': FieldValue.serverTimestamp(),
       });

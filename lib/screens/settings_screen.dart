@@ -51,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                   children: [
                     const Text('HESAP VE PROFİL',
-                      style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                      style: TextStyle(color: Color(0xFFE7EDF5), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                     const SizedBox(height: 10),
                     _QuickActionGrid(children: [
                       _QuickAction(icon: Icons.person_outline_rounded, leading: const ProfileAvatar(radius: 18), title: t('profile'), subtitle: 'Fotoğrafını ve profilini düzenle',
@@ -89,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 22),
                     const Text('KİŞİSELLEŞTİRME',
-                      style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                      style: TextStyle(color: Color(0xFFE7EDF5), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                     const SizedBox(height: 8),
                     _SettingsExpansion(
                       icon: Icons.style_outlined,
@@ -246,7 +246,7 @@ class _QuickAction extends StatelessWidget {
               Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
               if (subtitle != null) Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                style: const TextStyle(color: Color(0xFFE0E6EF), fontSize: 11, height: 1.2)),
             ])),
             const Icon(Icons.chevron_right, color: Colors.white38, size: 18),
           ]),
@@ -275,7 +275,7 @@ class _SettingsExpansion extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
         leading: Icon(icon, color: Colors.amber, size: 22),
         title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFFD8E0EA), fontSize: 12, height: 1.25)),
         iconColor: Colors.amber,
         collapsedIconColor: Colors.white54,
         children: children,

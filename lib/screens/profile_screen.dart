@@ -668,7 +668,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+              style: const TextStyle(color: Color(0xFFF1F5F9), fontSize: 13, height: 1.45, fontWeight: FontWeight.w500),
             ),
           ),
         ],

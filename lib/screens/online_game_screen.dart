@@ -480,15 +480,14 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             backgroundColor: GameUi.surface,
             foregroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            title: Text('${t('room')}: ${widget.roomCode}'),
+            title: Text('${t('room')}: ${widget.roomCode}', maxLines: 2, softWrap: true, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17, height: 1.15, fontWeight: FontWeight.w800)),
             actions: [
               if (widget.isHost || widget.isTournamentMatch)
                 IconButton(
-                  icon: Icon(
-                    widget.isTournamentMatch ? Icons.arrow_back_rounded : Icons.close_rounded,
-                    color: widget.isTournamentMatch ? const Color(0xFFFFD76A) : Colors.redAccent,
-                    size: 27,
-                  ),
+                  icon: Container(width: 36, height: 36,
+                    decoration: BoxDecoration(color: widget.isTournamentMatch ? const Color(0x33FFD76A) : const Color(0x55FF6B6B), borderRadius: BorderRadius.circular(11), border: Border.all(color: widget.isTournamentMatch ? const Color(0xFFFFD76A) : const Color(0xFFFFA3A3))),
+                    child: Icon(widget.isTournamentMatch ? Icons.arrow_back_rounded : Icons.close_rounded,
+                      color: widget.isTournamentMatch ? const Color(0xFFFFE08A) : const Color(0xFFFFC1C1), size: 25)),
                   tooltip: widget.isTournamentMatch ? 'Turnuvaya dön' : 'Masayı kapat',
                   onPressed: widget.isTournamentMatch ? _minimizeRoom : _confirmLeaveRoom,
                 ),

@@ -101,7 +101,7 @@ service cloud.firestore {
         // Owner edits channel metadata / manages the channel.
         (resource.data.ownerDeviceId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt']))
+            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt', 'closedAt']))
         ||
         // New member joins: their membership is created in the same batch.
         (existsAfter(channelMemberPath(channelId, request.auth.uid))
@@ -140,6 +140,7 @@ service cloud.firestore {
             // The owner may transfer ownership to a remaining member, or close an empty channel.
             (resource.data.ownerDeviceId == request.auth.uid
               && (request.resource.data.ownerDeviceId == null
+                  || (request.resource.data.ownerDeviceId == request.auth.uid && request.resource.data.status == 'closed')
                   || (existsAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId))
                       && getAfter(channelMemberPath(channelId, request.resource.data.ownerDeviceId)).data.role == 'owner')))
           ))
