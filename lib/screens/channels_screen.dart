@@ -506,7 +506,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     Map<String, dynamic> invite,
   ) async {
     if (_busy) return;
-    setState(() { _busy = true; _error = null; });
+    setState(() => _busy = true);
     try {
       final code = invite['roomCode'] as String?;
       if (code == null || code.isEmpty) {
