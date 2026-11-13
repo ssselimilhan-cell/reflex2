@@ -72,10 +72,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: Text(t('profile'), style: const TextStyle(fontWeight: FontWeight.w800)),
             backgroundColor: const Color(0xFFD96C32),
             foregroundColor: Colors.white,
+            actions: profile.hasProfile ? [
+              PopupMenuButton<String>(
+                tooltip: 'Profil işlemleri',
+                onSelected: (action) {
+                  if (action == 'edit') _editNickname();
+                  if (action == 'delete') _confirmDeleteProfile();
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: ListTile(
+                    dense: true, contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.edit_rounded), title: Text('Takma adı değiştir'))),
+                  PopupMenuItem(value: 'delete', child: ListTile(
+                    dense: true, contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                    title: Text('Profili sil'))),
+                ],
+              ),
+            ] : null,
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
               child: profile.hasProfile
                   ? _buildProfileView(profile)
                   : _buildCreateView(),
@@ -712,10 +730,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildAccountCard(),
         const SizedBox(height: 10),
         _buildNicknameIdentityNote(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF29415F), Color(0xFF17263A), Color(0xFF111D2E)],
@@ -767,9 +785,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               )),
             ]),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Container(height: 1, color: Colors.white12),
-            const SizedBox(height: 13),
+            const SizedBox(height: 9),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
               _ProfileMetric(label: t('games_played'), value: profile.onlineGamesPlayed, icon: Icons.style_rounded),
               _ProfileMetric(label: t('wins'), value: profile.onlineWins, icon: Icons.emoji_events_rounded),
@@ -777,34 +795,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ]),
           ]),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 12),
         
         _RankCard(wins: profile.onlineWins),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: _saving ? null : _editNickname,
-          icon: const Icon(Icons.edit_rounded),
-          label: const Text('Takma adını değiştir'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFFFBBF24),
-            side: const BorderSide(color: Color(0x88FBBF24)),
-            padding: const EdgeInsets.symmetric(vertical: 13),
-          ),
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: OutlinedButton.icon(
-            onPressed: _saving ? null : _confirmDeleteProfile,
-            icon: const Icon(Icons.delete_outline_rounded),
-            label: Text(t('delete_profile')),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFFF8A80),
-              side: const BorderSide(color: Color(0x66FF8A80)),
-              padding: const EdgeInsets.symmetric(vertical: 13),
-            ),
-          ),
-        ),
+        const SizedBox(height: 10),
       ],
     );
   }
