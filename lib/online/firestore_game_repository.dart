@@ -1407,7 +1407,7 @@ class OnlineRoomRepository {
     }
   }
 
-  Future<void> closeChannel(String channelId, String deviceId) async {
+  Future<void> deleteChannel(String channelId, String deviceId) async {
     final uid = _requireChannelUid(deviceId);
     final channel = _channels.doc(channelId);
     final channelSnap = await channel.get();
@@ -1479,7 +1479,7 @@ class OnlineRoomRepository {
     // and all of its data; never leave an unreachable closed channel behind.
     final channelSnapshot = await channel.get();
     if (channelSnapshot.data()?['ownerDeviceId'] == uid && nextOwner == null) {
-      await closeChannel(channelId, uid);
+      await deleteChannel(channelId, uid);
       return;
     }
 

@@ -92,6 +92,40 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
   }
 
+  Future<void> _deleteOwnedChannel(String channelId) async {
+    if (_deviceId == null || _busy) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Eski kanalı sil?', style: TextStyle(color: Colors.white)),
+        content: const Text('Bu eski kapalı kanal ve ona bağlı üyelik, sohbet ve turnuva verileri kalıcı olarak silinecek.',
+          style: TextStyle(color: Colors.white70, height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kalıcı olarak sil'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      await _repo.deleteChannel(channelId, _deviceId!);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Eski kanal ve bağlı verileri silindi.')),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Kanal silinemedi: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _joinByInviteCode() async {
     final controller = TextEditingController();
     final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
@@ -246,7 +280,11 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           final docs = snapshot.data!.docs.where((d) {
             final data = d.data();
             final visible = data['visibility'] == 'public' || data['visibility'] == 'invite_only';
-            return visible && data['status'] == 'open';
+            final open = data['status'] == 'open';
+            // Old versions archived closed channels; keep them visible only
+            // to their owner so they can permanently remove the stale record.
+            final legacyClosedOwned = data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId;
+            return visible && (open || legacyClosedOwned);
           }).toList();
           if (docs.isEmpty) return Center(child: Padding(
             padding: const EdgeInsets.all(24),
@@ -299,6 +337,17 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     builder: (context, memberSnapshot) {
                       final isMember = memberSnapshot.data?.exists == true;
                       final inviteOnly = data['visibility'] == 'invite_only';
+                      if (data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId) {
+                        return OutlinedButton.icon(
+                          onPressed: _busy ? null : () => _deleteOwnedChannel(doc.id),
+                          icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                          label: const Text('Sil'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFFF8A80),
+                            side: const BorderSide(color: Color(0xFFFF8A80)),
+                          ),
+                        );
+                      }
                       if (!inviteOnly) {
                         return FilledButton(
                           onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
@@ -494,7 +543,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     if (confirmed != true || !mounted || _busy) return;
     setState(() => _busy = true);
     try {
-      await _repo.closeChannel(widget.channelId, widget.deviceId);
+      await _repo.deleteChannel(widget.channelId, widget.deviceId);
       if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kanal ve bağlı tüm verileri silindi.'))); Navigator.pop(context); }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kanal silinemedi: $e')));
