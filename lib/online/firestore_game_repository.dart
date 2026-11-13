@@ -1437,11 +1437,10 @@ class OnlineRoomRepository {
     // security-sensitive collection is intentionally forbidden by rules.
     await channel.collection('private').doc('invite').delete();
 
-    // Delete all direct channel subcollections, including owner membership,
-    // pending requests, chat and tournament statistics.
+    // Keep the owner's membership until the very last atomic operation:
+    // subsequent subcollection reads are authorized through that membership.
     const directCollections = [
       'join_requests',
-      'members',
       'messages',
       'tournament_stats',
       'tournaments',
@@ -1451,9 +1450,21 @@ class OnlineRoomRepository {
       await _deleteChannelDocuments(snapshot.docs.map((doc) => doc.reference));
     }
 
-    // Delete the channel last so ownership rules remain verifiable while
-    // its child documents and invite records are being removed.
-    await channel.delete();
+    // Remove other members in chunks, but retain the owner record until the
+    // final batch. The owner membership and channel document are deleted
+    // together, so a retry remains possible if an earlier step fails.
+    final memberSnapshot = await channel.collection('members').get();
+    final otherMembers = memberSnapshot.docs
+        .where((doc) => doc.id != uid)
+        .map((doc) => doc.reference);
+    await _deleteChannelDocuments(otherMembers);
+    final ownerMember = channel.collection('members').doc(uid);
+    final finalBatch = FirebaseFirestore.instance.batch();
+    if (memberSnapshot.docs.any((doc) => doc.id == uid)) {
+      finalBatch.delete(ownerMember);
+    }
+    finalBatch.delete(channel);
+    await finalBatch.commit();
   }
 
   Future<void> leaveChannel(String channelId, String deviceId) async {
@@ -1463,6 +1474,15 @@ class OnlineRoomRepository {
     final memberDocs = await channel.collection('members').get();
     final replacement = memberDocs.docs.where((d) => d.id != uid).toList();
     final nextOwner = replacement.isEmpty ? null : replacement.first;
+
+    // If the owner is the final member, leaving means deleting the channel
+    // and all of its data; never leave an unreachable closed channel behind.
+    final channelSnapshot = await channel.get();
+    if (channelSnapshot.data()?['ownerDeviceId'] == uid && nextOwner == null) {
+      await closeChannel(channelId, uid);
+      return;
+    }
+
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final channelSnap = await tx.get(channel);
       final memberSnap = await tx.get(member);
