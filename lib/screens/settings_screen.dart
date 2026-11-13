@@ -237,15 +237,15 @@ class _QuickAction extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
-      child: SizedBox(height: 76,
+      child: ConstrainedBox(constraints: const BoxConstraints(minHeight: 76),
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(children: [
             leading ?? Icon(icon, color: Colors.amber, size: 22),
             const SizedBox(width: 9),
             Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+              Text(title, maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
                 style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-              if (subtitle != null) Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis,
+              if (subtitle != null) Text(subtitle!, maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
                 style: const TextStyle(color: Color(0xFFE0E6EF), fontSize: 11, height: 1.2)),
             ])),
             const Icon(Icons.chevron_right, color: Colors.white38, size: 18),

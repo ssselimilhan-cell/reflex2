@@ -39,7 +39,7 @@ class PlayerHeader extends StatelessWidget {
               name,
               maxLines: 2,
               softWrap: true,
-              overflow: TextOverflow.fade,
+              overflow: TextOverflow.visible,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,

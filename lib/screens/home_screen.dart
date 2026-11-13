@@ -256,7 +256,7 @@ class _LeaderboardShortcut extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(t('menu_leaderboard'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
-                  Text(t('tile_board_sub'), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white60, fontSize: 11)),
+                  Text(t('tile_board_sub'), maxLines: 2, softWrap: true, overflow: TextOverflow.visible, style: const TextStyle(color: Colors.white60, fontSize: 11)),
                 ],
               ),
             ),
@@ -316,9 +316,9 @@ class _TopBar extends StatelessWidget {
                             profile.hasProfile
                                 ? profile.displayName!
                                 : t('profile'),
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            softWrap: true,
+                            overflow: TextOverflow.visible,
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,

@@ -22,6 +22,22 @@ class GameUi {
   static const Color goldEdge = Color(0xFF8F5B0A);
   static const Color ink = Color(0xFF1A1208);
 
+  /// Keeps button labels readable on narrow layouts and larger system text sizes.
+  static Widget fitLabel(String value, {TextStyle? style, int maxLines = 2}) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final maxWidth = constraints.hasBoundedWidth ? constraints.maxWidth : 480.0;
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Text(value, maxLines: maxLines, softWrap: true,
+            textAlign: TextAlign.center, overflow: TextOverflow.visible, style: style),
+        ),
+      );
+    });
+  }
+
   static const Color glass = Color(0x40000000);
   static const Color hairline = Color(0x24FFFFFF);
 
@@ -275,14 +291,15 @@ class GameTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(title,
-                    maxLines: 2,
+                    maxLines: 3,
                     softWrap: true,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.visible,
                     style: GameUi.display(16)),
                 const SizedBox(height: 3),
                 Text(subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 3,
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                     style: const TextStyle(
                         color: Colors.white70, fontSize: 14, height: 1.3)),
                 if (footer != null) ...[
