@@ -469,7 +469,7 @@ class OnlineRoomRepository {
     String? tournamentId,
     String? tournamentMatchId,
   }) async {
-    await _invites.add({
+    final inviteRef = await _invites.add({
       'toDeviceId': toDeviceId,
       'fromDeviceId': fromDeviceId,
       'roomCode': roomCode,
@@ -486,6 +486,7 @@ class OnlineRoomRepository {
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
     });
+    return inviteRef.id;
   }
 
   /// Bu cihaza gelen, henüz kapatılmamış davetleri dinler.
@@ -1373,6 +1374,23 @@ class OnlineRoomRepository {
     });
     await batch.commit();
     return true;
+  }
+
+  Future<void> closeChannel(String channelId, String deviceId) async {
+    final uid = _requireChannelUid(deviceId);
+    final channel = _channels.doc(channelId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(channel);
+      if (!snap.exists || snap.data()?['ownerDeviceId'] != uid) {
+        throw StateError('Yalnızca kanal kurucusu kanalı kapatabilir.');
+      }
+      if (snap.data()?['status'] != 'open') return;
+      tx.update(channel, {
+        'status': 'closed',
+        'closedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 
   Future<void> leaveChannel(String channelId, String deviceId) async {

@@ -148,7 +148,7 @@ service cloud.firestore {
       allow delete: if false;
 
       match /private/{secretId} {
-        allow get: if request.auth != null && secretId == 'invite' && isChannelOwner(channelId);
+        allow get: if request.auth != null && secretId == 'invite' && isChannelMember(channelId);
         allow list: if false;
         allow create, update: if request.auth != null
           && secretId == 'invite'

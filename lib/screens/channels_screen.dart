@@ -315,6 +315,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                             style: FilledButton.styleFrom(
                               backgroundColor: pending ? const Color(0xFF263B55) : const Color(0xFFFBBF24),
                               foregroundColor: pending ? Colors.white : const Color(0xFF101827),
+                              disabledBackgroundColor: const Color(0xFF263B55),
+                              disabledForegroundColor: Colors.white,
                             ),
                             child: Text(pending ? 'Talep gönderildi' : requestStatus == 'rejected'
                                 ? 'Talep reddedildi' : alreadyRequested ? 'Talep tamamlandı' : 'Katılma talebi',
@@ -349,6 +351,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
   final Set<String> _startingTournamentIds = <String>{};
   final Set<String> _minimumPlayerWarningsShown = <String>{};
   String? _pendingRoomCode;
+  String? _pendingInviteId;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _roomSub;
 
   @override
@@ -459,6 +462,33 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     }
   }
 
+  Future<void> _closeChannel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B293D),
+        title: const Text('Kanalı kapat?', style: TextStyle(color: Colors.white)),
+        content: const Text('Kanal yeni katılımlara ve turnuva işlemlerine kapatılacak. Bu işlem geri alınamaz.',
+          style: TextStyle(color: Colors.white70, height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç', style: TextStyle(color: Colors.white70))),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true), child: const Text('Kanalı kapat')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await _repo.closeChannel(widget.channelId, widget.deviceId);
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kanal kapatıldı.'))); Navigator.pop(context); }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kanal kapatılamadı: $e')));
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+
   Future<void> _leave() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -560,6 +590,21 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     }
   }
 
+  Future<void> _cancelMatchInvite() async {
+    final code = _pendingRoomCode;
+    if (code == null || _busy) return;
+    setState(() => _busy = true);
+    try {
+      if (_pendingInviteId != null) await _repo.closeInvite(_pendingInviteId!);
+      await _repo.leaveRoom(code, widget.playerDeviceId, isHost: true);
+      await _roomSub?.cancel();
+      if (mounted) setState(() { _pendingRoomCode = null; _pendingInviteId = null; _openingMatch = false; });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gönderilen davet geri alındı.')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Davet geri alınamadı: $e')));
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+
   Future<void> _startMatch(String targetDeviceId) async {
     if (_busy || targetDeviceId == widget.playerDeviceId || _pendingRoomCode != null) return;
     setState(() => _busy = true);
@@ -574,7 +619,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
         hostAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
         hostPhotoBase64: p.hasProfile ? p.photoBase64 : null,
       );
-      await _repo.sendInvite(
+      final inviteId = await _repo.sendInvite(
         toDeviceId: targetDeviceId,
         fromDeviceId: widget.playerDeviceId,
         roomCode: code,
@@ -585,7 +630,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
         fromWinRate: p.hasProfile ? p.onlineWinRate : null,
       );
       if (!mounted) return;
-      setState(() => _pendingRoomCode = code);
+      setState(() { _pendingRoomCode = code; _pendingInviteId = inviteId; });
       _roomSub?.cancel();
       _roomSub = _repo.watchRoom(code).listen((snapshot) {
         final data = snapshot.data();
@@ -599,6 +644,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
               if (mounted) {
                 setState(() {
                   _pendingRoomCode = null;
+                  _pendingInviteId = null;
                   _openingMatch = false;
                 });
               }
@@ -628,6 +674,13 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           builder: (context, snapshot) => Text(snapshot.data?.data()?['name'] as String? ?? 'Kanal'),
         ),
         actions: [
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
+            builder: (context, snapshot) => snapshot.data?.data()?['ownerDeviceId'] == widget.deviceId
+              ? IconButton(tooltip: 'Kanalı kapat', icon: const Icon(Icons.settings_rounded, color: Color(0xFFFFD76A)),
+                  onPressed: _busy ? null : _closeChannel)
+              : const SizedBox.shrink(),
+          ),
           IconButton(
             tooltip: 'Kanal sohbeti',
             icon: const Icon(Icons.forum_rounded, color: Color(0xFFFBBF24)),
@@ -639,7 +692,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
             builder: (context, snapshot) {
               final data = snapshot.data?.data();
-              if (data?['ownerDeviceId'] != widget.deviceId || data?['visibility'] != 'invite_only') {
+              if (data?['visibility'] != 'invite_only') {
                 return const SizedBox.shrink();
               }
               return FutureBuilder<String?>(
@@ -1021,12 +1074,16 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0x6634D399)),
                 ),
-                child: const Row(children: [
-                  SizedBox(width: 8, height: 8, child: DecoratedBox(
+                child: Row(children: [
+                  const SizedBox(width: 8, height: 8, child: DecoratedBox(
                     decoration: BoxDecoration(color: Color(0xFF34D399), shape: BoxShape.circle))),
-                  SizedBox(width: 10),
-                  Expanded(child: Text('Davet bekleniyor · Kanalın açık kalıyor',
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('Davet bekleniyor · Kanalın açık kalıyor',
                     style: TextStyle(color: Color(0xFFB7F7D5), fontSize: 14, fontWeight: FontWeight.w700))),
+                  TextButton.icon(onPressed: _busy ? null : _cancelMatchInvite,
+                    icon: const Icon(Icons.undo_rounded, size: 17), label: const Text('Geri al'),
+                    style: TextButton.styleFrom(foregroundColor: const Color(0xFFFFD0C2),
+                      disabledForegroundColor: const Color(0xFFB6A39C))),
                 ]),
               ),
             Expanded(child: ListView.separated(
