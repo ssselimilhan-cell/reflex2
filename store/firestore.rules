@@ -157,7 +157,7 @@ service cloud.firestore {
           ))
       );
 
-      allow delete: if false;
+      allow delete: if request.auth != null && resource.data.ownerDeviceId == request.auth.uid;
 
       match /private/{secretId} {
         allow get: if request.auth != null && secretId == 'invite' && isChannelMember(channelId);
@@ -185,7 +185,7 @@ service cloud.firestore {
           && request.resource.data.playerDeviceId is string
           && request.resource.data.playerDeviceId.size() <= 128
           && request.resource.data.status == 'pending';
-        allow delete: if false;
+        allow delete: if isChannelOwner(channelId);
         allow update: if isChannelOwner(channelId)
           && resource.data.status == 'pending'
           && request.resource.data.status in ['accepted', 'rejected']
@@ -240,7 +240,7 @@ service cloud.firestore {
           isChannelOwner(channelId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
         );
-        allow delete: if request.auth != null && uid == request.auth.uid;
+        allow delete: if request.auth != null && (uid == request.auth.uid || isChannelOwner(channelId));
       }
       match /messages/{messageId} {
         allow read: if isChannelMember(channelId);
@@ -255,7 +255,8 @@ service cloud.firestore {
           && request.resource.data.isAnnouncement is bool
           && request.resource.data.sentAt == request.time
           && (!request.resource.data.isAnnouncement || isChannelOwner(channelId));
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isChannelOwner(channelId);
       }
 
       // Channel-wide competitive statistics. Each tournament can be
@@ -293,7 +294,7 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.creatorDeviceId == request.auth.uid
           && request.resource.data.lastRank == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].rank : 0)
           && request.resource.data.lastStars == (uid in getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements ? getAfter(/databases/$(database)/documents/channels/$(channelId)/tournaments/$(request.resource.data.lastTournamentId)).data.placements[uid].stars : 0);
-        allow delete: if false;
+        allow delete: if isChannelOwner(channelId);
       }
 
 
@@ -333,7 +334,7 @@ service cloud.firestore {
             && request.auth.uid in request.resource.data.participantIds
             && !(request.auth.uid in resource.data.participantIds))
         );
-        allow delete: if false;
+        allow delete: if isChannelOwner(channelId);
 
         match /reward_claims/{uid} {
           allow read: if request.auth != null && request.auth.uid == uid;
@@ -347,7 +348,8 @@ service cloud.firestore {
             && request.resource.data.stars is int
             && request.resource.data.stars > 0
             && request.resource.data.claimedAt == request.time;
-          allow update, delete: if false;
+          allow update: if false;
+          allow delete: if isChannelOwner(channelId);
         }
 
         match /matches/{matchId} {
@@ -408,7 +410,7 @@ service cloud.firestore {
               && request.resource.data.winnerUid in
                 [resource.data.player1Uid, resource.data.player2Uid])
           );
-          allow delete: if false;
+          allow delete: if isChannelOwner(channelId);
         }
       }
     }

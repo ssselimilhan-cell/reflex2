@@ -1390,53 +1390,64 @@ class OnlineRoomRepository {
     return true;
   }
 
-  Future<void> reopenChannel({
-    required String channelId,
-    required String deviceId,
-    required String playerDeviceId,
-    required String displayName,
-  }) async {
-    final uid = _requireChannelUid(deviceId);
-    final channel = _channels.doc(channelId);
-    final member = channel.collection('members').doc(uid);
-    await FirebaseFirestore.instance.runTransaction((tx) async {
-      final channelSnap = await tx.get(channel);
-      final memberSnap = await tx.get(member);
-      if (!channelSnap.exists || channelSnap.data()?['ownerDeviceId'] != uid ||
-          channelSnap.data()?['status'] != 'closed' || memberSnap.exists) {
-        throw StateError('Bu kanalı yeniden açma yetkin yok veya kanal zaten açık.');
+  /// Kanalı ve ona bağlı tüm verileri kalıcı olarak siler.
+  /// Firestore alt koleksiyonları üst belge silinince otomatik silinmediği
+  /// için her alt koleksiyon açıkça temizlenir; büyük listeler 400'lük
+  /// batch'lere bölünür. Kanal belgesi en son silinir.
+  Future<void> _deleteChannelDocuments(
+      Iterable<DocumentReference<Map<String, dynamic>>> references) async {
+    final docs = references.toList(growable: false);
+    for (var start = 0; start < docs.length; start += 400) {
+      final batch = FirebaseFirestore.instance.batch();
+      final end = (start + 400 < docs.length) ? start + 400 : docs.length;
+      for (final ref in docs.sublist(start, end)) {
+        batch.delete(ref);
       }
-      tx.set(member, {
-        'deviceId': uid,
-        'playerDeviceId': playerDeviceId,
-        'displayName': displayName,
-        'joinedAt': FieldValue.serverTimestamp(),
-        'role': 'owner',
-      });
-      tx.update(channel, {
-        'status': 'open',
-        'memberCount': 1,
-        'ownerDisplayName': displayName,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    });
+      await batch.commit();
+    }
   }
 
   Future<void> closeChannel(String channelId, String deviceId) async {
     final uid = _requireChannelUid(deviceId);
     final channel = _channels.doc(channelId);
-    await FirebaseFirestore.instance.runTransaction((tx) async {
-      final snap = await tx.get(channel);
-      if (!snap.exists || snap.data()?['ownerDeviceId'] != uid) {
-        throw StateError('Yalnızca kanal kurucusu kanalı kapatabilir.');
-      }
-      if (snap.data()?['status'] != 'open') return;
-      tx.update(channel, {
-        'status': 'closed',
-        'closedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    });
+    final channelSnap = await channel.get();
+    if (!channelSnap.exists || channelSnap.data()?['ownerDeviceId'] != uid) {
+      throw StateError('Yalnızca kanal kurucusu kanalı silebilir.');
+    }
+
+    // Invite-code records point to this channel and must be removed first.
+    final inviteDocs = await _channelInvites
+        .where('channelId', isEqualTo: channelId).get();
+    await _deleteChannelDocuments(inviteDocs.docs.map((doc) => doc.reference));
+
+    // Remove nested tournament records before deleting their parent documents.
+    final tournaments = await channel.collection('tournaments').get();
+    for (final tournamentDoc in tournaments.docs) {
+      final tournament = tournamentDoc.reference;
+      final matches = await tournament.collection('matches').get();
+      await _deleteChannelDocuments(matches.docs.map((doc) => doc.reference));
+      final claims = await tournament.collection('reward_claims').get();
+      await _deleteChannelDocuments(claims.docs.map((doc) => doc.reference));
+    }
+
+    // Delete all direct channel subcollections. This includes owner membership,
+    // pending requests, chat, invite secret and tournament statistics.
+    const directCollections = [
+      'private',
+      'join_requests',
+      'members',
+      'messages',
+      'tournament_stats',
+      'tournaments',
+    ];
+    for (final name in directCollections) {
+      final snapshot = await channel.collection(name).get();
+      await _deleteChannelDocuments(snapshot.docs.map((doc) => doc.reference));
+    }
+
+    // Delete the channel last so ownership rules remain verifiable while
+    // its child documents and invite records are being removed.
+    await channel.delete();
   }
 
   Future<void> leaveChannel(String channelId, String deviceId) async {

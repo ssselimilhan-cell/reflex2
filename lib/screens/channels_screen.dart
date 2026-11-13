@@ -92,25 +92,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
   }
 
-  Future<void> _reopenOwnedChannel(String channelId) async {
-    if (_deviceId == null || _busy) return;
-    setState(() { _busy = true; _error = null; });
-    try {
-      final profile = UserProfile.instance;
-      await _repo.reopenChannel(
-        channelId: channelId,
-        deviceId: _deviceId!,
-        playerDeviceId: await _currentPlayerDeviceId(),
-        displayName: profile.hasProfile ? profile.displayName! : t('you'),
-      );
-      if (mounted) await _openChannel(channelId, joinIfNeeded: false);
-    } catch (e) {
-      if (mounted) setState(() => _error = 'Kanal yeniden açılamadı: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
   Future<void> _joinByInviteCode() async {
     final controller = TextEditingController();
     final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
@@ -265,9 +246,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           final docs = snapshot.data!.docs.where((d) {
             final data = d.data();
             final visible = data['visibility'] == 'public' || data['visibility'] == 'invite_only';
-            final open = data['status'] == 'open';
-            final ownedClosed = data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId;
-            return visible && (open || ownedClosed);
+            return visible && data['status'] == 'open';
           }).toList();
           if (docs.isEmpty) return Center(child: Padding(
             padding: const EdgeInsets.all(24),
@@ -320,13 +299,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     builder: (context, memberSnapshot) {
                       final isMember = memberSnapshot.data?.exists == true;
                       final inviteOnly = data['visibility'] == 'invite_only';
-                      if (data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId) {
-                        return FilledButton(
-                          onPressed: _busy ? null : () => _reopenOwnedChannel(doc.id),
-                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827)),
-                          child: const Text('Yeniden aç', style: TextStyle(fontWeight: FontWeight.w800)),
-                        );
-                      }
                       if (!inviteOnly) {
                         return FilledButton(
                           onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
@@ -507,15 +479,15 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
-        title: const Text('Kanalı kapat?', style: TextStyle(color: Colors.white)),
-        content: const Text('Kanal yeni katılımlara ve turnuva işlemlerine kapatılacak. Bu işlem geri alınamaz.',
+        title: const Text('Kanalı sil?', style: TextStyle(color: Colors.white)),
+        content: const Text('Kanal; üyeleri, sohbet mesajları, davet kodları ve turnuva kayıtlarıyla birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz.',
           style: TextStyle(color: Colors.white70, height: 1.4)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Vazgeç', style: TextStyle(color: Colors.white70))),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true), child: const Text('Kanalı kapat')),
+            onPressed: () => Navigator.pop(ctx, true), child: const Text('Kanalı sil')),
         ],
       ),
     );
@@ -523,9 +495,9 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     setState(() => _busy = true);
     try {
       await _repo.closeChannel(widget.channelId, widget.deviceId);
-      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kanal kapatıldı.'))); Navigator.pop(context); }
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kanal ve bağlı tüm verileri silindi.'))); Navigator.pop(context); }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kanal kapatılamadı: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kanal silinemedi: $e')));
     } finally { if (mounted) setState(() => _busy = false); }
   }
 
@@ -717,7 +689,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
           StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
             builder: (context, snapshot) => snapshot.data?.data()?['ownerDeviceId'] == widget.deviceId
-              ? IconButton(tooltip: 'Kanalı kapat', icon: const Icon(Icons.settings_rounded, color: Color(0xFFFFD76A)),
+              ? IconButton(tooltip: 'Kanalı sil', icon: const Icon(Icons.delete_forever_rounded, color: Color(0xFFFFD76A)),
                   onPressed: _busy ? null : _closeChannel)
               : const SizedBox.shrink(),
           ),
