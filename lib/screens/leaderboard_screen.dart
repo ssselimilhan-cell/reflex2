@@ -148,22 +148,122 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(14),
-          itemCount: top.length,
-          itemBuilder: (context, i) {
-            final entry = top[i].value;
-            return _LeaderboardRow(
-              rank: i + 1,
-              name: entry['displayName'] as String? ?? t('guest_label'),
-              wins: entry['count'] as int,
-              photoBase64: entry['photoBase64'] as String?,
-              iconIndex: entry['avatarIconIndex'] as int?,
-              colorValue: entry['avatarColorValue'] as int?,
-            );
-          },
+        final podium = <int>[2, 1, 3]
+            .where((rank) => rank <= top.length)
+            .map((rank) => top[rank - 1])
+            .toList();
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF263B55), Color(0xFF17263A)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0x66FBBF24)),
+              ),
+              child: Column(children: [
+                const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD36A), size: 22),
+                  SizedBox(width: 8),
+                  Text('ŞAMPİYONLAR PODYUMU', style: TextStyle(
+                    color: Color(0xFFFFE4A3), fontSize: 13,
+                    fontWeight: FontWeight.w900, letterSpacing: 1)),
+                ]),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final item in podium)
+                      Expanded(child: _LeaderboardPodiumCard(
+                        rank: top.indexOf(item) + 1,
+                        name: item.value['displayName'] as String? ?? t('guest_label'),
+                        wins: item.value['count'] as int,
+                        photoBase64: item.value['photoBase64'] as String?,
+                        iconIndex: item.value['avatarIconIndex'] as int?,
+                        colorValue: item.value['avatarColorValue'] as int?,
+                      )),
+                  ],
+                ),
+              ]),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(4, 18, 4, 10),
+              child: Row(children: [
+                Icon(Icons.leaderboard_rounded, color: Color(0xFFFFD36A), size: 19),
+                SizedBox(width: 8),
+                Text('GENEL SIRALAMA', style: TextStyle(
+                  color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900,
+                  letterSpacing: .8)),
+              ]),
+            ),
+            for (var i = 3; i < top.length; i++)
+              _LeaderboardRow(
+                rank: i + 1,
+                name: top[i].value['displayName'] as String? ?? t('guest_label'),
+                wins: top[i].value['count'] as int,
+                photoBase64: top[i].value['photoBase64'] as String?,
+                iconIndex: top[i].value['avatarIconIndex'] as int?,
+                colorValue: top[i].value['avatarColorValue'] as int?,
+              ),
+          ],
         );
       },
+    );
+  }
+}
+
+class _LeaderboardPodiumCard extends StatelessWidget {
+  final int rank;
+  final String name;
+  final int wins;
+  final String? photoBase64;
+  final int? iconIndex;
+  final int? colorValue;
+
+  const _LeaderboardPodiumCard({
+    required this.rank, required this.name, required this.wins,
+    this.photoBase64, this.iconIndex, this.colorValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final first = rank == 1;
+    final accent = rank == 1 ? const Color(0xFFFFD36A)
+        : rank == 2 ? const Color(0xFFD7E0EA) : const Color(0xFFD99A68);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Container(
+        constraints: BoxConstraints(minHeight: first ? 144 : 126),
+        padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
+        decoration: BoxDecoration(
+          color: accent.withOpacity(first ? .18 : .10),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: accent.withOpacity(first ? .85 : .45), width: first ? 1.8 : 1.1),
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Text(rank == 1 ? '👑' : rank == 2 ? '🥈' : '🥉',
+            style: TextStyle(fontSize: first ? 27 : 23)),
+          const SizedBox(height: 5),
+          ProfileAvatar.remote(
+            radius: first ? 25 : 21,
+            photoBase64: photoBase64,
+            iconIndex: iconIndex,
+            color: colorValue != null ? Color(colorValue!) : Colors.white24,
+          ),
+          const SizedBox(height: 6),
+          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 3),
+          Text('$wins galibiyet', maxLines: 1,
+            style: TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w900)),
+        ]),
+      ),
     );
   }
 }
@@ -201,16 +301,14 @@ class _LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cv = colorValue; // public alan terfi etmez, yerel kopya şart
-    final isTop3 = rank <= 3;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: isTop3 ? Colors.amber.withOpacity(0.12) : Colors.black26,
-        borderRadius: BorderRadius.circular(12),
-        border: isTop3
-            ? Border.all(color: Colors.amber.withOpacity(0.5), width: 1.2)
-            : null,
+        color: const Color(0xFF263B55).withOpacity(.82),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(.09)),
+        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 3))],
       ),
       child: Row(
         children: [
@@ -219,10 +317,10 @@ class _LeaderboardRow extends StatelessWidget {
             child: Text(
               _rankBadge,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: isTop3 ? 22 : 15,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFFFFD27A),
+                  fontWeight: FontWeight.w900),
             ),
           ),
           const SizedBox(width: 8),
@@ -242,7 +340,7 @@ class _LeaderboardRow extends StatelessWidget {
           ),
           Text('$wins',
               style: const TextStyle(
-                  color: Colors.amber,
+                  color: const Color(0xFFFFD27A),
                   fontWeight: FontWeight.w900,
                   fontSize: 16)),
         ],
