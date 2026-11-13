@@ -48,3 +48,4 @@ flutter_launcher_icons:
   image_path: "assets/icon/icon.png"
   adaptive_icon_background: "#7B1E3A"
   adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+# [build-preview-apk] Verified test build checkpoint
