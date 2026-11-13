@@ -1096,9 +1096,10 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             memberNames[stats[i].id] ?? 'Oyuncu',
                             maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
-                          Text('${stats[i].data()['championships'] ?? 0} şamp.  ·  '
+                          Flexible(child: Text('${stats[i].data()['championships'] ?? 0} şamp.  ·  '
                             '${stats[i].data()['podiums'] ?? 0} podyum',
-                            style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                            maxLines: 2, softWrap: true, textAlign: TextAlign.end,
+                            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.15))),
                         ]),
                       ),
                   ]),

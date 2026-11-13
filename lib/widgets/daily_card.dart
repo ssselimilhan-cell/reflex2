@@ -157,8 +157,9 @@ class DailyCard extends StatelessWidget {
                                       fontWeight: FontWeight.w800)),
                               const SizedBox(height: 3),
                               Text(t('streak_hint'),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                  softWrap: true,
+                                  overflow: TextOverflow.visible,
                                   style: const TextStyle(
                                       color: Colors.white60, fontSize: 10.5)),
                             ],
