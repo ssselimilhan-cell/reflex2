@@ -140,7 +140,9 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         playerDeviceId: await _currentPlayerDeviceId(),
         displayName: displayName,
       );
-      if (mounted) setState(() => _error = 'Katılma talebin kurucuya gönderildi. Kabul edilirse kanala katılabileceksin.');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Katılma talebin kurucuya gönderildi. Onaylandığında kanala girebilirsin.')),
+      );
     } catch (e) {
       if (mounted) setState(() => _error = 'Katılma talebi gönderilemedi: $e');
     } finally {
