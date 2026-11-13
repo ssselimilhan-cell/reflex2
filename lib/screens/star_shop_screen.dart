@@ -13,17 +13,20 @@ import 'admin_theme_screen.dart';
 class StarShopScreen extends StatelessWidget {
   const StarShopScreen({super.key});
 
+  // Tema mağazası test süresince tüm yayınlanmış temaları 1 yıldızdan sunar.
+  static const int _testThemePrice = 1;
+
   // Temel koleksiyon uygulamayla birlikte gelir; Firestore boş veya çevrimdışı olsa da görünür.
   static const List<Map<String, dynamic>> _builtInCatalog = [
-    {'id':'card_theme_5','themeIndex':5,'visualStyleIndex':5,'name':'Roma','description':'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.','priceStars':100,'sortOrder':1},
-    {'id':'card_theme_11','themeIndex':11,'visualStyleIndex':11,'name':'Almanya','description':'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.','priceStars':100,'sortOrder':2},
-    {'id':'card_theme_12','themeIndex':12,'visualStyleIndex':12,'name':'Fransa','description':'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.','priceStars':100,'sortOrder':3},
-    {'id':'card_theme_10','themeIndex':10,'visualStyleIndex':10,'name':'Hindistan','description':'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.','priceStars':150,'sortOrder':4},
-    {'id':'card_theme_15','themeIndex':15,'visualStyleIndex':15,'name':'Rusya','description':'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.','priceStars':150,'sortOrder':5},
-    {'id':'card_theme_4','themeIndex':4,'visualStyleIndex':4,'name':'Firavun','description':'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.','priceStars':200,'sortOrder':6},
-    {'id':'card_theme_14','themeIndex':14,'visualStyleIndex':14,'name':'Pers','description':'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.','priceStars':200,'sortOrder':7},
-    {'id':'card_theme_3','themeIndex':3,'visualStyleIndex':3,'name':'Osmanlı','description':'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.','priceStars':250,'sortOrder':8},
-    {'id':'card_theme_13','themeIndex':13,'visualStyleIndex':13,'name':'Japonya','description':'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.','priceStars':250,'sortOrder':9},
+    {'id':'card_theme_5','themeIndex':5,'visualStyleIndex':5,'name':'Roma','description':'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.','priceStars':1,'sortOrder':1},
+    {'id':'card_theme_11','themeIndex':11,'visualStyleIndex':11,'name':'Almanya','description':'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.','priceStars':1,'sortOrder':2},
+    {'id':'card_theme_12','themeIndex':12,'visualStyleIndex':12,'name':'Fransa','description':'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.','priceStars':1,'sortOrder':3},
+    {'id':'card_theme_10','themeIndex':10,'visualStyleIndex':10,'name':'Hindistan','description':'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.','priceStars':1,'sortOrder':4},
+    {'id':'card_theme_15','themeIndex':15,'visualStyleIndex':15,'name':'Rusya','description':'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.','priceStars':1,'sortOrder':5},
+    {'id':'card_theme_4','themeIndex':4,'visualStyleIndex':4,'name':'Firavun','description':'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.','priceStars':1,'sortOrder':6},
+    {'id':'card_theme_14','themeIndex':14,'visualStyleIndex':14,'name':'Pers','description':'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.','priceStars':1,'sortOrder':7},
+    {'id':'card_theme_3','themeIndex':3,'visualStyleIndex':3,'name':'Osmanlı','description':'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.','priceStars':1,'sortOrder':8},
+    {'id':'card_theme_13','themeIndex':13,'visualStyleIndex':13,'name':'Japonya','description':'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.','priceStars':1,'sortOrder':9},
   ];
 
   @override
@@ -76,7 +79,7 @@ class StarShopScreen extends StatelessWidget {
                 final entries=catalog.entries.where((entry){
                   final d=entry.value;
                   final i=d['visualStyleIndex'] is int ? d['visualStyleIndex'] as int : d['themeIndex'];
-                  return d['priceStars'] is int && (d['priceStars'] as int)>0 && i is int && i>=0 && i<CardFaceTheme.values.length;
+                  return i is int && i>=0 && i<CardFaceTheme.values.length;
                 }).toList()..sort((a,b)=>((a.value['sortOrder'] as int?)??0).compareTo((b.value['sortOrder'] as int?)??0));
                 if(!snapshot.hasData && !snapshot.hasError && snapshot.connectionState!=ConnectionState.done){
                   return const Padding(padding:EdgeInsets.all(24),child:Center(child:CircularProgressIndicator()));
@@ -89,7 +92,7 @@ class StarShopScreen extends StatelessWidget {
                     itemBuilder:(context,index){
                       final entry=entries[index]; final data=entry.value;
                       final styleIndex=data['visualStyleIndex'] is int ? data['visualStyleIndex'] as int : data['themeIndex'] as int;
-                      final theme=CardFaceTheme.values[styleIndex]; final price=data['priceStars'] as int;
+                      final theme=CardFaceTheme.values[styleIndex]; final price=_testThemePrice;
                       final id=entry.key; final name=data['name'] as String? ?? 'Tema';
                       final owned=progress.isCatalogThemeUnlocked(id,styleIndex);
                       final equipped=AppSettings.instance.selectedThemeId==id || (AppSettings.instance.selectedThemeId.startsWith('builtin_') && AppSettings.instance.cardTheme==theme);
