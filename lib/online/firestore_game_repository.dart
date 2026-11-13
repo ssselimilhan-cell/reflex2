@@ -5,6 +5,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../settings/guest_progress_snapshot.dart';
 import '../game/game_engine.dart';
 
+/// Bekleme odaları için tek süre hesabı: yeni kayıtlarda expiresAt,
+/// eski kayıtlarda createdAt + 5 dakika kullanılır.
+DateTime? waitingRoomDeadline(Map<String, dynamic> data) {
+  final storedExpiry = data['expiresAt'];
+  if (storedExpiry is Timestamp) return storedExpiry.toDate();
+  final createdAt = data['createdAt'];
+  if (createdAt is Timestamp) {
+    return createdAt.toDate().add(const Duration(minutes: 5));
+  }
+  return null;
+}
+
 /// Bir online oyun odasının Firestore üzerindeki temsili.
 /// Koleksiyon: "rooms", döküman id'si 4 haneli okunabilir bir kod (örn "AB12").
 class OnlineRoomRepository {
@@ -102,13 +114,7 @@ class OnlineRoomRepository {
         .map((snapshot) {
           for (final doc in snapshot.docs) {
             final data = doc.data();
-            final storedExpiry = data['expiresAt'];
-            final createdAt = data['createdAt'];
-            final deadline = storedExpiry is Timestamp
-                ? storedExpiry.toDate()
-                : createdAt is Timestamp
-                    ? createdAt.toDate().add(const Duration(minutes: 5))
-                    : null;
+            final deadline = waitingRoomDeadline(data);
             if (deadline != null && !DateTime.now().isBefore(deadline)) {
               unawaited(expireWaitingRoom(doc.id));
             }
@@ -125,13 +131,7 @@ class OnlineRoomRepository {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
-      final storedExpiry = data['expiresAt'];
-      final createdAt = data['createdAt'];
-      final deadline = storedExpiry is Timestamp
-          ? storedExpiry.toDate()
-          : createdAt is Timestamp
-              ? createdAt.toDate().add(const Duration(minutes: 5))
-              : null;
+      final deadline = waitingRoomDeadline(data);
       if (data['roomStatus'] != 'waiting' || deadline == null ||
           DateTime.now().isBefore(deadline)) {
         return false;
@@ -161,6 +161,19 @@ class OnlineRoomRepository {
       if (!snap.exists) return false;
       final data = snap.data()!;
       if (data['roomStatus'] != 'waiting') return false;
+
+      // Süresi dolmuş oda, lobideki temizlik zamanlayıcısından önce de
+      // katılıma kapalı olmalı. Kontrol ve iptal aynı transaction içindedir.
+      final deadline = waitingRoomDeadline(data);
+      if (deadline != null && !DateTime.now().isBefore(deadline)) {
+        tx.update(ref, {
+          'roomStatus': 'cancelled',
+          'cancelledBy': 'system_timeout',
+          'cancelledReason': 'waiting_timeout',
+          'cancelledAt': FieldValue.serverTimestamp(),
+        });
+        return false;
+      }
       if (data['guestDeviceId'] != null) return false;
       // Name-invited tables are private: only the exact invited device may
       // take the guest seat, even if another player discovers the room code.
