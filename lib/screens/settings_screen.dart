@@ -720,8 +720,9 @@ class _CardDesignRowState extends State<_CardDesignRow> {
                     _pendingId.startsWith('builtin_')
                         ? _builtinLabel(_pendingStyle)
                         : '$_pendingId',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ),
@@ -926,8 +927,9 @@ class _ThemeTile extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 3,
+                softWrap: true,
+                overflow: TextOverflow.visible,
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
             ],
