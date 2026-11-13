@@ -455,7 +455,7 @@ class OnlineRoomRepository {
   /// [toDeviceId]'ye, [roomCode] odasına gelmesi için bir davet gönderir.
   /// Gönderenin profil bilgisi davetin içine gömülür ki alıcı, kimin
   /// davet ettiğini (ismi, avatarı, kazanma oranı) görebilsin.
-  Future<void> sendInvite({
+  Future<String> sendInvite({
     required String toDeviceId,
     required String fromDeviceId,
     required String roomCode,
