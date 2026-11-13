@@ -213,8 +213,21 @@ service cloud.firestore {
             && getAfter(channelJoinRequestPath(channelId, uid)).data.status == 'accepted')
         );
 
-        allow update: if isChannelOwner(channelId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
+        allow update: if (
+          request.auth != null
+          && uid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['playerDeviceId', 'displayName', 'identityUpdatedAt'])
+          && request.resource.data.playerDeviceId is string
+          && request.resource.data.playerDeviceId.size() > 0
+          && request.resource.data.playerDeviceId.size() <= 128
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 1
+          && request.resource.data.displayName.size() <= 32
+        ) || (
+          isChannelOwner(channelId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+        );
         allow delete: if request.auth != null && uid == request.auth.uid;
       }
       match /messages/{messageId} {

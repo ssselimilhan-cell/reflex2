@@ -35,10 +35,10 @@ class SettingsScreen extends StatelessWidget {
       animation: Listenable.merge([settings, Moderation.instance, Progress.instance]),
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFFB94E20),
+          backgroundColor: const Color(0xFFEA8545),
           appBar: AppBar(
             title: Text(t('settings_title'), style: const TextStyle(fontWeight: FontWeight.w800)),
-            backgroundColor: const Color(0xFF713116),
+            backgroundColor: const Color(0xFFD96C32),
             foregroundColor: Colors.white,
             elevation: 0,
           ),

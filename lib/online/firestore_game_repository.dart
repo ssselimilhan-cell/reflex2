@@ -1192,7 +1192,14 @@ class OnlineRoomRepository {
       if (!channelSnap.exists || channelSnap.data()?['status'] != 'open' ||
           channelSnap.data()?['visibility'] != 'public') return false;
       final memberSnap = await tx.get(member);
-      if (memberSnap.exists) return true;
+      if (memberSnap.exists) {
+        tx.update(member, {
+          'playerDeviceId': playerDeviceId,
+          'displayName': displayName,
+          'identityUpdatedAt': FieldValue.serverTimestamp(),
+        });
+        return true;
+      }
       final data = channelSnap.data()!;
       tx.set(member, {
         'deviceId': uid,
@@ -1295,6 +1302,24 @@ class OnlineRoomRepository {
     return null;
   }
 
+  /// Refreshes an existing member's persistent game-device identity.
+  Future<void> refreshChannelMemberIdentity({
+    required String channelId,
+    required String deviceId,
+    required String playerDeviceId,
+    required String displayName,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final member = _channels.doc(channelId).collection('members').doc(uid);
+    final snap = await member.get();
+    if (!snap.exists) return;
+    await member.update({
+      'playerDeviceId': playerDeviceId,
+      'displayName': displayName,
+      'identityUpdatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<bool> joinPrivateChannelByCode({
     required String code,
     required String deviceId,
@@ -1310,7 +1335,14 @@ class OnlineRoomRepository {
     if (channelId == null || channelId.isEmpty) return false;
     final channel = _channels.doc(channelId);
     final member = channel.collection('members').doc(uid);
-    if ((await member.get()).exists) return true;
+    if ((await member.get()).exists) {
+      await member.update({
+        'playerDeviceId': playerDeviceId,
+        'displayName': displayName,
+        'identityUpdatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    }
     final batch = FirebaseFirestore.instance.batch();
     batch.set(member, {
       'deviceId': uid,

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
+import '../online/persistent_device_id.dart';
 import '../settings/progress.dart';
 import '../settings/auth_service.dart';
 import '../settings/user_profile.dart';
@@ -30,6 +31,9 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     // Güvenli kanal üyeliği yalnızca Firebase hesabının UID'siyle yapılır.
     _deviceId = FirebaseAuth.instance.currentUser?.uid;
   }
+
+  Future<String> _currentPlayerDeviceId() async =>
+      UserProfile.instance.deviceId ?? await getPersistentDeviceId();
 
   Future<void> _createChannel() async {
     final name = TextEditingController();
@@ -73,7 +77,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       final p = UserProfile.instance;
       final id = await _repo.createChannel(
         ownerDeviceId: _deviceId!,
-        ownerPlayerDeviceId: p.deviceId ?? '',
+        ownerPlayerDeviceId: await _currentPlayerDeviceId(),
         ownerDisplayName: p.hasProfile ? p.displayName! : t('you'),
         name: cleanName,
         description: cleanDescription,
@@ -108,7 +112,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       final p = UserProfile.instance;
       final joined = await _repo.joinPrivateChannelByCode(
         code: code, deviceId: _deviceId!,
-        playerDeviceId: p.deviceId ?? '',
+        playerDeviceId: await _currentPlayerDeviceId(),
         displayName: p.hasProfile ? p.displayName! : t('you'),
       );
       if (!joined) throw StateError('Davet kodu geçersiz veya kanal kapalı.');
@@ -128,7 +132,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       await _repo.requestChannelJoin(
         channelId: channelId,
         uid: _deviceId!,
-        playerDeviceId: UserProfile.instance.deviceId ?? _deviceId!,
+        playerDeviceId: await _currentPlayerDeviceId(),
         displayName: displayName,
       );
       if (mounted) setState(() => _error = 'Katılma talebin kurucuya gönderildi. Kabul edilirse kanala katılabileceksin.');
