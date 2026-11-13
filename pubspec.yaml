@@ -70,3 +70,5 @@ flutter_launcher_icons:
 # [build-preview-apk] Expired waiting-room join guard and deadline tests
 
 # [build-preview-apk] Build preview for verified waiting-room expiry fix
+
+# [build-preview-apk] Verify adaptive labels and no-clipping layout pass
