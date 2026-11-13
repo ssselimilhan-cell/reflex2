@@ -13,7 +13,7 @@ class AdminThemeScreen extends StatefulWidget {
 
 class _AdminThemeScreenState extends State<AdminThemeScreen> {
   static const _themes = <int, String>{
-    3: 'Osmanlı', 4: 'Firavun', 5: 'Roma', 10: 'Hint',
+    3: 'Osmanlı', 4: 'Mısır', 5: 'Roma', 10: 'Hint',
     11: 'Alman', 12: 'Fransız', 13: 'Japon', 14: 'Pers', 15: 'Rus',
   };
   static const _prices = <int, int>{
@@ -22,7 +22,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
   };
   static const _descriptions = <int, String>{
     3: 'İznik çinileri, lale ve karanfil motifleri, tuğra kıvrımları, hilal ve altın tezhip bezemeleri.',
-    4: 'Kanatlı güneş, ankh, firavun maskesi, lapis lazuli ve altın hiyeroglif bordürleri.',
+    4: 'Kanatlı güneş, ankh, Mısır maskesi, lapis lazuli ve altın hiyeroglif bordürleri.',
     5: 'Defne çelengi, mermer sütunlar, Roma kartalı ve imparatorluk madalyonları.',
     10: 'Tavus kuşu tüyleri, lotus, mücevher işlemeli Babür kemerleri ve katmanlı mandala bezemeleri.',
     11: 'Kara Orman meşesi, Gotik katedral pencereleri, kartal arması ve dövme demir işçiliği.',

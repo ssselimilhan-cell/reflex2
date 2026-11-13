@@ -537,6 +537,24 @@ class _CivilizationEmblemPainter extends CustomPainter {
     }
   }
 
+  void _rosette(Canvas canvas, Offset center, double radius, int points, Paint outer, Paint inner) {
+    final path = Path();
+    for (var i = 0; i < points * 2; i++) {
+      final angle = -math.pi / 2 + i * math.pi / points;
+      final distance = i.isEven ? radius : radius * 0.72;
+      final point = Offset(center.dx + math.cos(angle) * distance,
+          center.dy + math.sin(angle) * distance);
+      if (i == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, outer);
+    canvas.drawCircle(center, radius * 0.24, inner);
+  }
+
   @override
   bool shouldRepaint(covariant _CivilizationEmblemPainter old) =>
       old.theme != theme || old.suit != suit || old.ink != ink;
