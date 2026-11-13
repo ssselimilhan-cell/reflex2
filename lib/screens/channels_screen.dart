@@ -110,14 +110,19 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     setState(() { _busy = true; _error = null; });
     try {
       final p = UserProfile.instance;
-      final joined = await _repo.joinPrivateChannelByCode(
-        code: code, deviceId: _deviceId!,
+      final id = await _repo.findChannelByInviteCode(code);
+      if (id == null) throw StateError('Davet kodu geçersiz veya kanal kapalı.');
+      await _repo.requestChannelJoin(
+        channelId: id,
+        uid: _deviceId!,
         playerDeviceId: await _currentPlayerDeviceId(),
         displayName: p.hasProfile ? p.displayName! : t('you'),
       );
-      if (!joined) throw StateError('Davet kodu geçersiz veya kanal kapalı.');
-      final id = await _repo.findChannelByInviteCode(code);
-      if (id != null && mounted) await _openChannel(id, joinIfNeeded: false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Katılma talebin kanal kurucusuna gönderildi. Onaylandığında kanala girebilirsin.')),
+        );
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Kanala katılınamadı: ' + e.toString());
     } finally {
