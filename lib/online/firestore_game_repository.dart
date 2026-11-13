@@ -234,6 +234,19 @@ class OnlineRoomRepository {
     });
   }
 
+  /// Hızlı eşleşme kuyruğunu doğrudan sunucudan okur. Stream.first eski
+  /// yerel önbelleği döndürüp uzak cihazın bekleme odasını kaçırabilir.
+  Future<QuerySnapshot<Map<String, dynamic>>> fetchQuickMatchQueue() {
+    return _rooms
+        .where('quickMatch', isEqualTo: true)
+        .get(const GetOptions(source: Source.server));
+  }
+
+  /// Bekleme odasının sunucudaki güncel durumunu okur.
+  Future<DocumentSnapshot<Map<String, dynamic>>> getRoomFromServer(String code) {
+    return _rooms.doc(code).get(const GetOptions(source: Source.server));
+  }
+
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchRoom(String code) {
     return _rooms.doc(code).snapshots();
   }

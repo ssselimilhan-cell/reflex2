@@ -81,6 +81,46 @@ void main() {
       );
     });
   });
+  group('quickMatchRoomCanBeJoined', () {
+    final now = DateTime(2026, 11, 13, 12);
+    final waiting = {
+      'hostDeviceId': 'host-device',
+      'guestDeviceId': null,
+      'quickMatch': true,
+      'roomStatus': 'waiting',
+      'expiresAt': Timestamp.fromDate(now.add(const Duration(minutes: 4))),
+    };
+
+    test('later room code joins earlier room', () {
+      expect(quickMatchRoomCanBeJoined(
+        roomCode: 'AAAA', ownRoomCode: 'BBBB', deviceId: 'guest-device',
+        data: waiting, now: now,
+      ), isTrue);
+    });
+
+    test('earlier room code does not join later room', () {
+      expect(quickMatchRoomCanBeJoined(
+        roomCode: 'BBBB', ownRoomCode: 'AAAA', deviceId: 'guest-device',
+        data: waiting, now: now,
+      ), isFalse);
+    });
+
+    test('rejects own, occupied and ordinary public rooms', () {
+      expect(quickMatchRoomCanBeJoined(
+        roomCode: 'AAAA', ownRoomCode: 'BBBB', deviceId: 'host-device',
+        data: waiting, now: now,
+      ), isFalse);
+      expect(quickMatchRoomCanBeJoined(
+        roomCode: 'AAAA', ownRoomCode: 'BBBB', deviceId: 'guest-device',
+        data: {...waiting, 'guestDeviceId': 'other'}, now: now,
+      ), isFalse);
+      expect(quickMatchRoomCanBeJoined(
+        roomCode: 'AAAA', ownRoomCode: 'BBBB', deviceId: 'guest-device',
+        data: {...waiting, 'quickMatch': false}, now: now,
+      ), isFalse);
+    });
+  });
+
   group('quickMatchRoomVisibleInPublicLobby', () {
     test('hides queue rooms from the manual public room list', () {
       expect(quickMatchRoomVisibleInPublicLobby({'quickMatch': true}), isFalse);

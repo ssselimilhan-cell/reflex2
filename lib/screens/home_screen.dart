@@ -104,19 +104,17 @@ class HomeScreen extends StatelessWidget {
                               ? constraints.maxWidth
                               : 520.0;
                           return Center(
-                            child: SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                                child: SizedBox(
-                                  width: contentWidth,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.center,
+                              child: SizedBox(
+                                width: contentWidth,
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                                  child: IntrinsicHeight(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      children: [
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
                                 const Reveal(index: 0, child: _Hero()),
                                 const SizedBox(height: 8),
                                 Reveal(
@@ -125,7 +123,7 @@ class HomeScreen extends StatelessWidget {
                                     label: t('menu_quick_match'),
                                     subtitle: t('tile_quick_sub'),
                                     icon: Icons.bolt_rounded,
-                                    height: 76,
+                                    height: 64,
                                     pulse: true,
                                     onTap: () => _openQuickMatch(context),
                                   ),
@@ -202,13 +200,11 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 const Reveal(index: 4, child: DailyCard()),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
-                          ),
                           );
                         },
                       ),

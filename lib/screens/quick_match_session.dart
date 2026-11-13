@@ -33,10 +33,29 @@ bool quickMatchRoomNeedsReplacement({
   return deadline != null && !now.isBefore(deadline);
 }
 
+
+/// Eşzamanlı aramalarda yalnızca büyük oda koduna sahip cihaz küçük kodlu
+/// odaya katılır. Böylece iki cihaz birbirinin odasına aynı anda misafir olmaz.
+bool quickMatchRoomCanBeJoined({
+  required String roomCode,
+  required String ownRoomCode,
+  required String deviceId,
+  required Map<String, dynamic> data,
+  required DateTime now,
+}) {
+  final host = data['hostDeviceId'];
+  return host is String &&
+      host != deviceId &&
+      data['quickMatch'] == true &&
+      data['roomStatus'] == 'waiting' &&
+      data['guestDeviceId'] == null &&
+      roomCode.compareTo(ownRoomCode) < 0 &&
+      !quickMatchRoomNeedsReplacement(exists: true, data: data, now: now);
+}
+
 /// Eşleşmeyi bot maçı boyunca arka planda sürdürür. Bot maçı bitince
 /// bulunan rakip döndürülür; bulunamadıysa kendi bekleme odası kapatılır.
 class QuickMatchSession {
-  static const _freshSeconds = 90;
   final _repo = OnlineRoomRepository();
   String? _deviceId;
   String? _roomCode;
@@ -61,13 +80,12 @@ class QuickMatchSession {
       final id = UserProfile.instance.deviceId ?? await getPersistentDeviceId();
       _deviceId = id;
       if (_finished) return;
-      if (await _tryJoinExisting(id, null)) return;
-      if (_finished) return;
-
+      // Önce kendi kuyruğumuzu aç. Eşzamanlı aramalarda oda kodu sıralaması
+      // yalnızca tek cihazın diğerinin odasına katılmasını sağlar.
       var code = await _createWaitingRoom(id);
       _roomCode = code;
       while (!_finished && _match == null) {
-        final room = await _repo.watchRoom(code).first;
+        final room = await _repo.getRoomFromServer(code);
         final data = room.data();
         if (room.exists && data?['guestDeviceId'] != null) {
           _publishMatch(QuickMatchResult(code, id, true));
@@ -82,8 +100,6 @@ class QuickMatchSession {
           // Bot maçı 5 dakikadan uzun sürerse eski bekleme odası kapanabilir.
           // Eski oda yerine yeni bir kuyruk odası açarak eşleşmeyi sürdür.
           _roomCode = null;
-          if (await _tryJoinExisting(id, null)) return;
-          if (_finished) return;
           code = await _createWaitingRoom(id);
           _roomCode = code;
           continue;
@@ -116,18 +132,18 @@ class QuickMatchSession {
 
   Future<bool> _tryJoinExisting(String id, String? ownCode) async {
     try {
-      final snap = await _repo.watchOpenTables().first;
+      final snap = await _repo.fetchQuickMatchQueue();
       for (final d in snap.docs) {
         final data = d.data();
         final host = data['hostDeviceId'] as String?;
-        if (host == null || host == id || data['quickMatch'] != true) continue;
-        if (Moderation.instance.isBlocked(host)) continue;
-        final created = data['createdAt'];
-        if (created is Timestamp &&
-            DateTime.now().difference(created.toDate()).inSeconds > _freshSeconds) {
-          continue;
-        }
-        if (ownCode != null && d.id.compareTo(ownCode) >= 0) continue;
+        if (!quickMatchRoomCanBeJoined(
+          roomCode: d.id,
+          ownRoomCode: ownCode!,
+          deviceId: id,
+          data: data,
+          now: DateTime.now(),
+        )) continue;
+        if (Moderation.instance.isBlocked(host!)) continue;
         final p = UserProfile.instance;
         final joined = await _repo.joinRoom(
           d.id,
@@ -147,7 +163,7 @@ class QuickMatchSession {
         }
         return true;
       }
-    } catch (_) {}
+    }
     return false;
   }
 
@@ -158,7 +174,7 @@ class QuickMatchSession {
     final code = _roomCode;
     if (_match == null && code != null && _deviceId != null) {
       try {
-        final snap = await _repo.watchRoom(code).first;
+        final snap = await _repo.getRoomFromServer(code);
         if (snap.data()?['guestDeviceId'] != null) {
           _publishMatch(QuickMatchResult(code, _deviceId!, true));
         }
