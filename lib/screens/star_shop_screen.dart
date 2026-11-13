@@ -18,15 +18,15 @@ class StarShopScreen extends StatelessWidget {
 
   // Temel koleksiyon uygulamayla birlikte gelir; Firestore boş veya çevrimdışı olsa da görünür.
   static const List<Map<String, dynamic>> _builtInCatalog = [
-    {'id':'card_theme_5','themeIndex':5,'visualStyleIndex':5,'name':'Roma','description':'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.','priceStars':1,'sortOrder':1},
-    {'id':'card_theme_11','themeIndex':11,'visualStyleIndex':11,'name':'Almanya','description':'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.','priceStars':1,'sortOrder':2},
-    {'id':'card_theme_12','themeIndex':12,'visualStyleIndex':12,'name':'Fransa','description':'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.','priceStars':1,'sortOrder':3},
-    {'id':'card_theme_10','themeIndex':10,'visualStyleIndex':10,'name':'Hindistan','description':'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.','priceStars':1,'sortOrder':4},
-    {'id':'card_theme_15','themeIndex':15,'visualStyleIndex':15,'name':'Rusya','description':'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.','priceStars':1,'sortOrder':5},
+    {'id':'card_theme_5','themeIndex':5,'visualStyleIndex':5,'name':'Roma','description':'Defne çelengi, mermer sütunlar, Roma kartalı ve imparatorluk madalyonları.','priceStars':1,'sortOrder':1},
+    {'id':'card_theme_11','themeIndex':11,'visualStyleIndex':11,'name':'Alman','description':'Kara Orman meşesi, Gotik katedral pencereleri, kartal arması ve dövme demir işçiliğinden ilham alan görkemli Alman estetiği.','priceStars':1,'sortOrder':2},
+    {'id':'card_theme_12','themeIndex':12,'visualStyleIndex':12,'name':'Fransız','description':'Fleur-de-lis, kraliyet tacı, Versailles süslemeleri ve altın varaklı rokoko ayrıntıları.','priceStars':1,'sortOrder':3},
+    {'id':'card_theme_10','themeIndex':10,'visualStyleIndex':10,'name':'Hint','description':'Tavus kuşu tüyleri, lotus, mücevher işlemeli Babür kemerleri ve katmanlı mandala bezemeleri.','priceStars':1,'sortOrder':4},
+    {'id':'card_theme_15','themeIndex':15,'visualStyleIndex':15,'name':'Rus','description':'Soğan kubbeli katedraller, mine işi renkler, Fabergé esintili mücevher bezemeleri ve çift başlı kartal silueti.','priceStars':1,'sortOrder':5},
     {'id':'card_theme_4','themeIndex':4,'visualStyleIndex':4,'name':'Firavun','description':'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.','priceStars':1,'sortOrder':6},
-    {'id':'card_theme_14','themeIndex':14,'visualStyleIndex':14,'name':'Pers','description':'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.','priceStars':1,'sortOrder':7},
-    {'id':'card_theme_3','themeIndex':3,'visualStyleIndex':3,'name':'Osmanlı','description':'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.','priceStars':1,'sortOrder':8},
-    {'id':'card_theme_13','themeIndex':13,'visualStyleIndex':13,'name':'Japonya','description':'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.','priceStars':1,'sortOrder':9},
+    {'id':'card_theme_14','themeIndex':14,'visualStyleIndex':14,'name':'Pers','description':'Şahname minyatürlerinden ilham alan simurg, aslan-güneş rozeti, firuze çiniler ve ince halı bordürleri.','priceStars':1,'sortOrder':7},
+    {'id':'card_theme_3','themeIndex':3,'visualStyleIndex':3,'name':'Osmanlı','description':'İznik çinileri, lale ve karanfil motifleri, tuğra kıvrımları, hilal ve altın tezhip bezemeleri.','priceStars':1,'sortOrder':8},
+    {'id':'card_theme_13','themeIndex':13,'visualStyleIndex':13,'name':'Japon','description':'Samuray zırhı silueti, kırmızı torii, sakura dalları, seigaiha dalgaları ve altın kintsugi çizgileri.','priceStars':1,'sortOrder':9},
   ];
 
   @override
@@ -99,13 +99,15 @@ class StarShopScreen extends StatelessWidget {
                       return Container(
                         padding:const EdgeInsets.all(12),
                         decoration:BoxDecoration(color:const Color(0xFF26313A),borderRadius:BorderRadius.circular(18),
-                          border:Border.all(color:equipped?GameUi.gold:Colors.white24,width:equipped?1.8:1),
-                          boxShadow:[BoxShadow(color:Colors.black.withOpacity(.16),blurRadius:10,offset:const Offset(0,4))]),
+                          border:Border.all(color:equipped?const Color(0xFFFFD54A):Colors.white24,width:equipped?3.2:1),
+                          gradient:equipped?const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF5A3B18),Color(0xFF26313A),Color(0xFF26313A)]):null,
+                          boxShadow:[if(equipped) BoxShadow(color:const Color(0xFFFFC928).withOpacity(.55),blurRadius:22,spreadRadius:2),BoxShadow(color:Colors.black.withOpacity(.16),blurRadius:10,offset:const Offset(0,4))]),
                         child:Column(children:[
+                          if(equipped) const Align(alignment:Alignment.topRight,child:Padding(padding:EdgeInsets.only(bottom:2),child:Row(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.verified_rounded,color:Color(0xFFFFD54A),size:15),SizedBox(width:4),Text('SEÇİLİ TEMA',style:TextStyle(color:Color(0xFFFFD54A),fontSize:10,fontWeight:FontWeight.w900,letterSpacing:.6))]))),
                           Expanded(child:Center(child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-                            CardWidget(card:const PlayingCard(Suit.hearts,7),themeOverride:theme,width:54,height:78),
+                            CardWidget(card:const PlayingCard(Suit.hearts,7),themeOverride:theme,width:62,height:90),
                             const SizedBox(width:7),
-                            CardWidget(card:const PlayingCard(Suit.spades,12),faceDown:true,themeOverride:theme,width:54,height:78),
+                            CardWidget(card:const PlayingCard(Suit.spades,12),faceDown:true,themeOverride:theme,width:62,height:90),
                           ]))),
                           const SizedBox(height:8),
                           Text(name,maxLines:2,softWrap:true,overflow:TextOverflow.visible,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:15,height:1.15)),

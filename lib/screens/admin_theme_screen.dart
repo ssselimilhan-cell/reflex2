@@ -13,23 +13,23 @@ class AdminThemeScreen extends StatefulWidget {
 
 class _AdminThemeScreenState extends State<AdminThemeScreen> {
   static const _themes = <int, String>{
-    3: 'Osmanlı', 4: 'Firavun', 5: 'Roma', 10: 'Hindistan',
-    11: 'Almanya', 12: 'Fransa', 13: 'Japonya', 14: 'Pers', 15: 'Rusya',
+    3: 'Osmanlı', 4: 'Firavun', 5: 'Roma', 10: 'Hint',
+    11: 'Alman', 12: 'Fransız', 13: 'Japon', 14: 'Pers', 15: 'Rus',
   };
   static const _prices = <int, int>{
     3: 250, 4: 200, 5: 100, 10: 150,
     11: 100, 12: 100, 13: 250, 14: 200, 15: 150,
   };
   static const _descriptions = <int, String>{
-    3: 'Gece laciverti, altın tezhip, hilal ve sekiz kollu çini rozetleriyle saray ihtişamı.',
-    4: 'Nil turkuazı, güneş diski ve piramit çizgileriyle çölün görkemli altın çağı.',
-    5: 'Mermer beyazı, imparatorluk kızılı ve görkemli sütunlarla Roma arenalarının asaleti.',
-    10: 'Safran, yakut ve zümrüt tonlarında lotuslar ve katmanlı mandala geometrisi.',
-    11: 'Kömür grisi, eski altın, Gotik kemerler ve vitraydan ilham alan keskin çizgiler.',
-    12: 'Mücevher moru, gül kurusu ve fleur-de-lis motifleriyle zarif Fransız saray stili.',
-    13: 'Gece kirazı, ipek pembesi, torii kapısı ve sakura çiçekleriyle Japon dinginliği.',
-    14: 'Derin turkuaz, lapis mavisi ve iç içe geçen Pers yıldız geometrisi.',
-    15: 'Gece mavisi, buz mavisi ve renkli kubbe siluetleriyle Rus mimari ihtişamı.',
+    3: 'İznik çinileri, lale ve karanfil motifleri, tuğra kıvrımları, hilal ve altın tezhip bezemeleri.',
+    4: 'Kanatlı güneş, ankh, firavun maskesi, lapis lazuli ve altın hiyeroglif bordürleri.',
+    5: 'Defne çelengi, mermer sütunlar, Roma kartalı ve imparatorluk madalyonları.',
+    10: 'Tavus kuşu tüyleri, lotus, mücevher işlemeli Babür kemerleri ve katmanlı mandala bezemeleri.',
+    11: 'Kara Orman meşesi, Gotik katedral pencereleri, kartal arması ve dövme demir işçiliği.',
+    12: 'Fleur-de-lis, kraliyet tacı, Versailles süslemeleri ve altın varaklı rokoko ayrıntıları.',
+    13: 'Samuray zırhı silueti, kırmızı torii, sakura dalları, seigaiha dalgaları ve altın kintsugi çizgileri.',
+    14: 'Şahname minyatürlerinden ilham alan simurg, aslan-güneş rozeti, firuze çiniler ve ince halı bordürleri.',
+    15: 'Soğan kubbeli katedraller, mine işi renkler, Fabergé esintili mücevher bezemeleri ve kartal silueti.',
   };
 
   final _db = FirebaseFirestore.instance;
@@ -98,12 +98,12 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
         CardFaceTheme.chineseZodiac => 'Eski Çin teması',
         CardFaceTheme.matryoshka => 'Eski Matruşka teması',
         CardFaceTheme.soviet => 'Eski Sovyet teması',
-        CardFaceTheme.india => 'Hindistan motifleri',
-        CardFaceTheme.germany => 'Almanya motifleri',
-        CardFaceTheme.france => 'Fransa motifleri',
-        CardFaceTheme.japan => 'Japonya motifleri',
+        CardFaceTheme.india => 'Hint kültürü',
+        CardFaceTheme.germany => 'Alman kültürü',
+        CardFaceTheme.france => 'Fransız kültürü',
+        CardFaceTheme.japan => 'Japon kültürü',
         CardFaceTheme.persia => 'Pers motifleri',
-        CardFaceTheme.russia => 'Rusya motifleri',
+        CardFaceTheme.russia => 'Rus kültürü',
       };
     }
     return 'Görsel şablon';

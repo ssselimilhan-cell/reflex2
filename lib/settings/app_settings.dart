@@ -33,7 +33,7 @@ class AppSettings extends ChangeNotifier {
 
   double cardScale = 1.5; // 0.7 - 2.2 (varsayılan %150)
   double fontScale = 1.0; // 0.8 - 1.6
-  Color themeColor = const Color(0xFF101827);
+  Color themeColor = const Color(0xFFFF5A1F);
   Color cardBackColor = const Color(0xFF1E4D8C);
   double animationSpeed = 1.0; // 0.5 hızlı, 1.0 normal, 1.6 yavaş
   bool highContrast = true; // varsayılan açık
@@ -56,7 +56,8 @@ class AppSettings extends ChangeNotifier {
   bool onboardingDone = false;
 
   static const List<Color> presetColors = [
-    Color(0xFF101827), // modern koyu mavi (varsayılan)
+    Color(0xFFFF5A1F), // canlı STRES turuncusu
+    Color(0xFF101827), // modern koyu mavi
     Color(0xFF1E3A5F), // rekabetçi mavi
     Color(0xFF0B6E4F), // yeşil
     Color(0xFF4A148C), // mor
@@ -83,7 +84,10 @@ class AppSettings extends ChangeNotifier {
       animationSpeed = prefs.getDouble('animationSpeed') ?? 1.0;
       highContrast = prefs.getBool('highContrast') ?? true;
       final colorValue = prefs.getInt('themeColor');
-      if (colorValue != null) themeColor = Color(colorValue);
+      if (colorValue != null) {
+        final savedTheme = Color(colorValue);
+        themeColor = colorValue == 0xFF101827 ? const Color(0xFFFF5A1F) : savedTheme;
+      }
       final backValue = prefs.getInt('cardBackColor');
       if (backValue != null) cardBackColor = Color(backValue);
       final lang = prefs.getString('language');
