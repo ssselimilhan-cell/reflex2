@@ -85,6 +85,12 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     await batch.commit();
   }
 
+  String _displayThemeName(String value) => switch (value) {
+    'Almanya' => 'Alman', 'Fransa' => 'Fransız', 'Rusya' => 'Rus',
+    'Hindistan' => 'Hint', 'Japonya' => 'Japon', 'Firavun' => 'Mısır',
+    _ => value,
+  };
+
   String _templateName(int index) {
     if (index >= 0 && index < CardFaceTheme.values.length) {
       return switch (CardFaceTheme.values[index]) {
@@ -164,7 +170,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
 
   Future<void> _edit(DocumentSnapshot<Map<String, dynamic>> doc) async {
     final data = doc.data() ?? {};
-    final name = TextEditingController(text: data['name'] as String? ?? '');
+    final name = TextEditingController(text: _displayThemeName(data['name'] as String? ?? ''));
     final description = TextEditingController(text: data['description'] as String? ?? '');
     final price = TextEditingController(text: data['priceStars']?.toString() ?? '');
     final sortOrder = TextEditingController(text: (data['sortOrder'] as int? ?? 0).toString());
@@ -280,7 +286,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
                 Card(
                   color: const Color(0xFF1B293D),
                   child: ListTile(
-                    title: Text(doc.data()['name'] as String? ?? 'Tema', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    title: Text(_displayThemeName(doc.data()['name'] as String? ?? 'Tema'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                     subtitle: Text(doc.data()['isPublished'] == true ? 'Yayında • ${doc.data()['priceStars']} yıldız' : 'Taslak / yayında değil', style: const TextStyle(color: Colors.white60)),
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                       IconButton(icon: const Icon(Icons.edit_outlined, color: GameUi.gold), onPressed: () => _edit(doc)),
