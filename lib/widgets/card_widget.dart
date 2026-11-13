@@ -419,63 +419,233 @@ class _CivilizationEmblemPainter extends CustomPainter {
       final p = Offset(c.dx + math.cos(a) * r * 0.91, c.dy + math.sin(a) * r * 0.91);
       canvas.drawCircle(p, r * 0.045, solid);
     }
+    // Her koleksiyonun merkezinde tek bir küçük ikon değil, kendi kültür
+    // diline ait katmanlı bir arma bulunur. Siluet + ince işçilik + taş rengi.
     switch (theme) {
       case CardFaceTheme.ottoman:
-        _crescent(canvas, c, r * 0.52, gold);
-        _star(canvas, Offset(c.dx + r * 0.25, c.dy - r * 0.23), r * 0.13, solid);
+        _drawTulip(canvas, c, r, gold, line, fill);
+        _crescent(canvas, Offset(c.dx, c.dy-r*.58), r*.22, gold);
         _arabesque(canvas, c, r, line);
         break;
       case CardFaceTheme.egypt:
-        _sun(canvas, c, r * 0.34, gold);
-        final pyramid = Path()..moveTo(c.dx-r*0.52,c.dy+r*0.38)..lineTo(c.dx,c.dy-r*0.34)..lineTo(c.dx+r*0.52,c.dy+r*0.38)..close();
-        canvas.drawPath(pyramid, fill); canvas.drawPath(pyramid, line);
-        canvas.drawLine(Offset(c.dx,c.dy-r*0.34), Offset(c.dx,c.dy+r*0.38), line);
+        _drawWingedFalcon(canvas, c, r, gold, line, fill);
+        _sun(canvas, Offset(c.dx,c.dy-r*.43), r*.17, gold);
+        _drawAnkh(canvas, Offset(c.dx,c.dy+r*.37), r*.18, solid, line);
         break;
       case CardFaceTheme.rome:
-        canvas.drawArc(Rect.fromCircle(center:c,radius:r*0.48), math.pi, math.pi, false, line);
-        for (var i=-1;i<=1;i++) {
-          final x=c.dx+i*r*0.28;
-          canvas.drawRect(Rect.fromLTWH(x-r*0.075,c.dy-r*0.05,r*0.15,r*0.48), fill);
-          canvas.drawRect(Rect.fromLTWH(x-r*0.075,c.dy-r*0.05,r*0.15,r*0.48), line);
-          canvas.drawLine(Offset(x-r*0.12,c.dy-r*0.08),Offset(x+r*0.12,c.dy-r*0.08),line);
-        }
-        canvas.drawLine(Offset(c.dx-r*0.5,c.dy+r*0.45),Offset(c.dx+r*0.5,c.dy+r*0.45),line);
+        _drawRomanEagle(canvas, c, r, gold, line, fill);
+        _drawLaurel(canvas, c, r*.83, line);
         break;
       case CardFaceTheme.india:
-        _lotus(canvas,c,r*0.58,gold);
-        _dotRing(canvas,c,r*0.62,solid,12);
+        _drawPeacock(canvas, c, r, gold, line, fill);
+        _lotus(canvas, Offset(c.dx,c.dy+r*.43), r*.24, gold);
+        _dotRing(canvas,c,r*.86,solid,16);
         break;
       case CardFaceTheme.germany:
-        final shield=Path()..moveTo(c.dx,c.dy-r*0.48)..lineTo(c.dx+r*0.39,c.dy-r*0.28)..lineTo(c.dx+r*0.31,c.dy+r*0.23)..lineTo(c.dx,c.dy+r*0.48)..lineTo(c.dx-r*0.31,c.dy+r*0.23)..lineTo(c.dx-r*0.39,c.dy-r*0.28)..close();
-        canvas.drawPath(shield,fill); canvas.drawPath(shield,line);
-        canvas.drawLine(Offset(c.dx,c.dy-r*0.35),Offset(c.dx,c.dy+r*0.35),line);
-        canvas.drawLine(Offset(c.dx-r*0.24,c.dy),Offset(c.dx+r*0.24,c.dy),line);
+        _drawImperialEagle(canvas, c, r, gold, line, fill);
+        _drawOakSprig(canvas, Offset(c.dx-r*.48,c.dy+r*.48), r*.28, line);
+        _drawOakSprig(canvas, Offset(c.dx+r*.48,c.dy+r*.48), r*.28, line);
         break;
       case CardFaceTheme.france:
-        _fleur(canvas,c,r*0.58,gold);
+        _drawFrenchCrown(canvas, c, r, gold, line, fill);
+        _fleur(canvas,Offset(c.dx,c.dy+r*.20),r*.37,gold);
         break;
       case CardFaceTheme.japan:
-        final torii=Path()..moveTo(c.dx-r*0.48,c.dy-r*0.18)..lineTo(c.dx+r*0.48,c.dy-r*0.18)..lineTo(c.dx+r*0.38,c.dy-r*0.30)..lineTo(c.dx-r*0.38,c.dy-r*0.30)..close();
-        canvas.drawPath(torii,solid);
-        canvas.drawRect(Rect.fromLTWH(c.dx-r*0.30,c.dy-r*0.18,r*0.10,r*0.64),fill);
-        canvas.drawRect(Rect.fromLTWH(c.dx+r*0.20,c.dy-r*0.18,r*0.10,r*0.64),fill);
-        canvas.drawLine(Offset(c.dx-r*0.42,c.dy+r*0.48),Offset(c.dx+r*0.42,c.dy+r*0.48),line);
-        _sakura(canvas,Offset(c.dx,c.dy-r*0.52),r*0.16,gold);
+        _drawKabuto(canvas, c, r, gold, line, fill);
+        _sakura(canvas,Offset(c.dx-r*.48,c.dy+r*.42),r*.13,gold);
+        _sakura(canvas,Offset(c.dx+r*.48,c.dy+r*.42),r*.13,gold);
         break;
       case CardFaceTheme.persia:
-        _star(canvas,c,r*0.52,solid,8);
-        _dotRing(canvas,c,r*0.58,solid,16);
+        _drawSimurgh(canvas, c, r, gold, line, fill);
+        _star(canvas,Offset(c.dx,c.dy-r*.48),r*.14,solid,8);
+        _dotRing(canvas,c,r*.87,solid,16);
         break;
       case CardFaceTheme.russia:
-        _dome(canvas,c,r,gold,line,fill);
+        _drawImperialDomes(canvas,c,r,gold,line,fill);
+        _drawCrest(canvas,Offset(c.dx,c.dy+r*.28),r*.24,gold,line);
         break;
       default:
-        _star(canvas,c,r*0.4,solid);
+        _star(canvas,c,r*.4,solid);
     }
     // Kart takımına göre küçük, dengeli bir alt işaret.
     final suitGlyph = switch (suit) { Suit.spades => '♠', Suit.hearts => '♥', Suit.diamonds => '♦', Suit.clubs => '♣' };
     final tp=TextPainter(text:TextSpan(text:suitGlyph,style:TextStyle(color:ink.withOpacity(0.72),fontSize:size.shortestSide*0.13,fontWeight:FontWeight.w900)),textDirection:TextDirection.ltr)..layout();
     tp.paint(canvas,Offset(c.dx-tp.width/2,c.dy+r*0.53));
+  }
+
+
+  void _drawTulip(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    final p=Path()..moveTo(c.dx,c.dy+r*.46)
+      ..cubicTo(c.dx-r*.42,c.dy+r*.12,c.dx-r*.27,c.dy-r*.30,c.dx,c.dy-r*.48)
+      ..cubicTo(c.dx+r*.27,c.dy-r*.30,c.dx+r*.42,c.dy+r*.12,c.dx,c.dy+r*.46)..close();
+    canvas.drawPath(p,fill); canvas.drawPath(p,line);
+    canvas.drawLine(Offset(c.dx,c.dy+r*.42),Offset(c.dx,c.dy+r*.82),line);
+    for(final side in [-1,1]) {
+      final leaf=Path()..moveTo(c.dx,c.dy+r*.65)
+        ..quadraticBezierTo(c.dx+side*r*.55,c.dy+r*.38,c.dx+side*r*.48,c.dy+r*.78)
+        ..quadraticBezierTo(c.dx+side*r*.18,c.dy+r*.82,c.dx,c.dy+r*.65);
+      canvas.drawPath(leaf,fill); canvas.drawPath(leaf,line);
+    }
+    canvas.drawLine(Offset(c.dx-r*.18,c.dy-r*.03),Offset(c.dx,c.dy-r*.35),line);
+    canvas.drawLine(Offset(c.dx+r*.18,c.dy-r*.03),Offset(c.dx,c.dy-r*.35),line);
+  }
+
+  void _drawWingedFalcon(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    final body=Path()..moveTo(c.dx,c.dy-r*.36)..quadraticBezierTo(c.dx+r*.20,c.dy-r*.08,c.dx+r*.10,c.dy+r*.42)
+      ..lineTo(c.dx,c.dy+r*.58)..lineTo(c.dx-r*.10,c.dy+r*.42)..quadraticBezierTo(c.dx-r*.20,c.dy-r*.08,c.dx,c.dy-r*.36)..close();
+    canvas.drawPath(body,fill); canvas.drawPath(body,line);
+    for(final side in [-1,1]) {
+      final wing=Path()..moveTo(c.dx+side*r*.08,c.dy-r*.12)
+        ..cubicTo(c.dx+side*r*.35,c.dy-r*.56,c.dx+side*r*.72,c.dy-r*.44,c.dx+side*r*.82,c.dy-r*.12)
+        ..cubicTo(c.dx+side*r*.54,c.dy-r*.20,c.dx+side*r*.34,c.dy+r*.02,c.dx+side*r*.12,c.dy+r*.20)..close();
+      canvas.drawPath(wing,fill); canvas.drawPath(wing,line);
+      for(var i=0;i<3;i++) canvas.drawLine(Offset(c.dx+side*r*(.22+i*.15),c.dy-r*.05),Offset(c.dx+side*r*(.55+i*.10),c.dy-r*(.25-i*.08)),line);
+    }
+    final head=Offset(c.dx,c.dy-r*.34);
+    canvas.drawCircle(head,r*.13,Paint()..color=gold);
+    final beak=Path()..moveTo(c.dx+r*.10,c.dy-r*.34)..lineTo(c.dx+r*.30,c.dy-r*.27)..lineTo(c.dx+r*.10,c.dy-r*.22)..close();
+    canvas.drawPath(beak,Paint()..color=gold);
+    canvas.drawLine(Offset(c.dx-r*.10,c.dy+r*.42),Offset(c.dx-r*.23,c.dy+r*.60),line);
+    canvas.drawLine(Offset(c.dx+r*.10,c.dy+r*.42),Offset(c.dx+r*.23,c.dy+r*.60),line);
+  }
+
+  void _drawRomanEagle(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    _drawImperialEagle(canvas,c,r,gold,line,fill);
+    canvas.drawCircle(Offset(c.dx,c.dy-r*.18),r*.10,Paint()..color=gold);
+    final tail=Path()..moveTo(c.dx-r*.10,c.dy+r*.30)..lineTo(c.dx,c.dy+r*.66)..lineTo(c.dx+r*.10,c.dy+r*.30)..close();
+    canvas.drawPath(tail,fill); canvas.drawPath(tail,line);
+  }
+
+  void _drawImperialEagle(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    final body=Path()..moveTo(c.dx,c.dy-r*.28)..quadraticBezierTo(c.dx+r*.18,c.dy,c.dx+r*.08,c.dy+r*.38)
+      ..lineTo(c.dx,c.dy+r*.55)..lineTo(c.dx-r*.08,c.dy+r*.38)..quadraticBezierTo(c.dx-r*.18,c.dy,c.dx,c.dy-r*.28)..close();
+    canvas.drawPath(body,fill); canvas.drawPath(body,line);
+    for(final side in [-1,1]) {
+      final wing=Path()..moveTo(c.dx+side*r*.07,c.dy-r*.12)
+        ..cubicTo(c.dx+side*r*.30,c.dy-r*.70,c.dx+side*r*.68,c.dy-r*.58,c.dx+side*r*.84,c.dy-r*.16)
+        ..quadraticBezierTo(c.dx+side*r*.50,c.dy-r*.10,c.dx+side*r*.12,c.dy+r*.12)..close();
+      canvas.drawPath(wing,fill); canvas.drawPath(wing,line);
+      for(var i=0;i<4;i++) {
+        final x=c.dx+side*r*(.20+i*.12);
+        canvas.drawLine(Offset(x,c.dy-r*.08),Offset(x+side*r*.24,c.dy-r*(.30-i*.06)),line);
+      }
+    }
+    canvas.drawCircle(Offset(c.dx,c.dy-r*.32),r*.12,Paint()..color=gold);
+    final crown=Path()..moveTo(c.dx-r*.16,c.dy-r*.42)..lineTo(c.dx-r*.12,c.dy-r*.58)
+      ..lineTo(c.dx,c.dy-r*.47)..lineTo(c.dx+r*.12,c.dy-r*.58)
+      ..lineTo(c.dx+r*.16,c.dy-r*.42)..close();
+    canvas.drawPath(crown,Paint()..color=gold);
+    canvas.drawLine(Offset(c.dx-r*.10,c.dy+r*.36),Offset(c.dx-r*.28,c.dy+r*.53),line);
+    canvas.drawLine(Offset(c.dx+r*.10,c.dy+r*.36),Offset(c.dx+r*.28,c.dy+r*.53),line);
+  }
+
+  void _drawPeacock(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    for(var i=0;i<7;i++) {
+      final a=math.pi+(i*math.pi/6);
+      final end=Offset(c.dx+math.cos(a)*r*.72,c.dy+math.sin(a)*r*.72);
+      final path=Path()..moveTo(c.dx,c.dy+r*.12)
+        ..quadraticBezierTo(c.dx+math.cos(a)*r*.62,c.dy+math.sin(a)*r*.62-r*.16,end.dx,end.dy);
+      canvas.drawPath(path,line);
+      canvas.drawCircle(end,r*.105,fill);
+      canvas.drawCircle(end,r*.045,Paint()..color=gold);
+    }
+    final body=Path()..moveTo(c.dx,c.dy-r*.02)..cubicTo(c.dx-r*.22,c.dy+r*.20,c.dx-r*.16,c.dy+r*.52,c.dx,c.dy+r*.63)
+      ..cubicTo(c.dx+r*.16,c.dy+r*.52,c.dx+r*.22,c.dy+r*.20,c.dx,c.dy-r*.02)..close();
+    canvas.drawPath(body,fill); canvas.drawPath(body,line);
+    canvas.drawCircle(Offset(c.dx,c.dy-r*.12),r*.11,Paint()..color=gold);
+    canvas.drawLine(Offset(c.dx,c.dy-r*.22),Offset(c.dx-r*.05,c.dy-r*.36),line);
+    canvas.drawCircle(Offset(c.dx-r*.05,c.dy-r*.37),r*.035,Paint()..color=gold);
+  }
+
+  void _drawFrenchCrown(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    final base=Rect.fromCenter(center:Offset(c.dx,c.dy+r*.12),width:r*1.12,height:r*.22);
+    canvas.drawRRect(RRect.fromRectAndRadius(base,Radius.circular(r*.05)),fill);
+    canvas.drawRRect(RRect.fromRectAndRadius(base,Radius.circular(r*.05)),line);
+    final crown=Path()..moveTo(c.dx-r*.54,c.dy+r*.02)..lineTo(c.dx-r*.42,c.dy-r*.45)
+      ..lineTo(c.dx-r*.14,c.dy-r*.12)..lineTo(c.dx,c.dy-r*.58)
+      ..lineTo(c.dx+r*.14,c.dy-r*.12)..lineTo(c.dx+r*.42,c.dy-r*.45)
+      ..lineTo(c.dx+r*.54,c.dy+r*.02)..close();
+    canvas.drawPath(crown,fill); canvas.drawPath(crown,line);
+    for(final x in [-.42,0.0,.42]) canvas.drawCircle(Offset(c.dx+r*x,c.dy-r*(x==0?.58:.45)),r*.055,Paint()..color=gold);
+    canvas.drawCircle(Offset(c.dx,c.dy-r*.03),r*.10,Paint()..color=gold);
+  }
+
+  void _drawKabuto(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    final helmet=Path()..moveTo(c.dx-r*.55,c.dy+r*.16)..quadraticBezierTo(c.dx-r*.50,c.dy-r*.48,c.dx,c.dy-r*.48)
+      ..quadraticBezierTo(c.dx+r*.50,c.dy-r*.48,c.dx+r*.55,c.dy+r*.16)
+      ..lineTo(c.dx+r*.34,c.dy+r*.06)..lineTo(c.dx-r*.34,c.dy+r*.06)..close();
+    canvas.drawPath(helmet,fill); canvas.drawPath(helmet,line);
+    final crest=Path()..moveTo(c.dx,c.dy-r*.45)..cubicTo(c.dx-r*.08,c.dy-r*.78,c.dx-r*.44,c.dy-r*.74,c.dx-r*.38,c.dy-r*.52)
+      ..cubicTo(c.dx-r*.22,c.dy-r*.60,c.dx-r*.12,c.dy-r*.52,c.dx,c.dy-r*.45)
+      ..cubicTo(c.dx+r*.12,c.dy-r*.52,c.dx+r*.22,c.dy-r*.60,c.dx+r*.38,c.dy-r*.52)
+      ..cubicTo(c.dx+r*.44,c.dy-r*.74,c.dx+r*.08,c.dy-r*.78,c.dx,c.dy-r*.45)..close();
+    canvas.drawPath(crest,fill); canvas.drawPath(crest,line);
+    canvas.drawLine(Offset(c.dx-r*.40,c.dy+r*.20),Offset(c.dx+r*.40,c.dy+r*.20),line);
+    for(var i=-2;i<=2;i++) canvas.drawLine(Offset(c.dx+i*r*.14,c.dy+r*.10),Offset(c.dx+i*r*.14,c.dy+r*.42),line);
+  }
+
+  void _drawSimurgh(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    for(final side in [-1,1]) {
+      final wing=Path()..moveTo(c.dx,c.dy-r*.10)
+        ..cubicTo(c.dx+side*r*.22,c.dy-r*.72,c.dx+side*r*.70,c.dy-r*.66,c.dx+side*r*.84,c.dy-r*.18)
+        ..cubicTo(c.dx+side*r*.56,c.dy-r*.28,c.dx+side*r*.36,c.dy+r*.02,c.dx+side*r*.10,c.dy+r*.20)..close();
+      canvas.drawPath(wing,fill); canvas.drawPath(wing,line);
+      for(var i=0;i<4;i++) canvas.drawLine(Offset(c.dx+side*r*(.12+i*.10),c.dy-r*.08),Offset(c.dx+side*r*(.42+i*.10),c.dy-r*(.34-i*.06)),line);
+    }
+    final body=Path()..moveTo(c.dx,c.dy-r*.22)..quadraticBezierTo(c.dx+r*.22,c.dy+r*.14,c.dx,c.dy+r*.58)
+      ..quadraticBezierTo(c.dx-r*.22,c.dy+r*.14,c.dx,c.dy-r*.22)..close();
+    canvas.drawPath(body,fill); canvas.drawPath(body,line);
+    canvas.drawCircle(Offset(c.dx,c.dy-r*.30),r*.10,Paint()..color=gold);
+    final plume=Path()..moveTo(c.dx,c.dy-r*.36)..quadraticBezierTo(c.dx+r*.24,c.dy-r*.65,c.dx+r*.38,c.dy-r*.48);
+    canvas.drawPath(plume,line);
+  }
+
+  void _drawImperialDomes(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
+    for(var i=-1;i<=1;i++) {
+      final x=c.dx+i*r*.42; final w=r*.42; final base=c.dy+r*.32;
+      final dome=Path()..moveTo(x-w/2,base)..quadraticBezierTo(x-w/2,c.dy-r*.36,x, c.dy-r*.48)
+        ..quadraticBezierTo(x+w/2,c.dy-r*.36,x+w/2,base)..close();
+      canvas.drawPath(dome,fill); canvas.drawPath(dome,line);
+      canvas.drawRect(Rect.fromLTWH(x-w*.34,base,w*.68,r*.36),fill);
+      canvas.drawRect(Rect.fromLTWH(x-w*.34,base,w*.68,r*.36),line);
+      canvas.drawLine(Offset(x,c.dy-r*.48),Offset(x,c.dy-r*.65),line);
+      canvas.drawCircle(Offset(x,c.dy-r*.68),r*.035,Paint()..color=gold);
+    }
+    canvas.drawLine(Offset(c.dx-r*.78,c.dy+r*.70),Offset(c.dx+r*.78,c.dy+r*.70),line);
+  }
+
+  void _drawCrest(Canvas canvas,Offset c,double r,Color gold,Paint line) {
+    final shield=Path()..moveTo(c.dx,c.dy-r*.48)..lineTo(c.dx+r*.38,c.dy-r*.25)
+      ..lineTo(c.dx+r*.30,c.dy+r*.22)..lineTo(c.dx,c.dy+r*.48)
+      ..lineTo(c.dx-r*.30,c.dy+r*.22)..lineTo(c.dx-r*.38,c.dy-r*.25)..close();
+    canvas.drawPath(shield,Paint()..color=gold.withOpacity(.18));
+    canvas.drawPath(shield,line);
+    _star(canvas,c,r*.18,Paint()..color=gold,8);
+  }
+
+  void _drawAnkh(Canvas canvas,Offset c,double r,Paint fill,Paint line) {
+    canvas.drawOval(Rect.fromCenter(center:Offset(c.dx,c.dy-r*.18),width:r*.48,height:r*.60),line);
+    canvas.drawLine(Offset(c.dx,c.dy+r*.08),Offset(c.dx,c.dy+r*.60),line);
+    canvas.drawLine(Offset(c.dx-r*.26,c.dy+r*.28),Offset(c.dx+r*.26,c.dy+r*.28),line);
+  }
+
+  void _drawLaurel(Canvas canvas,Offset c,double r,Paint line) {
+    for(final side in [-1,1]) {
+      for(var i=0;i<5;i++) {
+        final x=c.dx+side*r*(.22+i*.10);
+        final y=c.dy+r*(.42-i*.19);
+        canvas.drawOval(Rect.fromCenter(center:Offset(x,y),width:r*.18,height:r*.32),line);
+      }
+    }
+  }
+
+  void _drawOakSprig(Canvas canvas,Offset c,double r,Paint line) {
+    canvas.drawLine(Offset(c.dx-r*.30,c.dy+r*.28),Offset(c.dx+r*.30,c.dy-r*.28),line);
+    for(var i=0;i<3;i++) {
+      final x=c.dx-r*.18+i*r*.18; final y=c.dy+r*.12-i*r*.18;
+      canvas.drawOval(Rect.fromCenter(center:Offset(x-r*.10,y),width:r*.22,height:r*.14),line);
+      canvas.drawOval(Rect.fromCenter(center:Offset(x+r*.10,y-r*.10),width:r*.22,height:r*.14),line);
+    }
   }
 
   Color _palette() => switch(theme) {
