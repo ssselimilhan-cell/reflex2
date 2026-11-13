@@ -556,8 +556,8 @@ class _CardBackPatternPainter extends CustomPainter {
     final r = short * 0.31;
 
     // Çift çerçeve ve köşe rozetleri: küçük kartta dahi koleksiyon hissi.
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size.deflate(short * 0.035), Radius.circular(short * 0.045)), thin);
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size.deflate(short * 0.085), Radius.circular(short * 0.035)), bold);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(short * 0.035, short * 0.035, size.width - short * 0.07, size.height - short * 0.07), Radius.circular(short * 0.045)), thin);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(short * 0.085, short * 0.085, size.width - short * 0.17, size.height - short * 0.17), Radius.circular(short * 0.035)), bold);
     for (final x in [size.width * 0.16, size.width * 0.84]) {
       for (final y in [size.height * 0.12, size.height * 0.88]) {
         canvas.drawCircle(Offset(x, y), short * 0.025, bold);
