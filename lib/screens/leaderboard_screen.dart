@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../online/firestore_game_repository.dart';
 import '../settings/app_settings.dart';
 import '../settings/strings.dart';
+import '../settings/user_profile.dart';
 import '../widgets/profile_avatar.dart';
 
 enum _Period { daily, weekly, monthly, yearly }
@@ -136,10 +137,25 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   });
           entry['count'] = (entry['count'] as int) + 1;
         }
+        // Stable tie-breakers keep equal-win rankings consistent.
         final sorted = agg.entries.toList()
-          ..sort((a, b) =>
-              (b.value['count'] as int).compareTo(a.value['count'] as int));
+          ..sort((a, b) {
+            final winsCompare = (b.value['count'] as int)
+                .compareTo(a.value['count'] as int);
+            if (winsCompare != 0) return winsCompare;
+            final nameA = (a.value['displayName'] as String? ?? '')
+                .trim().toLowerCase();
+            final nameB = (b.value['displayName'] as String? ?? '')
+                .trim().toLowerCase();
+            final nameCompare = nameA.compareTo(nameB);
+            return nameCompare != 0 ? nameCompare : a.key.compareTo(b.key);
+          });
         final top = sorted.take(30).toList();
+        final myDeviceId = UserProfile.instance.deviceId;
+        final myIndex = myDeviceId == null
+            ? -1
+            : sorted.indexWhere((entry) => entry.key == myDeviceId);
+        final myEntry = myIndex >= 0 ? sorted[myIndex] : null;
 
         if (top.isEmpty) {
           return Center(
@@ -191,6 +207,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ),
               ]),
             ),
+            if (myEntry != null) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(4, 18, 4, 9),
+                child: Row(children: [
+                  Icon(Icons.person_pin_circle_rounded,
+                      color: Color(0xFFFFD36A), size: 19),
+                  SizedBox(width: 8),
+                  Text('SENİN SIRALAMAN', style: TextStyle(
+                    color: Colors.white, fontSize: 14,
+                    fontWeight: FontWeight.w900, letterSpacing: .8)),
+                ]),
+              ),
+              _LeaderboardRow(
+                rank: myIndex + 1,
+                name: myEntry.value['displayName'] as String? ?? t('guest_label'),
+                wins: myEntry.value['count'] as int,
+                photoBase64: myEntry.value['photoBase64'] as String?,
+                iconIndex: myEntry.value['avatarIconIndex'] as int?,
+                colorValue: myEntry.value['avatarColorValue'] as int?,
+                isCurrentPlayer: true,
+              ),
+            ],
             const Padding(
               padding: EdgeInsets.fromLTRB(4, 18, 4, 10),
               child: Row(children: [
@@ -275,6 +313,7 @@ class _LeaderboardRow extends StatelessWidget {
   final String? photoBase64;
   final int? iconIndex;
   final int? colorValue;
+  final bool isCurrentPlayer;
 
   const _LeaderboardRow({
     required this.rank,
@@ -283,6 +322,7 @@ class _LeaderboardRow extends StatelessWidget {
     this.photoBase64,
     this.iconIndex,
     this.colorValue,
+    this.isCurrentPlayer = false,
   });
 
   String get _rankBadge {
@@ -305,9 +345,16 @@ class _LeaderboardRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFF263B55).withOpacity(.82),
+        color: isCurrentPlayer
+            ? const Color(0xFF70431F)
+            : const Color(0xFF263B55).withOpacity(.82),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(.09)),
+        border: Border.all(
+          color: isCurrentPlayer
+              ? const Color(0xFFFFD36A)
+              : Colors.white.withOpacity(.09),
+          width: isCurrentPlayer ? 1.6 : 1,
+        ),
         boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 3))],
       ),
       child: Row(
@@ -338,9 +385,16 @@ class _LeaderboardRow extends StatelessWidget {
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ),
+          if (isCurrentPlayer) ...[
+            const SizedBox(width: 6),
+            const Text('SEN', style: TextStyle(
+              color: Color(0xFFFFE4A3), fontSize: 10,
+              fontWeight: FontWeight.w900)),
+            const SizedBox(width: 8),
+          ],
           Text('$wins',
               style: const TextStyle(
-                  color: const Color(0xFFFFD27A),
+                  color: Color(0xFFFFD27A),
                   fontWeight: FontWeight.w900,
                   fontSize: 16)),
         ],
