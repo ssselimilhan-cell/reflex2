@@ -66,3 +66,5 @@ flutter_launcher_icons:
 # [build-preview-apk] Channel rules recovery and readability pass
 
 # [build-preview-apk] Build verified channel and readability fixes
+
+# [build-preview-apk] Expired waiting-room join guard and deadline tests
