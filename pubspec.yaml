@@ -49,4 +49,4 @@ flutter_launcher_icons:
   adaptive_icon_background: "#7B1E3A"
   adaptive_icon_foreground: "assets/icon/icon_foreground.png"
 # [build-preview-apk] Verified test build checkpoint
-# [build-preview-apk] Build current premium theme preview for device testing
+# [build-preview-apk] Build preview with restored theme store and orange page backgrounds
