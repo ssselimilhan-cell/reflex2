@@ -154,6 +154,22 @@ test('private channel requires a valid invite code before membership and is hidd
   await assertSucceeds(getDocs(collection(playerDb, 'channels/private-one/members')));
 });
 
+test('owner may close a legacy channel but cannot reopen it', async () => {
+  await createChannel({ id: 'legacy-close', ownerUid: 'owner-a', visibility: 'public' });
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const channelRef = doc(ownerDb, 'channels/legacy-close');
+
+  await assertSucceeds(updateDoc(channelRef, {
+    status: 'closed',
+    closedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(channelRef, {
+    status: 'open',
+    updatedAt: serverTimestamp(),
+  }));
+});
+
 test('only the channel owner can delete a channel and its private records', async () => {
   await createChannel({
     id: 'delete-channel',

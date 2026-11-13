@@ -98,11 +98,13 @@ service cloud.firestore {
         && getAfter(channelMemberPath(channelId, request.auth.uid)).data.role == 'owner';
 
       allow update: if request.auth != null && (
-        // Owner may edit channel presentation only; lifecycle changes use
-        // the permanent deletion flow instead of archive/reopen states.
+        // Owner may edit channel metadata. Legacy app versions may still
+        // mark a channel closed, but reopening archived channels is forbidden.
         (resource.data.ownerDeviceId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'description', 'ownerDisplayName', 'updatedAt']))
+            .hasOnly(['name', 'description', 'status', 'ownerDisplayName', 'updatedAt', 'closedAt'])
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+            || request.resource.data.status == 'closed'))
         ||
         // New member joins: their membership is created in the same batch.
         (existsAfter(channelMemberPath(channelId, request.auth.uid))
