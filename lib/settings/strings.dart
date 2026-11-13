@@ -9,12 +9,12 @@ const Map<String, Map<String, String>> _strings = {
   'star_shop_buy': {'tr': 'YILDIZLA AÇ', 'en': 'UNLOCK WITH STARS', 'ru': 'ОТКРЫТЬ ЗА ЗВЁЗДЫ', 'zh': '使用星星解锁'},
   'star_shop_not_enough': {'tr': 'Bu ödül için yeterli yıldızın yok.', 'en': 'You need more stars for this reward.', 'ru': 'Недостаточно звёзд для этой награды.', 'zh': '星星不足，无法兑换此奖励。'},
   'star_shop_free_note': {'tr': 'Oyunlar ücretsiz ve sınırsız. Yıldızlar yalnızca kozmetik ödüller içindir.', 'en': 'Games are always free. Stars are only for cosmetic rewards.', 'ru': 'Игры всегда бесплатны. Звёзды нужны только для косметических наград.', 'zh': '游戏始终免费。星星仅用于外观奖励。'},
-  'app_title': {'tr': 'STRES', 'en': 'STRES', 'ru': 'STRES', 'zh': 'STRES'},
+  'app_title': {'tr': 'STRES-REFLEX', 'en': 'STRESS-REFLEX', 'ru': 'STRES-REFLEX', 'zh': 'STRES-REFLEX'},
   'app_subtitle': {
-    'tr': 'Refleks Kart Oyunu',
-    'en': 'Reflex Card Game',
-    'ru': 'Карточная игра на реакцию',
-    'zh': '反应力纸牌游戏'
+    'tr': 'Kart Oyunu',
+    'en': 'Card Game',
+    'ru': 'Карточная игра',
+    'zh': '纸牌游戏'
   },
   'menu_local': {
     'tr': '2 Kişilik (Aynı Cihaz)',
