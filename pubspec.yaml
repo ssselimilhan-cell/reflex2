@@ -76,3 +76,5 @@ flutter_launcher_icons:
 # [build-preview-apk] Verify word-safe multilingual labels and full UI regression pass
 
 # [build-preview-apk] Build channel deletion fix preview
+
+# [build-preview-apk] Verify permanent channel deletion flow
