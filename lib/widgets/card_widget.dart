@@ -3,6 +3,36 @@ import 'package:flutter/material.dart';
 import '../models/playing_card.dart';
 import '../settings/app_settings.dart';
 
+/// Her kart koleksiyonunun kendi renk kimliği. Klasik destede oyuncunun seçtiği
+/// arka plan rengi korunur; koleksiyon desteleri kendi sanat yönetimini kullanır.
+class CardThemePalette {
+  static Color primary(CardFaceTheme theme) => switch (theme) {
+    CardFaceTheme.ottoman => const Color(0xFFB58A35),
+    CardFaceTheme.egypt => const Color(0xFFD7A83E),
+    CardFaceTheme.rome => const Color(0xFFC28A55),
+    CardFaceTheme.india => const Color(0xFFE19A45),
+    CardFaceTheme.germany => const Color(0xFFC6A45A),
+    CardFaceTheme.france => const Color(0xFFD28BA7),
+    CardFaceTheme.japan => const Color(0xFFE58B91),
+    CardFaceTheme.persia => const Color(0xFF55B8AD),
+    CardFaceTheme.russia => const Color(0xFF80A9D5),
+    _ => const Color(0xFFD5B46A),
+  };
+
+  static Color background(CardFaceTheme theme) => switch (theme) {
+    CardFaceTheme.ottoman => const Color(0xFF172B35),
+    CardFaceTheme.egypt => const Color(0xFF183A49),
+    CardFaceTheme.rome => const Color(0xFF3A2020),
+    CardFaceTheme.india => const Color(0xFF45251F),
+    CardFaceTheme.germany => const Color(0xFF242B36),
+    CardFaceTheme.france => const Color(0xFF34243C),
+    CardFaceTheme.japan => const Color(0xFF3B202B),
+    CardFaceTheme.persia => const Color(0xFF123C3B),
+    CardFaceTheme.russia => const Color(0xFF20324D),
+    _ => const Color(0xFF1E4D8C),
+  };
+}
+
 class CardWidget extends StatefulWidget {
   final PlayingCard? card;
   final bool faceDown;
@@ -161,7 +191,13 @@ class _CardWidgetState extends State<CardWidget>
   }
 
   Widget _buildBack() {
-    final base = AppSettings.instance.cardBackColor;
+    final theme = widget.themeOverride ?? AppSettings.instance.cardTheme;
+    final base = theme == CardFaceTheme.classic
+        ? AppSettings.instance.cardBackColor
+        : CardThemePalette.background(theme);
+    final accent = theme == CardFaceTheme.classic
+        ? const Color(0xFFE6C77A)
+        : CardThemePalette.primary(theme);
     final emblemSize = math.min(widget.width, widget.height) * 0.30;
     return Container(
       decoration: BoxDecoration(
@@ -175,7 +211,7 @@ class _CardWidgetState extends State<CardWidget>
           ],
         ),
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: accent.withOpacity(0.95), width: 1.5),
       ),
       child: Padding(
         padding: EdgeInsets.all(widget.width * 0.055),
@@ -189,21 +225,21 @@ class _CardWidgetState extends State<CardWidget>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CustomPaint(painter: _CardBackPatternPainter(theme: AppSettings.instance.cardTheme)),
+                CustomPaint(painter: _CardBackPatternPainter(theme: theme)),
                 Center(
                   child: Container(
                     width: emblemSize * 1.65,
                     height: emblemSize * 1.65,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.10),
-                      border: Border.all(color: Colors.white.withOpacity(0.58), width: 1.1),
+                      color: accent.withOpacity(0.14),
+                      border: Border.all(color: accent.withOpacity(0.88), width: 1.35),
                       boxShadow: [
                         BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 8),
                       ],
                     ),
                     child: Icon(Icons.auto_awesome_rounded,
-                        color: Colors.white.withOpacity(0.92), size: emblemSize),
+                        color: accent.withOpacity(0.98), size: emblemSize),
                   ),
                 ),
               ],
@@ -511,64 +547,138 @@ class _CardBackPatternPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final line = Paint()
-      ..color = Colors.white.withOpacity(0.13)
-      ..strokeWidth = 0.65
-      ..style = PaintingStyle.stroke;
-    final step = math.max(8.0, size.shortestSide * 0.22);
-    for (double x = -size.height; x < size.width + size.height; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
-      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
-    }
-    final accent = Paint()
-      ..color = Colors.white.withOpacity(0.28)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.8, size.shortestSide * 0.012);
+    final accent = CardThemePalette.primary(theme);
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.shortestSide * 0.23;
-    canvas.drawRRect(RRect.fromRectAndRadius(
-      Rect.fromCenter(center: center, width: radius * 2.5, height: radius * 2.5),
-      Radius.circular(radius * 0.18)), accent);
-    canvas.drawCircle(center, radius, accent);
-    // Her kültür için kart arkasında farklı bir geometrik imza.
+    final short = size.shortestSide;
+    final thin = Paint()..color = accent.withOpacity(0.30)..style = PaintingStyle.stroke..strokeWidth = math.max(0.65, short * 0.009);
+    final bold = Paint()..color = accent.withOpacity(0.72)..style = PaintingStyle.stroke..strokeWidth = math.max(1.0, short * 0.018);
+    final soft = Paint()..color = accent.withOpacity(0.12)..style = PaintingStyle.fill;
+    final r = short * 0.31;
+
+    // Çift çerçeve ve köşe rozetleri: küçük kartta dahi koleksiyon hissi.
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size.deflate(short * 0.035), Radius.circular(short * 0.045)), thin);
+    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size.deflate(short * 0.085), Radius.circular(short * 0.035)), bold);
+    for (final x in [size.width * 0.16, size.width * 0.84]) {
+      for (final y in [size.height * 0.12, size.height * 0.88]) {
+        canvas.drawCircle(Offset(x, y), short * 0.025, bold);
+      }
+    }
+
     switch (theme) {
       case CardFaceTheme.ottoman:
-      case CardFaceTheme.persia:
-      case CardFaceTheme.india:
-        for (var i = 0; i < 8; i++) {
-          final a = i * math.pi / 4;
-          final p = Offset(center.dx + math.cos(a) * radius, center.dy + math.sin(a) * radius);
-          canvas.drawCircle(p, radius * 0.22, accent);
+        _rosette(canvas, center, r, 8, bold, thin);
+        for (var i = 0; i < 4; i++) {
+          final a = i * math.pi / 2;
+          final p = Offset(center.dx + math.cos(a) * r * 1.42, center.dy + math.sin(a) * r * 1.42);
+          canvas.drawCircle(p, r * 0.22, thin);
+          canvas.drawCircle(p, r * 0.08, soft);
         }
         break;
       case CardFaceTheme.egypt:
-        final pyramid = Path()..moveTo(center.dx-radius,center.dy+radius*0.72)..lineTo(center.dx,center.dy-radius)..lineTo(center.dx+radius,center.dy+radius*0.72)..close();
-        canvas.drawPath(pyramid, accent);
+        _sun(canvas, center, r * 0.43, bold);
+        final pyramid = Path()..moveTo(center.dx-r*1.1,center.dy+r*0.72)..lineTo(center.dx,center.dy-r*0.72)..lineTo(center.dx+r*1.1,center.dy+r*0.72)..close();
+        canvas.drawPath(pyramid, soft); canvas.drawPath(pyramid, bold);
+        canvas.drawLine(Offset(center.dx,center.dy-r*0.72),Offset(center.dx,center.dy+r*0.72),thin);
         break;
       case CardFaceTheme.rome:
-      case CardFaceTheme.germany:
         for (var i=-1;i<=1;i++) {
-          final x=center.dx+i*radius*0.55;
-          canvas.drawLine(Offset(x,center.dy-radius),Offset(x,center.dy+radius),accent);
+          final x=center.dx+i*r*0.58;
+          canvas.drawRect(Rect.fromLTWH(x-r*0.16,center.dy-r*0.25,r*0.32,r*1.25),soft);
+          canvas.drawRect(Rect.fromLTWH(x-r*0.16,center.dy-r*0.25,r*0.32,r*1.25),thin);
+          canvas.drawLine(Offset(x-r*0.22,center.dy-r*0.3),Offset(x+r*0.22,center.dy-r*0.3),bold);
+        }
+        canvas.drawArc(Rect.fromCenter(center:Offset(center.dx,center.dy-r*0.15),width:r*2.25,height:r*1.4),math.pi,math.pi,false,bold);
+        canvas.drawLine(Offset(center.dx-r*1.1,center.dy+r*1.08),Offset(center.dx+r*1.1,center.dy+r*1.08),bold);
+        break;
+      case CardFaceTheme.india:
+        _rosette(canvas, center, r*0.88, 12, bold, thin);
+        for (var i=0;i<8;i++) {
+          final a=i*math.pi/4;
+          final p=Offset(center.dx+math.cos(a)*r*1.38,center.dy+math.sin(a)*r*1.38);
+          canvas.drawOval(Rect.fromCenter(center:p,width:r*0.25,height:r*0.48),thin);
         }
         break;
+      case CardFaceTheme.germany:
+        for (var i=-2;i<=2;i++) {
+          final x=center.dx+i*r*0.42;
+          canvas.drawLine(Offset(x,center.dy-r*1.05),Offset(x,center.dy+r*1.05),thin);
+        }
+        final shield=Path()..moveTo(center.dx,center.dy-r*1.05)..lineTo(center.dx+r*0.85,center.dy-r*0.65)..lineTo(center.dx+r*0.65,center.dy+r*0.55)..lineTo(center.dx,center.dy+r*1.08)..lineTo(center.dx-r*0.65,center.dy+r*0.55)..lineTo(center.dx-r*0.85,center.dy-r*0.65)..close();
+        canvas.drawPath(shield,soft); canvas.drawPath(shield,bold);
+        break;
       case CardFaceTheme.france:
-        canvas.drawArc(Rect.fromCircle(center:center,radius:radius),math.pi,math.pi,false,accent);
-        canvas.drawLine(Offset(center.dx,center.dy-radius),Offset(center.dx,center.dy+radius),accent);
+        canvas.drawArc(Rect.fromCenter(center:center,width:r*2.0,height:r*2.0),math.pi,math.pi,false,bold);
+        canvas.drawLine(Offset(center.dx,center.dy-r),Offset(center.dx,center.dy+r),thin);
+        _fleur(canvas,center,r*0.72,accent);
         break;
       case CardFaceTheme.japan:
-        canvas.drawArc(Rect.fromCircle(center:center,radius:radius),math.pi,math.pi,false,accent);
-        canvas.drawLine(Offset(center.dx-radius,center.dy),Offset(center.dx+radius,center.dy),accent);
+        for (var row=0;row<4;row++) {
+          final y=center.dy-r*0.95+row*r*0.62;
+          for (var col=-1;col<=1;col++) {
+            final x=center.dx+col*r*0.72+(row.isOdd?r*0.36:0);
+            canvas.drawArc(Rect.fromCenter(center:Offset(x,y),width:r*0.82,height:r*0.48),math.pi,math.pi,false,thin);
+          }
+        }
+        _sakura(canvas,center,r*0.36,accent);
+        break;
+      case CardFaceTheme.persia:
+        _rosette(canvas,center,r,8,bold,thin);
+        _rosette(canvas,center,r*0.55,8,thin,bold);
+        for (var i=0;i<8;i++) {
+          final a=i*math.pi/4;
+          canvas.drawLine(Offset(center.dx+math.cos(a)*r*1.05,center.dy+math.sin(a)*r*1.05),Offset(center.dx+math.cos(a)*r*1.42,center.dy+math.sin(a)*r*1.42),thin);
+        }
         break;
       case CardFaceTheme.russia:
         for (var i=-1;i<=1;i++) {
-          final x=center.dx+i*radius*0.55;
-          canvas.drawArc(Rect.fromCenter(center:Offset(x,center.dy),width:radius*0.85,height:radius*1.2),math.pi,math.pi,false,accent);
+          final x=center.dx+i*r*0.72;
+          final dome=Path()..moveTo(x-r*0.32,center.dy+r*0.45)..quadraticBezierTo(x-r*0.32,center.dy-r*0.62,x,center.dy-r*0.62)..quadraticBezierTo(x+r*0.32,center.dy-r*0.62,x+r*0.32,center.dy+r*0.45)..close();
+          canvas.drawPath(dome,soft); canvas.drawPath(dome,bold);
+          canvas.drawLine(Offset(x,center.dy-r*0.62),Offset(x,center.dy-r*0.86),thin);
         }
+        canvas.drawLine(Offset(center.dx-r*1.15,center.dy+r*0.48),Offset(center.dx+r*1.15,center.dy+r*0.48),bold);
         break;
       default:
-        canvas.drawCircle(center,radius*0.48,accent);
+        _rosette(canvas,center,r,8,bold,thin);
     }
+  }
+
+  void _rosette(Canvas canvas, Offset c, double r, int points, Paint outer, Paint inner) {
+    final path=Path();
+    for(var i=0;i<points*2;i++) {
+      final a=-math.pi/2+i*math.pi/points;
+      final rr=i.isEven?r:r*0.68;
+      final p=Offset(c.dx+math.cos(a)*rr,c.dy+math.sin(a)*rr);
+      if(i==0) path.moveTo(p.dx,p.dy); else path.lineTo(p.dx,p.dy);
+    }
+    path.close(); canvas.drawPath(path,outer);
+    canvas.drawCircle(c,r*0.24,inner);
+  }
+
+  void _sun(Canvas canvas, Offset c, double r, Paint p) {
+    canvas.drawCircle(c,r,p);
+    for(var i=0;i<16;i++) {
+      final a=i*math.pi/8;
+      canvas.drawLine(Offset(c.dx+math.cos(a)*r*1.25,c.dy+math.sin(a)*r*1.25),Offset(c.dx+math.cos(a)*r*1.65,c.dy+math.sin(a)*r*1.65),p);
+    }
+  }
+
+  void _fleur(Canvas canvas, Offset c, double r, Color color) {
+    final p=Paint()..color=color.withOpacity(0.9)..style=PaintingStyle.stroke..strokeWidth=r*0.10;
+    for(final dx in [-0.32,0.0,0.32]) {
+      canvas.drawOval(Rect.fromCenter(center:Offset(c.dx+dx*r,c.dy-r*0.18),width:r*0.34,height:r*0.72),p);
+    }
+    canvas.drawLine(Offset(c.dx,c.dy+r*0.1),Offset(c.dx,c.dy+r*0.72),p);
+    canvas.drawLine(Offset(c.dx-r*0.42,c.dy+r*0.65),Offset(c.dx+r*0.42,c.dy+r*0.65),p);
+  }
+
+  void _sakura(Canvas canvas, Offset c, double r, Color color) {
+    final p=Paint()..color=color.withOpacity(0.92);
+    for(var i=0;i<5;i++) {
+      final a=i*math.pi*2/5-math.pi/2;
+      canvas.drawOval(Rect.fromCenter(center:Offset(c.dx+math.cos(a)*r*0.55,c.dy+math.sin(a)*r*0.55),width:r*0.72,height:r*0.72),p);
+    }
+    canvas.drawCircle(c,r*0.2,Paint()..color=const Color(0xFFFFD77A));
   }
 
   @override
