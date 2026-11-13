@@ -130,39 +130,41 @@ class QuickMatchSession {
     );
   }
 
-  Future<bool> _tryJoinExisting(String id, String? ownCode) async {
-    try {
-      final snap = await _repo.fetchQuickMatchQueue();
-      for (final d in snap.docs) {
-        final data = d.data();
-        final host = data['hostDeviceId'] as String?;
-        if (!quickMatchRoomCanBeJoined(
-          roomCode: d.id,
-          ownRoomCode: ownCode!,
-          deviceId: id,
-          data: data,
-          now: DateTime.now(),
-        )) continue;
-        if (Moderation.instance.isBlocked(host!)) continue;
-        final p = UserProfile.instance;
-        final joined = await _repo.joinRoom(
-          d.id,
-          id,
-          guestDisplayName: p.hasProfile ? p.displayName : null,
-          guestWinRate: p.hasProfile ? p.onlineWinRate : null,
-          guestAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
-          guestAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
-          guestPhotoBase64: p.hasProfile ? p.photoBase64 : null,
-        );
-        if (!joined) continue;
-        _publishMatch(QuickMatchResult(d.id, id, false));
-        try { await _repo.requestStart(d.id, PlayerSide.player2); } catch (_) {}
-        if (ownCode != null) {
-          try { await _repo.leaveRoom(ownCode, id, isHost: true); } catch (_) {}
-          _roomCode = null;
-        }
-        return true;
-      }
+  Future<bool> _tryJoinExisting(String id, String ownCode) async {
+    // Stream.first can return a stale local cache snapshot. Always query the
+    // server so two phones see the same live queue.
+    final snap = await _repo.fetchQuickMatchQueue();
+    for (final d in snap.docs) {
+      final data = d.data();
+      final host = data['hostDeviceId'] as String?;
+      if (!quickMatchRoomCanBeJoined(
+        roomCode: d.id,
+        ownRoomCode: ownCode,
+        deviceId: id,
+        data: data,
+        now: DateTime.now(),
+      )) continue;
+      if (Moderation.instance.isBlocked(host!)) continue;
+      final p = UserProfile.instance;
+      final joined = await _repo.joinRoom(
+        d.id,
+        id,
+        guestDisplayName: p.hasProfile ? p.displayName : null,
+        guestWinRate: p.hasProfile ? p.onlineWinRate : null,
+        guestAvatarIconIndex: p.hasProfile ? p.avatarIconIndex : null,
+        guestAvatarColorValue: p.hasProfile ? p.avatarColor.value : null,
+        guestPhotoBase64: p.hasProfile ? p.photoBase64 : null,
+      );
+      if (!joined) continue;
+      _publishMatch(QuickMatchResult(d.id, id, false));
+      try {
+        await _repo.requestStart(d.id, PlayerSide.player2);
+      } catch (_) {}
+      try {
+        await _repo.leaveRoom(ownCode, id, isHost: true);
+      } catch (_) {}
+      _roomCode = null;
+      return true;
     }
     return false;
   }
