@@ -85,7 +85,7 @@ class StarShopScreen extends StatelessWidget {
                   if(snapshot.hasError) const Padding(padding:EdgeInsets.only(bottom:10),child:Text('Çevrimiçi katalog yüklenemedi. Hazır temalar kullanılabilir.',style:TextStyle(color:Colors.white70,fontSize:12))),
                   GridView.builder(
                     shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:entries.length,
-                    gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:.78),
+                    gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:.70),
                     itemBuilder:(context,index){
                       final entry=entries[index]; final data=entry.value;
                       final styleIndex=data['visualStyleIndex'] is int ? data['visualStyleIndex'] as int : data['themeIndex'] as int;
@@ -105,13 +105,13 @@ class StarShopScreen extends StatelessWidget {
                             CardWidget(card:const PlayingCard(Suit.spades,12),faceDown:true,themeOverride:theme,width:54,height:78),
                           ]))),
                           const SizedBox(height:8),
-                          Text(name,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:16)),
-                          if((data['description'] as String? ?? '').isNotEmpty) Padding(padding:const EdgeInsets.only(top:3),child:Text(data['description'] as String,maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12,height:1.3))),
+                          Text(name,maxLines:2,softWrap:true,overflow:TextOverflow.visible,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:15,height:1.15)),
+                          if((data['description'] as String? ?? '').isNotEmpty) Padding(padding:const EdgeInsets.only(top:3),child:Text(data['description'] as String,maxLines:3,softWrap:true,overflow:TextOverflow.visible,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:11,height:1.2))),
                           const SizedBox(height:8),
                           SizedBox(width:double.infinity,height:36,child:owned
                             ? OutlinedButton(onPressed:equipped?null:()=>AppSettings.instance.setCatalogTheme(id:id,name:name,visualStyle:theme),
                                 style:OutlinedButton.styleFrom(foregroundColor:GameUi.gold,side:const BorderSide(color:GameUi.gold)),
-                                child:Text(equipped?'Kullanılıyor':t('star_shop_equip'),style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900)))
+                                child:GameUi.fitLabel(equipped?'Kullanılıyor':t('star_shop_equip'),style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900),maxLines:2))
                             : FilledButton(onPressed:progress.stars>=price?(){
                                 final ok=progress.purchaseCatalogTheme(id,styleIndex,price);
                                 if(!ok) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('star_shop_not_enough'))));

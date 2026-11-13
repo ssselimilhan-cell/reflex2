@@ -154,7 +154,6 @@ Widget _ghost(String label, VoidCallback onTap) {
       minimumSize: const Size.fromHeight(46),
       padding: const EdgeInsets.symmetric(horizontal: 8),
     ),
-    child: Text(label, maxLines: 2, softWrap: true, textAlign: TextAlign.center,
-        overflow: TextOverflow.visible),
+    child: GameUi.fitLabel(label, maxLines: 2),
   );
 }

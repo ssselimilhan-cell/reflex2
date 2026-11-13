@@ -480,7 +480,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             backgroundColor: GameUi.surface,
             foregroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
-            title: Text('${t('room')}: ${widget.roomCode}', maxLines: 2, softWrap: true, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17, height: 1.15, fontWeight: FontWeight.w800)),
+            title: Text('${t('room')}: ${widget.roomCode}', maxLines: 2, softWrap: true, overflow: TextOverflow.visible, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, height: 1.15, fontWeight: FontWeight.w800)),
             actions: [
               if (widget.isHost || widget.isTournamentMatch)
                 IconButton(

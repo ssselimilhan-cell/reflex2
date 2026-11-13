@@ -11,6 +11,7 @@ import '../settings/user_profile.dart';
 import '../settings/strings.dart';
 import 'online_game_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/game_ui.dart';
 
 class ChannelsScreen extends StatefulWidget {
   const ChannelsScreen({super.key});
@@ -303,11 +304,11 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     child: const Icon(Icons.forum_rounded, color: Color(0xFFFBBF24), size: 25)),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(data['name'] as String? ?? 'Kanal', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    Text(data['name'] as String? ?? 'Kanal', maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
                     if ((data['description'] as String? ?? '').isNotEmpty) ...[
                       const SizedBox(height: 3),
-                      Text(data['description'] as String, maxLines: 2, overflow: TextOverflow.ellipsis,
+                      Text(data['description'] as String, maxLines: 3, softWrap: true, overflow: TextOverflow.visible,
                         style: const TextStyle(color: Colors.white70, fontSize: 14)),
                     ],
                     const SizedBox(height: 5),
@@ -355,9 +356,11 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                               disabledBackgroundColor: const Color(0xFF263B55),
                               disabledForegroundColor: Colors.white,
                             ),
-                            child: Text(pending ? 'Talep gönderildi' : requestStatus == 'rejected'
+                            child: GameUi.fitLabel(
+                              pending ? 'Talep gönderildi' : requestStatus == 'rejected'
                                 ? 'Talep reddedildi' : alreadyRequested ? 'Talep tamamlandı' : 'Katılma talebi',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900), maxLines: 2,
+                            ),
                           );
                         },
                       );
@@ -884,7 +887,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                               onPressed: _busy ? null : () => _acceptTournamentInvite(
                                 inviteDoc.id, invite),
                               icon: const Icon(Icons.meeting_room_rounded, size: 18),
-                              label: const Text('DAVETİ KABUL ET'),
+                              label: GameUi.fitLabel('DAVETİ KABUL ET', maxLines: 2),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFFFBBF24),
                                 foregroundColor: const Color(0xFF101827),
@@ -1158,7 +1161,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             foregroundColor: const Color(0xFF101827),
                             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
                           ),
-                          child: const Text('Davet et', style: TextStyle(fontWeight: FontWeight.w800)),
+                          child: GameUi.fitLabel('Davet et', style: const TextStyle(fontWeight: FontWeight.w800)),
                         ),
                   ),
                 );
@@ -1167,7 +1170,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
               child: SizedBox(width: double.infinity, child: OutlinedButton.icon(
                 onPressed: _busy ? null : _leave, icon: const Icon(Icons.logout_rounded),
-                label: const Text('Kanaldan ayrıl'),
+                label: GameUi.fitLabel('Kanaldan ayrıl'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, padding: const EdgeInsets.symmetric(vertical: 14)))))),
           ]);
         },

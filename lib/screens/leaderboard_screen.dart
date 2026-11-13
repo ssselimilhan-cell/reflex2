@@ -294,7 +294,7 @@ class _LeaderboardPodiumCard extends StatelessWidget {
             color: colorValue != null ? Color(colorValue!) : Colors.white24,
           ),
           const SizedBox(height: 6),
-          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
+          Text(name, maxLines: 2, softWrap: true, overflow: TextOverflow.visible,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
           const SizedBox(height: 3),
