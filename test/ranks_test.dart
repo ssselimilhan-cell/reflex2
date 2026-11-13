@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:reflex2/settings/ranks.dart';
+import 'package:stres_kart/settings/ranks.dart';
 
 void main() {
   group('online rank thresholds', () {
