@@ -369,7 +369,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 foregroundColor: Colors.redAccent,
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
-                              child: const Text(
+                              child: Text(
                                 t('decline'),
                                 style: TextStyle(
                                   fontSize: 14,
@@ -389,7 +389,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 foregroundColor: const Color(0xFF101827),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
-                              child: const Text(
+                              child: Text(
                                 t('accept').toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 14,
