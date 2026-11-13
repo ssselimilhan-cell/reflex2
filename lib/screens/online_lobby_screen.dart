@@ -370,7 +370,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
                               child: const Text(
-                                'Reddet',
+                                t('decline'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
@@ -390,7 +390,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                               ),
                               child: const Text(
-                                'KABUL ET',
+                                t('accept').toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
