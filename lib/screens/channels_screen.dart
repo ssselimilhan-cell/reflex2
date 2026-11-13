@@ -1168,17 +1168,22 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
     try {
       final profile = UserProfile.instance;
       final name = profile.hasProfile ? profile.displayName : 'Oyuncu';
-      var opponentDeviceId = match['player2DeviceId'] as String?;
-      if (opponentDeviceId == null || opponentDeviceId.isEmpty) {
-        // Existing tournaments created before device IDs were stored in the
-        // bracket are upgraded from the member record on demand.
-        final opponent = await FirebaseFirestore.instance.collection('channels')
-            .doc(widget.channelId).collection('members')
-            .doc(match['player2Uid'] as String).get();
-        opponentDeviceId = opponent.data()?['playerDeviceId'] as String?;
+      final opponentUid = match['player2Uid'] as String?;
+      if (opponentUid == null || opponentUid.isEmpty) {
+        throw StateError('Bu eşleşmede rakip oyuncu kaydı bulunamadı.');
       }
-      if (opponentDeviceId == null || opponentDeviceId.isEmpty) {
-        throw StateError('Rakibin oyun cihazı bulunamadı. Kanal üyeliğini yenileyip tekrar dene.');
+      // Bracket kayıtları turnuva başladığı anda oluşturulur ve cihaz kimliği
+      // sonradan değişmiş olabilir. Eski turnuvalarda da davetin doğru telefona
+      // gitmesi için her davette güncel kanal üyeliğini esas al.
+      final opponent = await FirebaseFirestore.instance.collection('channels')
+          .doc(widget.channelId).collection('members')
+          .doc(opponentUid).get();
+      final opponentDeviceId = opponent.data()?['playerDeviceId'] as String?;
+      if (opponentDeviceId == null || opponentDeviceId.trim().isEmpty) {
+        throw StateError('Rakibin cihaz kimliği bulunamadı. Rakip kanalı yeni sürümde açıp tekrar denemeli.');
+      }
+      if (opponentDeviceId == UserProfile.instance.deviceId) {
+        throw StateError('Rakibin cihaz kimliği seninkiyle aynı görünüyor. Rakip kanalı kendi telefonunda yeniden açmalı.');
       }
       roomCode = await _repo.createRoom(
         widget.deviceId,
