@@ -313,53 +313,92 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                   side: const BorderSide(color: Colors.amber, width: 1.2),
                 ),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ProfileAvatar.remote(
-                        radius: 18,
-                        photoBase64: fromPhotoBase64,
-                        iconIndex: fromIconIndex,
-                        color: fromColorValue != null
-                            ? Color(fromColorValue)
-                            : Colors.white24,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(t('invite_received'),
-                                style: const TextStyle(
+                      Row(
+                        children: [
+                          ProfileAvatar.remote(
+                            radius: 20,
+                            photoBase64: fromPhotoBase64,
+                            iconIndex: fromIconIndex,
+                            color: fromColorValue != null
+                                ? Color(fromColorValue)
+                                : Colors.white24,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t('invite_received'),
+                                  style: const TextStyle(
                                     color: Colors.amber,
                                     fontSize: 15,
-                                    fontWeight: FontWeight.bold)),
-                            Text(
-                              fromWinRate == null
-                                  ? fromName
-                                  : '$fromName · ${fromWinRate.round()}%',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 17),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  fromWinRate == null
+                                      ? fromName
+                                      : '$fromName · ${fromWinRate.round()}%',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      OutlinedButton(
-                        onPressed: _loading ? null : () => _repo.closeInvite(doc.id),
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent),
-                        child: const Text('Reddet', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                      ),
-                      const SizedBox(width: 6),
-                      ElevatedButton(
-                        onPressed: _loading
-                            ? null
-                            : () => _joinRoomByCode(roomCode, inviteId: doc.id),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFBBF24),
-                          foregroundColor: const Color(0xFF101827),
-                        ),
-                        child: const Text('KABUL ET', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () => _repo.closeInvite(doc.id),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Text(
+                                'Reddet',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () => _joinRoomByCode(roomCode, inviteId: doc.id),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFBBF24),
+                                foregroundColor: const Color(0xFF101827),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Text(
+                                'KABUL ET',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
