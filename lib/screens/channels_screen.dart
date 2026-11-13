@@ -523,7 +523,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     }
   }
 
-  Future<void> _closeChannel() async {
+  Future<void> _deleteChannel() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -739,7 +739,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             stream: FirebaseFirestore.instance.collection('channels').doc(widget.channelId).snapshots(),
             builder: (context, snapshot) => snapshot.data?.data()?['ownerDeviceId'] == widget.deviceId
               ? IconButton(tooltip: 'Kanalı sil', icon: const Icon(Icons.delete_forever_rounded, color: Color(0xFFFFD76A)),
-                  onPressed: _busy ? null : _closeChannel)
+                  onPressed: _busy ? null : _deleteChannel)
               : const SizedBox.shrink(),
           ),
           IconButton(

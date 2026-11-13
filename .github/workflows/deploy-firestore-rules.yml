@@ -6,7 +6,6 @@ on:
       - redesign/modern-competitive
     paths:
       - 'store/firestore.rules'
-      - 'tools/backfill_waiting_room_expiry.cjs'
       - '.github/workflows/deploy-firestore-rules.yml'
   workflow_dispatch:
 

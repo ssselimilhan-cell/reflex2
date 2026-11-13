@@ -1420,7 +1420,9 @@ class OnlineRoomRepository {
     final privateInvite = await channel.collection('private').doc('invite').get();
     final inviteCode = privateInvite.data()?['inviteCode'] as String?;
     if (inviteCode != null && inviteCode.isNotEmpty) {
-      await _channelInvites.doc(inviteCode).delete();
+      final inviteRef = _channelInvites.doc(inviteCode);
+      final inviteSnapshot = await inviteRef.get();
+      if (inviteSnapshot.exists) await inviteRef.delete();
     }
 
     // Remove nested tournament records before deleting their parent documents.
