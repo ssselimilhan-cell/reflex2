@@ -1377,6 +1377,38 @@ class OnlineRoomRepository {
     return true;
   }
 
+  Future<void> reopenChannel({
+    required String channelId,
+    required String deviceId,
+    required String playerDeviceId,
+    required String displayName,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final channel = _channels.doc(channelId);
+    final member = channel.collection('members').doc(uid);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final channelSnap = await tx.get(channel);
+      final memberSnap = await tx.get(member);
+      if (!channelSnap.exists || channelSnap.data()?['ownerDeviceId'] != uid ||
+          channelSnap.data()?['status'] != 'closed' || memberSnap.exists) {
+        throw StateError('Bu kanalı yeniden açma yetkin yok veya kanal zaten açık.');
+      }
+      tx.set(member, {
+        'deviceId': uid,
+        'playerDeviceId': playerDeviceId,
+        'displayName': displayName,
+        'joinedAt': FieldValue.serverTimestamp(),
+        'role': 'owner',
+      });
+      tx.update(channel, {
+        'status': 'open',
+        'memberCount': 1,
+        'ownerDisplayName': displayName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   Future<void> closeChannel(String channelId, String deviceId) async {
     final uid = _requireChannelUid(deviceId);
     final channel = _channels.doc(channelId);

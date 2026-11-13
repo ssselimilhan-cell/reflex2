@@ -91,6 +91,25 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
     }
   }
 
+  Future<void> _reopenOwnedChannel(String channelId) async {
+    if (_deviceId == null || _busy) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      final profile = UserProfile.instance;
+      await _repo.reopenChannel(
+        channelId: channelId,
+        deviceId: _deviceId!,
+        playerDeviceId: await _currentPlayerDeviceId(),
+        displayName: profile.hasProfile ? profile.displayName! : t('you'),
+      );
+      if (mounted) await _openChannel(channelId, joinIfNeeded: false);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Kanal yeniden açılamadı: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _joinByInviteCode() async {
     final controller = TextEditingController();
     final value = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
@@ -242,9 +261,13 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasError) return Center(child: Text('Kanallar yüklenemedi: ${snapshot.error}', style: const TextStyle(color: Colors.white70)));
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
-          final docs = snapshot.data!.docs.where((d) =>
-            (d.data()['visibility'] == 'public' || d.data()['visibility'] == 'invite_only') &&
-            d.data()['status'] == 'open').toList();
+          final docs = snapshot.data!.docs.where((d) {
+            final data = d.data();
+            final visible = data['visibility'] == 'public' || data['visibility'] == 'invite_only';
+            final open = data['status'] == 'open';
+            final ownedClosed = data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId;
+            return visible && (open || ownedClosed);
+          }).toList();
           if (docs.isEmpty) return Center(child: Padding(
             padding: const EdgeInsets.all(24),
             child: Container(
@@ -296,6 +319,13 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                     builder: (context, memberSnapshot) {
                       final isMember = memberSnapshot.data?.exists == true;
                       final inviteOnly = data['visibility'] == 'invite_only';
+                      if (data['status'] == 'closed' && data['ownerDeviceId'] == _deviceId) {
+                        return FilledButton(
+                          onPressed: _busy ? null : () => _reopenOwnedChannel(doc.id),
+                          style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827)),
+                          child: const Text('Yeniden aç', style: TextStyle(fontWeight: FontWeight.w800)),
+                        );
+                      }
                       if (!inviteOnly) {
                         return FilledButton(
                           onPressed: _busy || _deviceId == null ? null : () => _openChannel(doc.id, joinIfNeeded: !isMember),
