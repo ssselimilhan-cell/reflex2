@@ -10,16 +10,6 @@ import '../widgets/card_widget.dart';
 import '../widgets/game_ui.dart';
 import 'admin_theme_screen.dart';
 
-Widget _inviteRewardRow(IconData icon, String label, int stars) {
-  return Row(children: [
-    Icon(icon, color: Colors.white70, size: 21),
-    const SizedBox(width: 9),
-    Expanded(child: Text(label,
-      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
-    Text('+$stars ⭐', style: GameUi.display(18, color: GameUi.gold)),
-  ]);
-}
-
 class StarShopScreen extends StatelessWidget {
   const StarShopScreen({super.key});
 
@@ -69,41 +59,6 @@ class StarShopScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text(t('star_shop_subtitle'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(17),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B293D),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: GameUi.gold.withOpacity(0.7), width: 1.3),
-                  ),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      const Icon(Icons.group_add_rounded, color: GameUi.gold, size: 27),
-                      const SizedBox(width: 10),
-                      Expanded(child: Text('ARKADAŞINI DAVET ET, YILDIZ KAZAN',
-                        style: GameUi.display(15, color: GameUi.gold))),
-                    ]),
-                    const SizedBox(height: 12),
-                    _inviteRewardRow(Icons.person_add_alt_1_rounded,
-                      'Kayıtlı oyuncuya oyun içinden davet gönder', 1),
-                    const SizedBox(height: 9),
-                    _inviteRewardRow(Icons.sports_esports_rounded,
-                      'Davet edilen kayıtlı oyuncu masaya katılır', 3),
-                    const SizedBox(height: 9),
-                    _inviteRewardRow(Icons.link_rounded,
-                      'Kişisel davet bağlantısı oluştur ve paylaş', 10),
-                    const SizedBox(height: 9),
-                    _inviteRewardRow(Icons.person_add_alt_rounded,
-                      'Bağlantınla gelen yeni oyuncu uygulamaya katılır', 100),
-                    const SizedBox(height: 9),
-                    const Text(
-                      'Yeni davet ödülleri hazırlanıyor. Bu yıldız tutarları hedeflenen '
-                      'ödül planını gösterir; doğrulama ve güvenli hesap bakiyesi '
-                      'tamamlanmadan henüz etkin değildir.',
-                      style: TextStyle(color: Colors.amberAccent, fontSize: 12, height: 1.35)),
-                  ]),
-                ),
-                const SizedBox(height: 22),
                 Text(t('settings_group_cards').toUpperCase(), style: GameUi.display(13, color: GameUi.gold)),
                 const SizedBox(height: 12),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -156,7 +111,19 @@ class StarShopScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(color: const Color(0xFF1B293D), borderRadius: BorderRadius.circular(18), border: Border.all(color: equipped ? GameUi.gold : Colors.white12, width: equipped ? 1.8 : 1)),
                           child: Column(children: [
-                            Expanded(child: Center(child: CardWidget(card: const PlayingCard(Suit.hearts, 7), themeOverride: theme, width: 62, height: 88))),
+                            Expanded(
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    CardWidget(card: const PlayingCard(Suit.hearts, 7), themeOverride: theme, width: 54, height: 78),
+                                    const SizedBox(width: 7),
+                                    CardWidget(card: const PlayingCard(Suit.spades, 12), faceDown: true, themeOverride: theme, width: 54, height: 78),
+                                  ],
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Text(data['name'] as String? ?? 'Tema', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                             if ((data['description'] as String? ?? '').isNotEmpty)
