@@ -1435,7 +1435,9 @@ class OnlineRoomRepository {
 
     // Delete the known private invite document directly; listing this
     // security-sensitive collection is intentionally forbidden by rules.
-    await channel.collection('private').doc('invite').delete();
+    if (privateInvite.exists) {
+      await channel.collection('private').doc('invite').delete();
+    }
 
     // Keep the owner's membership until the very last atomic operation:
     // subsequent subcollection reads are authorized through that membership.

@@ -154,6 +154,25 @@ test('private channel requires a valid invite code before membership and is hidd
   await assertSucceeds(getDocs(collection(playerDb, 'channels/private-one/members')));
 });
 
+test('only the channel owner can delete a channel and its private records', async () => {
+  await createChannel({
+    id: 'delete-channel',
+    ownerUid: 'owner-a',
+    visibility: 'invite_only',
+    inviteCode: 'EF234567',
+  });
+  const ownerDb = env.authenticatedContext('owner-a').firestore();
+  const outsiderDb = env.authenticatedContext('outsider').firestore();
+
+  await assertFails(deleteDoc(doc(outsiderDb, 'channels/delete-channel')));
+  await assertFails(deleteDoc(doc(outsiderDb, 'channel_invites/EF234567')));
+
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'channel_invites/EF234567')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'channels/delete-channel/private/invite')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'channels/delete-channel/members/owner-a')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'channels/delete-channel')));
+});
+
 test('channel chat is member-only and only channel owner can post announcements', async () => {
   await createChannel({ id: 'public-one', ownerUid: 'owner-a', visibility: 'public' });
   const ownerDb = env.authenticatedContext('owner-a').firestore();
