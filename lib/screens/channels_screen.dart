@@ -145,21 +145,29 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
 
   Future<void> _openChannel(String id, {bool joinIfNeeded = true}) async {
     if (_deviceId == null) return;
+    final p = UserProfile.instance;
+    final playerDeviceId = await _currentPlayerDeviceId();
     if (joinIfNeeded) {
-      final p = UserProfile.instance;
       final joined = await _repo.joinChannel(
         channelId: id, deviceId: _deviceId!,
-        playerDeviceId: p.deviceId ?? '',
+        playerDeviceId: playerDeviceId,
         displayName: p.hasProfile ? p.displayName! : t('you'),
       );
       if (!joined) {
         if (mounted) setState(() => _error = 'Bu kanal şu anda kullanılamıyor.');
         return;
       }
+    } else {
+      await _repo.refreshChannelMemberIdentity(
+        channelId: id, deviceId: _deviceId!,
+        playerDeviceId: playerDeviceId,
+        displayName: p.hasProfile ? p.displayName! : t('you'),
+      );
     }
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(
-      builder: (_) => ChannelDetailScreen(channelId: id, deviceId: _deviceId!, playerDeviceId: UserProfile.instance.deviceId ?? ''),
+      builder: (_) => ChannelDetailScreen(
+        channelId: id, deviceId: _deviceId!, playerDeviceId: playerDeviceId),
     ));
   }
 

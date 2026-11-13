@@ -691,15 +691,22 @@ class OnlineRoomRepository {
         final memberRef = _channels.doc(channelId).collection('members').doc(playerUid);
         final memberSnap = await tx.get(memberRef);
         if (memberSnap.exists) {
+          final playerDeviceId = memberSnap.data()?['playerDeviceId'] as String? ?? '';
+          if (playerDeviceId.trim().isEmpty) {
+            throw StateError('Bir oyuncunun cihaz kimliği eksik. Her oyuncu kanalı yeniden açıp tekrar denemeli.');
+          }
           players.add({
             'uid': playerUid,
-            'deviceId': memberSnap.data()?['playerDeviceId'] as String? ?? '',
+            'deviceId': playerDeviceId,
             'name': memberSnap.data()?['displayName'] as String? ?? 'Oyuncu',
           });
         }
       }
       if (players.length < 2) {
         throw StateError('Turnuvaya kayıtlı en az iki kanal üyesi bulunmalı.');
+      }
+      if (players.map((player) => player['deviceId']).toSet().length != players.length) {
+        throw StateError('İki oyuncuda aynı cihaz kimliği kayıtlı. Oyuncular kanalı yeniden açıp tekrar denemeli.');
       }
       final matches = tournament.collection('matches');
       final format = data['format'] as String? ?? 'single_elimination';
