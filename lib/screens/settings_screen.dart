@@ -4,6 +4,7 @@ import '../settings/app_settings.dart';
 import '../settings/strings.dart';
 import '../settings/moderation.dart';
 import '../settings/share_helper.dart';
+import '../settings/sound_manager.dart';
 import '../settings/feedback.dart';
 import '../settings/telemetry.dart';
 import '../settings/progress.dart';
@@ -136,8 +137,43 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         _switchRow(icon: Icons.volume_up_outlined, title: t('settings_sound'),
                           value: settings.soundEnabled, onChanged: settings.setSoundEnabled),
-                        _switchRow(icon: Icons.vibration, title: t('settings_haptics'),
-                          value: settings.hapticsEnabled, onChanged: settings.setHapticsEnabled),
+                        _SettingRow(
+                          icon: Icons.vibration,
+                          title: t('settings_haptics'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton.icon(
+                                onPressed: settings.hapticsEnabled
+                                    ? () => SoundManager.instance.testHaptics()
+                                    : null,
+                                icon: const Icon(Icons.vibration_rounded, size: 17),
+                                label: Text(t('haptics_test')),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.amber,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                              Switch(
+                                value: settings.hapticsEnabled,
+                                onChanged: settings.setHapticsEnabled,
+                                thumbColor: WidgetStateProperty.resolveWith<Color>(
+                                  (states) => states.contains(WidgetState.selected)
+                                      ? Colors.white
+                                      : Colors.white70,
+                                ),
+                                trackColor: WidgetStateProperty.resolveWith<Color>(
+                                  (states) => states.contains(WidgetState.selected)
+                                      ? Colors.amber
+                                      : const Color(0x33FFFFFF),
+                                ),
+                                trackOutlineColor:
+                                    const WidgetStatePropertyAll<Color>(Colors.transparent),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     _SettingsExpansion(
