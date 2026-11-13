@@ -177,9 +177,9 @@ class OnlineRoomRepository {
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
         'expiresAt': null,
-        // A tournament invitation is already the players' consent to play:
-        // once the invited player takes the seat, start the match immediately.
-        'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
+        // Joining a room only reserves the seat. Every mode uses the same
+        // two-player confirmation: ready -> start_requested -> active.
+        'roomStatus': 'ready',
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
         'guestAvatarIconIndex': guestAvatarIconIndex,
@@ -464,6 +464,10 @@ class OnlineRoomRepository {
     int? fromAvatarColorValue,
     String? fromPhotoBase64,
     double? fromWinRate,
+    String? inviteType,
+    String? tournamentChannelId,
+    String? tournamentId,
+    String? tournamentMatchId,
   }) async {
     await _invites.add({
       'toDeviceId': toDeviceId,
@@ -474,6 +478,10 @@ class OnlineRoomRepository {
       'fromAvatarColorValue': fromAvatarColorValue,
       'fromPhotoBase64': fromPhotoBase64,
       'fromWinRate': fromWinRate,
+      if (inviteType != null) 'inviteType': inviteType,
+      if (tournamentChannelId != null) 'tournamentChannelId': tournamentChannelId,
+      if (tournamentId != null) 'tournamentId': tournamentId,
+      if (tournamentMatchId != null) 'tournamentMatchId': tournamentMatchId,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),

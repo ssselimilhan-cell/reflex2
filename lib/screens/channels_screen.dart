@@ -501,6 +501,65 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     }
   }
 
+  Future<void> _acceptTournamentInvite(
+    String inviteId,
+    Map<String, dynamic> invite,
+  ) async {
+    if (_busy) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      final code = invite['roomCode'] as String?;
+      if (code == null || code.isEmpty) {
+        throw StateError('Davetin maç odası bulunamadı.');
+      }
+      final roomSnap = await _repo.getRoomFromServer(code);
+      final room = roomSnap.data();
+      if (!roomSnap.exists || room == null ||
+          room['tournamentChannelId'] != widget.channelId ||
+          room['tournamentId'] != invite['tournamentId'] ||
+          room['tournamentMatchId'] != invite['tournamentMatchId'] ||
+          room['inviteToDeviceId'] != widget.playerDeviceId) {
+        throw StateError('Bu turnuva daveti artık geçerli değil.');
+      }
+      final seatedGuest = room['guestDeviceId'] as String?;
+      if (seatedGuest == null) {
+        final profile = UserProfile.instance;
+        final joined = await _repo.joinRoom(
+          code,
+          widget.playerDeviceId,
+          guestDisplayName: profile.hasProfile ? profile.displayName : 'Oyuncu',
+          guestWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+          guestAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
+          guestAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+          guestPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+        );
+        if (!joined) {
+          final latest = await _repo.getRoomFromServer(code);
+          if (latest.data()?['guestDeviceId'] != widget.playerDeviceId) {
+            throw StateError('Maç odasına katılınamadı. Davet süresi dolmuş veya rakip başka bir oyuncuyla eşleşmiş olabilir.');
+          }
+        }
+      } else if (seatedGuest != widget.playerDeviceId) {
+        throw StateError('Bu maç odasına başka bir cihaz katılmış.');
+      }
+      await _repo.closeInvite(inviteId);
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) =>
+        OnlineGameScreen(
+          roomCode: code,
+          deviceId: widget.playerDeviceId,
+          isHost: false,
+          isTournamentMatch: true,
+        )));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Turnuva daveti kabul edilemedi: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _startMatch(String targetDeviceId) async {
     if (_busy || targetDeviceId == widget.playerDeviceId || _pendingRoomCode != null) return;
     setState(() => _busy = true);
@@ -685,6 +744,76 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
               },
             ),
             StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _repo.watchIncomingInvites(widget.playerDeviceId),
+              builder: (context, inviteSnapshot) {
+                final invites = (inviteSnapshot.data?.docs ?? const [])
+                    .where((doc) {
+                      final data = doc.data();
+                      return data['inviteType'] == 'tournament' &&
+                          data['tournamentChannelId'] == widget.channelId;
+                    }).toList();
+                if (invites.isEmpty) return const SizedBox.shrink();
+                return Container(
+                  margin: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF263B55),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0x99FBBF24)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      const Icon(Icons.mark_email_unread_rounded,
+                        color: Color(0xFFFFD76A), size: 21),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('TURNUVA MAÇ DAVETLERİ · ${invites.length}',
+                        style: const TextStyle(color: Color(0xFFFFD76A),
+                          fontSize: 14, fontWeight: FontWeight.w900))),
+                    ]),
+                    const SizedBox(height: 8),
+                    ...invites.map((inviteDoc) {
+                      final invite = inviteDoc.data();
+                      final sender = invite['fromDisplayName'] as String? ?? 'Rakibin';
+                      return Container(
+                        margin: const EdgeInsets.only(top: 7),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF17263A),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(sender, style: const TextStyle(
+                            color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 3),
+                          const Text('Turnuva rakibin seni maç odasına çağırıyor. Katıldıktan sonra oyunun başlaması için ayrıca onay vereceksiniz.',
+                            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.35)),
+                          const SizedBox(height: 8),
+                          Row(children: [
+                            Expanded(child: FilledButton.icon(
+                              onPressed: _busy ? null : () => _acceptTournamentInvite(
+                                inviteDoc.id, invite),
+                              icon: const Icon(Icons.meeting_room_rounded, size: 18),
+                              label: const Text('DAVETİ KABUL ET'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFFBBF24),
+                                foregroundColor: const Color(0xFF101827),
+                                padding: const EdgeInsets.symmetric(vertical: 11)),
+                            )),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: _busy ? null : () => _repo.closeInvite(inviteDoc.id),
+                              child: const Text('Reddet', style: TextStyle(color: Colors.white70)),
+                            ),
+                          ]),
+                        ]),
+                      );
+                    }),
+                  ]),
+                );
+              },
+            ),
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _repo.watchChannelTournaments(widget.channelId),
               builder: (context, tournamentSnapshot) {
                 final tournaments = tournamentSnapshot.data?.docs ?? const [];
@@ -757,6 +886,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                                     channelId: widget.channelId,
                                     tournamentId: doc.id,
                                     deviceId: widget.deviceId,
+                                    playerDeviceId: widget.playerDeviceId,
                                   ),
                                 )),
                                 child: Text(status == 'completed' ? 'Geçmiş' : 'Eşleşmeler'),
@@ -1145,11 +1275,13 @@ class ChannelTournamentScreen extends StatefulWidget {
   final String channelId;
   final String tournamentId;
   final String deviceId;
+  final String playerDeviceId;
   const ChannelTournamentScreen({
     super.key,
     required this.channelId,
     required this.tournamentId,
     required this.deviceId,
+    required this.playerDeviceId,
   });
 
   @override
@@ -1213,10 +1345,19 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         fromAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
         fromPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
         fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+        inviteType: 'tournament',
+        tournamentChannelId: widget.channelId,
+        tournamentId: widget.tournamentId,
+        tournamentMatchId: matchId,
       );
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) =>
-        OnlineGameScreen(roomCode: roomCode!, deviceId: widget.deviceId, isHost: true)));
+        OnlineGameScreen(
+          roomCode: roomCode!,
+          deviceId: widget.deviceId,
+          isHost: true,
+          isTournamentMatch: true,
+        )));
     } catch (e) {
       if (roomCode != null) {
         try { await _repo.leaveRoom(roomCode, widget.deviceId, isHost: true); } catch (_) {}
@@ -1541,6 +1682,45 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                     icon: const Icon(Icons.verified_rounded, size: 17),
                                     label: const Text('Gerçek maç sonucunu işle'),
                                   ));
+                                }
+                                final isPlayer1 = data['player1Uid'] == widget.deviceId;
+                                final isPlayer2 = data['player2Uid'] == widget.deviceId;
+                                final canReturnToRoom = winnerUid == null &&
+                                    ((isPlayer1 && room?['hostDeviceId'] == widget.deviceId) ||
+                                     (isPlayer2 && room?['guestDeviceId'] == widget.playerDeviceId));
+                                if (canReturnToRoom) {
+                                  final myRoomDeviceId = isPlayer1
+                                      ? room!['hostDeviceId'] as String
+                                      : room!['guestDeviceId'] as String;
+                                  return Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      children: [
+                                        Text(
+                                          room?['guestDeviceId'] != null
+                                              ? 'RAKİP MASADA · Oda ${data['roomCode']}'
+                                              : 'RAKİP BEKLENİYOR · Oda ${data['roomCode']}',
+                                          style: const TextStyle(color: Color(0xFFFFE7A3),
+                                            fontSize: 14, fontWeight: FontWeight.w800)),
+                                        FilledButton.icon(
+                                          onPressed: () => Navigator.push(context, MaterialPageRoute(
+                                            builder: (_) => OnlineGameScreen(
+                                              roomCode: data['roomCode'] as String,
+                                              deviceId: myRoomDeviceId,
+                                              isHost: isPlayer1,
+                                              isTournamentMatch: true,
+                                            ))),
+                                          icon: const Icon(Icons.sports_esports_rounded, size: 17),
+                                          label: const Text('MAÇA DÖN'),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(0xFFFBBF24),
+                                            foregroundColor: const Color(0xFF101827)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                                 }
                                 return Align(alignment: Alignment.centerRight, child: Text(
                                   winnerUid != null ? 'Maç bitti · Turnuva yöneticisi sonucu işleyecek'

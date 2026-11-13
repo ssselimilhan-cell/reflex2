@@ -67,6 +67,9 @@ jobs:
 
       - run: flutter pub get
 
+      - name: STRES-REFLEX Android uygulama simgelerini üret
+        run: dart run flutter_launcher_icons
+
       - name: İmzalama dosyalarını doğrula
         run: |
           set -euo pipefail

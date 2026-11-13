@@ -156,10 +156,9 @@ class QuickMatchSession {
         guestPhotoBase64: p.hasProfile ? p.photoBase64 : null,
       );
       if (!joined) continue;
+      // The match is paired, not started. Both players must explicitly
+      // request/accept the start in the shared ready-room UI.
       _publishMatch(QuickMatchResult(d.id, id, false));
-      try {
-        await _repo.requestStart(d.id, PlayerSide.player2);
-      } catch (_) {}
       try {
         await _repo.leaveRoom(ownCode, id, isHost: true);
       } catch (_) {}

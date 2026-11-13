@@ -26,12 +26,14 @@ class OnlineGameScreen extends StatefulWidget {
   final String roomCode;
   final String deviceId;
   final bool isHost;
+  final bool isTournamentMatch;
 
   const OnlineGameScreen({
     super.key,
     required this.roomCode,
     required this.deviceId,
     required this.isHost,
+    this.isTournamentMatch = false,
   });
 
   @override
@@ -56,7 +58,6 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _friendSub;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _incomingFriendDocs = [];
   bool _leavingBlocked = false;
-  bool _autoAccepted = false;
   int? _celebrationBonus;
 
   PlayerSide get mySide =>
@@ -481,11 +482,15 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             surfaceTintColor: Colors.transparent,
             title: Text('${t('room')}: ${widget.roomCode}'),
             actions: [
-              if (widget.isHost)
+              if (widget.isHost || widget.isTournamentMatch)
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.redAccent, size: 27),
-                  tooltip: 'Masayı kapat',
-                  onPressed: _confirmLeaveRoom,
+                  icon: Icon(
+                    widget.isTournamentMatch ? Icons.arrow_back_rounded : Icons.close_rounded,
+                    color: widget.isTournamentMatch ? const Color(0xFFFFD76A) : Colors.redAccent,
+                    size: 27,
+                  ),
+                  tooltip: widget.isTournamentMatch ? 'Turnuvaya dön' : 'Masayı kapat',
+                  onPressed: widget.isTournamentMatch ? _minimizeRoom : _confirmLeaveRoom,
                 ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.flag_outlined),
@@ -527,7 +532,9 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
             canPop: _allowRoutePop,
             onPopInvoked: (didPop) {
               if (!didPop) {
-                if (_currentRoomStatus == 'waiting') {
+                if (widget.isTournamentMatch || _currentRoomStatus == 'waiting') {
+                  // Tournament rooms remain linked to the bracket; back returns
+                  // to the match list instead of cancelling the shared room.
                   _minimizeRoom();
                 } else {
                   _confirmLeaveRoom();
@@ -619,7 +626,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   _opponentArrivalNotified = true;
                   final arrivedName = data['guestDisplayName'] as String? ?? 'Rakibin';
                   final arrivalMessage = data['tournamentMatchId'] is String
-                      ? '$arrivedName masaya oturdu! Turnuva maçı başlıyor.'
+                      ? '$arrivedName masaya oturdu! Maçı başlatmak için iki oyuncunun da onayı gerekiyor.'
                       : '$arrivedName masaya oturdu! Oyunu başlatabilirsin.';
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted) return;
@@ -645,16 +652,6 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   if (mounted) Navigator.of(context).maybePop();
                 });
               }
-
-                // Hızlı Eşleş odalarında başlatma isteğini ev sahibi otomatik kabul eder.
-                if (data['quickMatch'] == true &&
-                    roomStatus == 'start_requested' &&
-                    data['startRequestedBy'] != mySide.name &&
-                    !_autoAccepted) {
-                  _autoAccepted = true;
-                  WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => _repo.acceptStart(widget.roomCode));
-                }
 
                 if (roomStatus == 'waiting') {
                 _scheduleWaitingRoomExpiry(data);
