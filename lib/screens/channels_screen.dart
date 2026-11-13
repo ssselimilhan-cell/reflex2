@@ -1699,7 +1699,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                       spacing: 8,
                                       children: [
                                         Text(
-                                          room?['guestDeviceId'] != null
+                                          room['guestDeviceId'] != null
                                               ? 'RAKİP MASADA · Oda ${data['roomCode']}'
                                               : 'RAKİP BEKLENİYOR · Oda ${data['roomCode']}',
                                           style: const TextStyle(color: Color(0xFFFFE7A3),
