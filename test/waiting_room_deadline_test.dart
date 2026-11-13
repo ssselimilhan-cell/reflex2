@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:reflex2/online/firestore_game_repository.dart';
+import 'package:stres_kart/online/firestore_game_repository.dart';
 
 void main() {
   group('waitingRoomDeadline', () {
