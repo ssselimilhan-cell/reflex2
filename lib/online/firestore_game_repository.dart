@@ -1415,10 +1415,13 @@ class OnlineRoomRepository {
       throw StateError('Yalnızca kanal kurucusu kanalı silebilir.');
     }
 
-    // Invite-code records point to this channel and must be removed first.
-    final inviteDocs = await _channelInvites
-        .where('channelId', isEqualTo: channelId).get();
-    await _deleteChannelDocuments(inviteDocs.docs.map((doc) => doc.reference));
+    // Invite-code collection deliberately forbids listing. Read the single
+    // owner-only private invite record, then delete its known global document.
+    final privateInvite = await channel.collection('private').doc('invite').get();
+    final inviteCode = privateInvite.data()?['inviteCode'] as String?;
+    if (inviteCode != null && inviteCode.isNotEmpty) {
+      await _channelInvites.doc(inviteCode).delete();
+    }
 
     // Remove nested tournament records before deleting their parent documents.
     final tournaments = await channel.collection('tournaments').get();
@@ -1430,10 +1433,13 @@ class OnlineRoomRepository {
       await _deleteChannelDocuments(claims.docs.map((doc) => doc.reference));
     }
 
-    // Delete all direct channel subcollections. This includes owner membership,
-    // pending requests, chat, invite secret and tournament statistics.
+    // Delete the known private invite document directly; listing this
+    // security-sensitive collection is intentionally forbidden by rules.
+    await channel.collection('private').doc('invite').delete();
+
+    // Delete all direct channel subcollections, including owner membership,
+    // pending requests, chat and tournament statistics.
     const directCollections = [
-      'private',
       'join_requests',
       'members',
       'messages',

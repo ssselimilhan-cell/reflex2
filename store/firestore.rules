@@ -337,7 +337,8 @@ service cloud.firestore {
         allow delete: if isChannelOwner(channelId);
 
         match /reward_claims/{uid} {
-          allow read: if request.auth != null && request.auth.uid == uid;
+          allow read: if request.auth != null
+            && (request.auth.uid == uid || isChannelOwner(channelId));
           allow create: if request.auth != null
             && request.auth.uid == uid
             && request.resource.data.uid == uid
