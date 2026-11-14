@@ -188,17 +188,44 @@ class OnlineRoomRepository {
       // NOT: Katılan oyuncu direkt oyunu başlatmaz — "ready" durumuna
       // geçer, oyun ancak taraflardan biri başlatıp diğeri kabul edince
       // ("start_requested" -> "active") başlar.
+      final isTournament = data['tournamentMatchId'] is String;
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
         'expiresAt': null,
-        // Tournament matches start as soon as the assigned opponent joins;
-        // ordinary rooms still wait for the two-player confirmation flow.
-        'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
+        // Tournament rooms share one server timestamp; both clients see the
+        // same five-second countdown and neither player needs to confirm.
+        'roomStatus': isTournament ? 'countdown' : 'ready',
+        if (isTournament)
+          'tournamentStartAt': Timestamp.fromDate(
+            DateTime.now().add(const Duration(seconds: 5))),
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
         'guestAvatarIconIndex': guestAvatarIconIndex,
         'guestAvatarColorValue': guestAvatarColorValue,
         'guestPhotoBase64': guestPhotoBase64,
+      });
+      return true;
+    });
+  }
+
+  /// Turnuva geri sayımı bittiğinde ilk istemci oyunu tek transaction ile açar.
+  /// Diğer istemci aynı çağrıyı yapsa bile yalnızca bir kez geçiş yapılır.
+  Future<bool> activateTournamentRoom(String code) async {
+    final ref = _rooms.doc(code);
+    return FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return false;
+      final data = snap.data()!;
+      if (data['tournamentMatchId'] is! String ||
+          data['roomStatus'] != 'countdown' ||
+          data['hostDeviceId'] == null ||
+          data['guestDeviceId'] == null) return false;
+      final startAt = data['tournamentStartAt'];
+      if (startAt is! Timestamp ||
+          DateTime.now().isBefore(startAt.toDate())) return false;
+      tx.update(ref, {
+        'roomStatus': 'active',
+        'startedAt': FieldValue.serverTimestamp(),
       });
       return true;
     });
@@ -295,10 +322,13 @@ class OnlineRoomRepository {
 
       final gameUpdate = engine.toMap();
       if (engine.status != GameStatus.playing) {
-        final retentionDays = data['tournamentMatchId'] is String ? 30 : 1;
+        final isTournament = data['tournamentMatchId'] is String;
+        final retentionDays = isTournament ? 30 : 1;
         gameUpdate['expiresAt'] = Timestamp.fromDate(
           DateTime.now().add(Duration(days: retentionDays)),
         );
+        // Final oyun durumu ve oda kapanışı aynı atomik yazımda kaydedilir.
+        if (isTournament) gameUpdate['roomStatus'] = 'finished';
       }
       tx.update(ref, gameUpdate);
       return true;
