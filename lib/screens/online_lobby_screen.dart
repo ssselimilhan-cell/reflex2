@@ -22,7 +22,7 @@ class OnlineLobbyScreen extends StatefulWidget {
   State<OnlineLobbyScreen> createState() => _OnlineLobbyScreenState();
 }
 
-class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
+class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> with WidgetsBindingObserver {
   final _repo = OnlineRoomRepository();
   final _codeController = TextEditingController();
   bool _loading = false;
@@ -39,6 +39,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   bool _minimizedRoomIsHost = true;
   final Map<String, DateTime> _waitingRoomDeadlines = {};
   Timer? _roomCleanupTimer;
+  Timer? _presenceTimer;
+  bool _showOnlineOnly = false;
+  DateTime _presenceUiNow = DateTime.now();
 
   Future<void> _openRoom({required String code, required String deviceId, required bool isHost}) async {
     final minimized = await Navigator.push<bool>(
@@ -65,6 +68,14 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _presenceTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted) return;
+      setState(() => _presenceUiNow = DateTime.now());
+      if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        unawaited(_updateOwnPresence(true));
+      }
+    });
     _roomCleanupTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       final now = DateTime.now();
       final expiredIds = _waitingRoomDeadlines.entries
@@ -79,6 +90,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     _deviceId().then((id) {
       if (!mounted) return;
       setState(() => _myDeviceId = id);
+      unawaited(_updateOwnPresence(true));
       _friendSub = _repo.watchFriendships(id).listen((snap) {
         final ids = <String>{};
         for (final d in snap.docs) {
@@ -89,6 +101,40 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         if (mounted) setState(() => _friendIds = ids);
       }, onError: (_) {});
     });
+  }
+
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_updateOwnPresence(true));
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_updateOwnPresence(false));
+    }
+  }
+
+  Future<void> _updateOwnPresence(bool online) async {
+    final id = _myDeviceId;
+    if (id == null || !UserProfile.instance.hasProfile) return;
+    try {
+      await FirebaseFirestore.instance.collection('profiles').doc(id).set({
+        'isOnline': online,
+        'lastSeen': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Bağlantı yoksa son durum zaman aşımıyla çevrim dışı sayılır.
+    }
+  }
+
+  bool _isRecentlyOnline(Map<String, dynamic> data) {
+    if (data['isOnline'] != true) return false;
+    final lastSeen = data['lastSeen'];
+    if (lastSeen is! Timestamp) return false;
+    final age = _presenceUiNow.difference(lastSeen.toDate());
+    return age >= const Duration(seconds: -30) &&
+        age <= const Duration(seconds: 90);
   }
 
   /// Profil ile aynı, cihazda KALICI kimlik — oturum bazlı değil,
@@ -545,6 +591,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _presenceTimer?.cancel();
+    unawaited(_updateOwnPresence(false));
     _roomCleanupTimer?.cancel();
     _waitingRoomDeadlines.clear();
     _codeController.dispose();
@@ -1055,8 +1104,61 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       ),
       child: Column(
         children: [
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('profiles').snapshots(),
+            builder: (context, snapshot) {
+              final onlineCount = snapshot.data?.docs
+                      .where((doc) => _isRecentlyOnline(doc.data()))
+                      .length ??
+                  0;
+              final selected = _showOnlineOnly;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+                child: Material(
+                  color: selected ? const Color(0xFF174B38) : const Color(0xFF263B32),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => setState(() => _showOnlineOnly = !_showOnlineOnly),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 58),
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selected ? const Color(0xFF8BE0A8) : const Color(0xFF55B77B),
+                          width: selected ? 2 : 1.2,
+                        ),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.circle, color: Color(0xFF55E28A), size: 13),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text('ÇEVRİM İÇİ OYUNCULAR',
+                            maxLines: 2, softWrap: true,
+                            style: TextStyle(color: Colors.white, fontSize: 15,
+                              fontWeight: FontWeight.w900, letterSpacing: .2)),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                          decoration: BoxDecoration(color: const Color(0xFF55B77B),
+                            borderRadius: BorderRadius.circular(20)),
+                          child: Text('$onlineCount',
+                            style: const TextStyle(color: Color(0xFF10271B),
+                              fontSize: 16, fontWeight: FontWeight.w900)),
+                        ),
+                        const SizedBox(width: 7),
+                        Icon(selected ? Icons.filter_alt_off : Icons.filter_alt,
+                          color: Colors.white70, size: 20),
+                      ]),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
             child: Text(t('players_title'),
                 style: const TextStyle(
                     color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
@@ -1093,6 +1195,9 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                 if (_friendsOnly) {
                   docs.retainWhere((d) => _friendIds.contains(d.id));
                 }
+                if (_showOnlineOnly) {
+                  docs.retainWhere((d) => _isRecentlyOnline(d.data()));
+                }
                 docs.sort((a, b) {
                   final da = a.data();
                   final db = b.data();
@@ -1123,7 +1228,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Text(
-                          _friendsOnly ? t('no_friends_yet') : t('no_open_tables'),
+                          _showOnlineOnly ? 'Şu anda çevrim içi oyuncu yok.' : (_friendsOnly ? t('no_friends_yet') : t('no_open_tables')),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               color: Colors.white70, fontSize: 17)),
@@ -1154,13 +1259,28 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            ProfileAvatar.remote(
-                              radius: 18,
-                              photoBase64: photoBase64,
-                              iconIndex: iconIndex,
-                              color: colorValue != null
-                                  ? Color(colorValue)
-                                  : Colors.white24,
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ProfileAvatar.remote(
+                                  radius: 18,
+                                  photoBase64: photoBase64,
+                                  iconIndex: iconIndex,
+                                  color: colorValue != null ? Color(colorValue) : Colors.white24,
+                                ),
+                                if (_isRecentlyOnline(data))
+                                  Positioned(
+                                    right: -1, bottom: -1,
+                                    child: Container(
+                                      width: 11, height: 11,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF55E28A),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF202020), width: 1.5),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(width: 10),
                             Expanded(
