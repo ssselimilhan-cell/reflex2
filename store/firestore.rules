@@ -360,6 +360,24 @@ service cloud.firestore {
             && request.resource.data.stars > 0
             && request.resource.data.claimedAt == request.time;
           allow update: if false;
+          allow update: if request.auth != null
+            && request.auth.uid == resource.data.player1Uid
+            && resource.data.status == 'ready'
+            && request.resource.data.status == 'ready'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1ArrivedAt'])
+            && resource.data.joinDeadline is timestamp
+            && resource.data.joinDeadline > request.time
+            && request.resource.data.player1ArrivedAt == request.time;
+
+          allow update: if request.auth != null
+            && request.auth.uid == resource.data.player2Uid
+            && resource.data.status == 'ready'
+            && request.resource.data.status == 'ready'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player2ArrivedAt'])
+            && resource.data.joinDeadline is timestamp
+            && resource.data.joinDeadline > request.time
+            && request.resource.data.player2ArrivedAt == request.time;
+
           allow delete: if isChannelOwner(channelId);
         }
 
@@ -397,25 +415,6 @@ service cloud.firestore {
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.get('roomCode', null))).data.tournamentChannelId == channelId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.get('roomCode', null))).data.tournamentId == tournamentId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.get('roomCode', null))).data.tournamentMatchId == matchId)
-            ||
-            // Each assigned player may atomically record only their own arrival.
-            (request.auth != null
-              && request.auth.uid == resource.data.player1Uid
-              && resource.data.status == 'ready'
-              && request.resource.data.status == 'ready'
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1ArrivedAt'])
-              && resource.data.joinDeadline is timestamp
-              && resource.data.joinDeadline > request.time
-              && request.resource.data.player1ArrivedAt == request.time)
-            ||
-            (request.auth != null
-              && request.auth.uid == resource.data.player2Uid
-              && resource.data.status == 'ready'
-              && request.resource.data.status == 'ready'
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player2ArrivedAt'])
-              && resource.data.joinDeadline is timestamp
-              && resource.data.joinDeadline > request.time
-              && request.resource.data.player2ArrivedAt == request.time)
             ||
             // Player 1 may clear the link only after that exact room was cancelled.
             (request.auth != null
