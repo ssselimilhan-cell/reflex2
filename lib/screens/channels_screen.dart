@@ -1430,7 +1430,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final Set<String> _joiningMatches = <String>{};
   final Set<String> _joinedMatches = <String>{};
   final Set<String> _arrivedMatches = <String>{};
-  final Set<String> _routedMatches = <String>{};
+  final Set<String> _routedMatches = <String>{}; // Prevent duplicate automatic room navigation.
 
   @override
   void initState() { super.initState(); }
