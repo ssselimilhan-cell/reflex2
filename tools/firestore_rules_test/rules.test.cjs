@@ -423,6 +423,14 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     scoreApplied: true,
   }));
+  await assertSucceeds(setDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m2'), {
+    round: 1, matchIndex: 2, player1Uid: 'owner-a', player2Uid: 'player-b',
+    winnerUid: null, status: 'ready', isBye: false,
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m2'), {
+    winnerUid: null, status: 'completed', result: 'both_absent',
+    p1PointsHalf: 0, p2PointsHalf: 0, resultAt: serverTimestamp(),
+  }));
   await assertFails(updateDoc(doc(outsiderDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     winnerUid: 'owner-a',
     status: 'completed',

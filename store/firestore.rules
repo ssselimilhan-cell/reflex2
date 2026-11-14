@@ -405,7 +405,7 @@ service cloud.firestore {
               && request.resource.data.status == 'completed'
               && (request.resource.data.winnerUid in
                 [resource.data.player1Uid, resource.data.player2Uid]
-                || (request.resource.data.result == 'both_absent' && request.resource.data.winnerUid == null)))
+                || (request.resource.data.result in ['both_absent', 'both_left'] && request.resource.data.winnerUid == null)))
           )
           ||
           // After a result is final, the owner may mark its score contribution exactly once.

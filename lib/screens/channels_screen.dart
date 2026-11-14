@@ -1934,7 +1934,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                             const Align(alignment: Alignment.centerRight, child: Text('İlk oyuncu maçı başlatabilir',
                               style: TextStyle(color: Colors.white38, fontSize: 15))),
                           if (!ready)
-                            Align(alignment: Alignment.centerRight, child: Text(isBye ? 'Bay geçti' : data['result'] == 'both_absent' ? 'İki oyuncu da gelmedi · 0 puan' : data['result'] == 'player2_absent' ? 'Oyuncu 1 hükmen kazandı' : data['result'] == 'player1_absent' ? 'Oyuncu 2 hükmen kazandı' : 'Tamamlandı',
+                            Align(alignment: Alignment.centerRight, child: Text(isBye ? 'Bay geçti' : (data['result'] == 'both_absent' || data['result'] == 'both_left') ? 'İki oyuncu da gelmedi/ayrıldı · 0 puan' : data['result'] == 'player2_absent' ? 'Oyuncu 1 hükmen kazandı' : data['result'] == 'player1_absent' ? 'Oyuncu 2 hükmen kazandı' : 'Tamamlandı',
                               style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 15, fontWeight: FontWeight.w700))),
                         ]),
                       );
