@@ -508,10 +508,73 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     );
   }
 
-  Future<void> _startTournament(String id) async {
+  Future<bool> _confirmTournamentStart({
+    required String title,
+    required int participantCount,
+  }) async {
+    var acknowledged = false;
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1B293D),
+          title: const Text('Turnuva başlamadan önce',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(dialogContext).size.height * 0.62),
+            child: SingleChildScrollView(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('$title · $participantCount kayıtlı oyuncu',
+                  style: const TextStyle(color: Color(0xFFFFD76A), fontWeight: FontWeight.w800)),
+                const SizedBox(height: 14),
+                const Text(
+                  '• Başlattığınızda katılımcı listesi kesinleşir. Tur sayısı mevcut oyuncu sayısına göre otomatik belirlenir.\n\n'
+                  '• Eşleşmeler İsviçre sistemine göre yapılır. Kaybeden elenmez; sonraki turlarda puanına yakın oyuncularla eşleşir.\n\n'
+                  '• Oyuncular uygulamada turnuva eşleşmeleri ekranındayken odalarına otomatik alınır. İki oyuncu da odaya girince 5 saniyelik geri sayım başlar ve oyun kendiliğinden açılır.\n\n'
+                  '• Maç sonucu oyun bittiğinde otomatik kaydedilir, oda maç için kapatılır ve turun bütün maçları sonuçlanınca yeni tur otomatik hazırlanır. Sonuç girmek veya tur ilerletmek için müdahale etmeniz gerekmez.\n\n'
+                  '• Gelmeyen tek oyuncu hükmen kaybeder; iki oyuncu da gelmezse ikisi de puan alamaz. Tek sayıda katılımcı varsa bay geçen oyuncu 1 puan alır.\n\n'
+                  '• Bu oyunda beraberlik sonucu bulunmaz; maçlar kazanan belirlenince tamamlanır.\n\n'
+                  '• ÖNEMLİ: Ücretsiz altyapı nedeniyle turlar sunucuda arka planda kendi kendine ilerlemez. Turnuva boyunca internet bağlantınız açık olmalı ve turnuva ekranını açık tutmalısınız. Uygulama kapanırsa yeniden açıp kanalın Turnuva / Eşleşmeler ekranına dönün; otomatik işlemler oradan devam eder. Oyuncular da eşleşme ve oda yönlendirmesi için uygulamada olmalıdır.',
+                  style: TextStyle(color: Colors.white70, fontSize: 15, height: 1.42)),
+                const SizedBox(height: 18),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: acknowledged,
+                  activeColor: const Color(0xFFFBBF24),
+                  checkColor: const Color(0xFF101827),
+                  title: const Text('Bu açıklamayı okudum ve turnuvayı bu koşullarla yöneteceğimi anladım.',
+                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                  onChanged: (value) => setDialogState(() => acknowledged = value == true),
+                ),
+              ]),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Vazgeç')),
+            FilledButton(
+              onPressed: acknowledged ? () => Navigator.pop(dialogContext, true) : null,
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: const Color(0xFF101827)),
+              child: const Text('Okudum, turnuvayı başlat'),
+            ),
+          ],
+        ),
+      ),
+    );
+    return result == true;
+  }
+
+  Future<void> _startTournament(
+    String id, {
+    required String title,
+    required int participantCount,
+  }) async {
     if (!_startingTournamentIds.add(id)) return;
     if (mounted) setState(() {});
     try {
+      final confirmed = await _confirmTournamentStart(title: title, participantCount: participantCount);
+      if (!confirmed || !mounted) return;
       await _repo.startChannelTournament(
         channelId: widget.channelId, tournamentId: id, creatorDeviceId: widget.deviceId,
       );
@@ -520,10 +583,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       final isMinimumPlayersWarning =
           message.contains('en az 2 oyuncu') ||
           message.contains('en az iki kanal üyesi');
-      // A missing-player warning is shown once per tournament while this
-      // channel screen remains open, not on every repeated tap.
-      final shouldShow = !isMinimumPlayersWarning ||
-          _minimumPlayerWarningsShown.add(id);
+      final shouldShow = !isMinimumPlayersWarning || _minimumPlayerWarningsShown.add(id);
       if (mounted && shouldShow) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
@@ -992,7 +1052,9 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             if (status == 'registration' && isCreator)
                               IconButton(
                                 onPressed: _startingTournamentIds.contains(doc.id)
-                                    ? null : () => _startTournament(doc.id),
+                                    ? null : () => _startTournament(doc.id,
+                                        title: data['title'] as String? ?? 'Turnuva',
+                                        participantCount: participants.length),
                                 tooltip: 'Turnuvayı başlat',
                                 icon: _startingTournamentIds.contains(doc.id)
                                     ? const SizedBox(
