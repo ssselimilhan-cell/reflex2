@@ -381,6 +381,25 @@ service cloud.firestore {
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentId == tournamentId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentMatchId == matchId)
             ||
+            // Each assigned player may atomically record only their own arrival.
+            (request.auth != null
+              && request.auth.uid == resource.data.player1Uid
+              && resource.data.status == 'ready'
+              && request.resource.data.status == 'ready'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1ArrivedAt'])
+              && resource.data.joinDeadline is timestamp
+              && resource.data.joinDeadline > request.time
+              && request.resource.data.player1ArrivedAt == request.time)
+            ||
+            (request.auth != null
+              && request.auth.uid == resource.data.player2Uid
+              && resource.data.status == 'ready'
+              && request.resource.data.status == 'ready'
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player2ArrivedAt'])
+              && resource.data.joinDeadline is timestamp
+              && resource.data.joinDeadline > request.time
+              && request.resource.data.player2ArrivedAt == request.time)
+            ||
             // Player 1 may clear the link only after that exact room was cancelled.
             (request.auth != null
               && request.auth.uid == resource.data.player1Uid
