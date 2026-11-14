@@ -50,6 +50,16 @@ class UserProfile extends ChangeNotifier {
 
   bool get hasProfile => displayName != null && displayName!.trim().isNotEmpty;
 
+  /// Profil oluşturmayan oyuncu için cihaz kimliğinden türetilen sabit görünen ad.
+  String get guestDisplayName {
+    final source = deviceId ?? 'guest-player';
+    var hash = 0;
+    for (final unit in source.codeUnits) {
+      hash = (hash * 31 + unit) & 0x7fffffff;
+    }
+    return 'Misafir' + (10000 + (hash % 90000)).toString();
+  }
+
   int get onlineGamesPlayed => onlineWins + onlineLosses;
 
   /// 0-100 arası yüzde. Hiç oyun oynanmadıysa null.
