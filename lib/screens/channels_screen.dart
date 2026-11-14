@@ -365,9 +365,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                         builder: (context, requestSnapshot) {
                           final requestStatus = requestSnapshot.data?.data()?['status'] as String?;
                           final pending = requestStatus == 'pending';
-                          final alreadyRequested = requestStatus != null;
                           return FilledButton(
-                            onPressed: _busy || alreadyRequested ? null : () => _requestJoin(
+                            onPressed: _busy || pending ? null : () => _requestJoin(
                               doc.id, UserProfile.instance.hasProfile
                                   ? UserProfile.instance.displayName! : 'Oyuncu',
                             ),
@@ -378,8 +377,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
                               disabledForegroundColor: Colors.white,
                             ),
                             child: GameUi.fitLabel(
-                              pending ? 'Talep gönderildi' : requestStatus == 'rejected'
-                                ? 'Talep reddedildi' : alreadyRequested ? 'Talep tamamlandı' : 'Katılma talebi',
+                              pending ? 'Talep gönderildi' : 'Katılma isteği gönder',
                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900), maxLines: 2,
                             ),
                           );
