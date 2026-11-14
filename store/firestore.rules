@@ -313,7 +313,7 @@ service cloud.firestore {
           (isChannelOwner(channelId)
             && resource.data.creatorDeviceId == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['status', 'startedAt', 'currentRound', 'matchCount', 'winnerUid', 'completedAt', 'tiedWinnerUids', 'placements'])
+              .hasOnly(['status', 'startedAt', 'currentRound', 'matchCount', 'winnerUid', 'completedAt', 'tiedWinnerUids', 'placements', 'roundsTotal', 'playerInfo', 'scoresHalf', 'opponents', 'byeCounts'])
             && request.resource.data.status in ['in_progress', 'completed'])
           ||
           // A channel member may add only their own UID while registration is open.
@@ -370,7 +370,7 @@ service cloud.firestore {
               && resource.data.status == 'ready'
               && request.resource.data.status == 'ready'
               && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt'])
+                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt', 'joinDeadline'])
               && request.resource.data.roomCreatedBy == request.auth.uid
               && request.resource.data.roomCode is string
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId == request.auth.uid
@@ -400,10 +400,11 @@ service cloud.firestore {
             (isChannelOwner(channelId)
               && resource.data.status == 'ready'
               && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['winnerUid', 'status', 'resultAt'])
+                .hasOnly(['winnerUid', 'status', 'resultAt', 'result', 'p1PointsHalf', 'p2PointsHalf', 'scoreApplied'])
               && request.resource.data.status == 'completed'
-              && request.resource.data.winnerUid in
-                [resource.data.player1Uid, resource.data.player2Uid])
+              && (request.resource.data.winnerUid in
+                [resource.data.player1Uid, resource.data.player2Uid]
+                || (request.resource.data.result == 'both_absent' && request.resource.data.winnerUid == null)))
           );
           allow delete: if isChannelOwner(channelId);
         }

@@ -596,6 +596,7 @@ class OnlineRoomRepository {
         'roomCode': roomCode,
         'roomCreatedBy': uid,
         'roomLinkedAt': FieldValue.serverTimestamp(),
+        'joinDeadline': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 3))),
       });
     });
   }
@@ -775,6 +776,8 @@ class OnlineRoomRepository {
           'status': pairing.isBye ? 'completed' : 'ready',
           'isBye': pairing.isBye,
           'pointsAwarded': pairing.isBye ? 2 : 0,
+          'scoreApplied': pairing.isBye,
+          'joinDeadline': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
@@ -789,6 +792,185 @@ class OnlineRoomRepository {
         'scoresHalf': scoresHalf,
         'opponents': opponents,
         'byeCounts': byeCounts,
+      });
+    });
+  }
+
+
+  /// Owner-client reconciliation: no Cloud Function required. Repeated calls
+  /// are safe; match scores are applied once and round advancement is atomic.
+  Future<void> reconcileSwissTournament({
+    required String channelId, required String tournamentId,
+    required String creatorDeviceId,
+  }) async {
+    final uid = _requireChannelUid(creatorDeviceId);
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final initial = await tournament.get();
+    final td = initial.data();
+    if (!initial.exists || td?['creatorDeviceId'] != uid ||
+        td?['status'] != 'in_progress' || td?['format'] != 'swiss') return;
+    final round = (td?['currentRound'] as num?)?.toInt() ?? 0;
+    final query = await tournament.collection('matches').where('round', isEqualTo: round).get();
+    if (query.docs.isEmpty) return;
+    final refs = query.docs.map((d) => d.reference).toList();
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final ts = await tx.get(tournament);
+      if (!ts.exists) return;
+      final t = ts.data()!;
+      if (t['creatorDeviceId'] != uid || t['status'] != 'in_progress' ||
+          (t['currentRound'] as num?)?.toInt() != round || t['format'] != 'swiss') return;
+      final snaps = <DocumentSnapshot<Map<String, dynamic>>>[];
+      for (final ref in refs) { snaps.add(await tx.get(ref)); }
+      final roomRefs = <int, DocumentReference<Map<String, dynamic>>>{};
+      for (var i = 0; i < snaps.length; i++) {
+        final code = snaps[i].data()?['roomCode'];
+        if (snaps[i].exists && code is String && code.isNotEmpty) roomRefs[i] = _rooms.doc(code);
+      }
+      final rooms = <int, DocumentSnapshot<Map<String, dynamic>>>{};
+      for (final e in roomRefs.entries) { rooms[e.key] = await tx.get(e.value); }
+
+      final scores = <String, int>{
+        for (final e in Map<String, dynamic>.from(t['scoresHalf'] as Map? ?? const {}).entries)
+          e.key: (e.value as num).toInt(),
+      };
+      final opponents = <String, List<String>>{
+        for (final e in Map<String, dynamic>.from(t['opponents'] as Map? ?? const {}).entries)
+          e.key: List<String>.from(e.value as List? ?? const []),
+      };
+      final byes = <String, int>{
+        for (final e in Map<String, dynamic>.from(t['byeCounts'] as Map? ?? const {}).entries)
+          e.key: (e.value as num).toInt(),
+      };
+      final info = Map<String, dynamic>.from(t['playerInfo'] as Map? ?? const {});
+      final data = <Map<String, dynamic>>[];
+      final now = DateTime.now();
+
+      for (var i = 0; i < snaps.length; i++) {
+        if (!snaps[i].exists) continue;
+        final m = Map<String, dynamic>.from(snaps[i].data()!);
+        if (m['status'] != 'completed') {
+          final p1 = m['player1Uid'] as String?;
+          final p2 = m['player2Uid'] as String?;
+          final room = rooms[i]?.data();
+          final gameStatus = room?['status'];
+          String? winner;
+          String? result;
+          if (gameStatus == 'player1Wins') { winner = p1; result = 'played'; }
+          if (gameStatus == 'player2Wins') { winner = p2; result = 'played'; }
+          final deadlineValue = m['joinDeadline'];
+          final deadline = deadlineValue is Timestamp ? deadlineValue.toDate() : null;
+          if (result == null && deadline != null && !now.isBefore(deadline)) {
+            final one = info[p1] is Map ? Map<String, dynamic>.from(info[p1] as Map) : const <String, dynamic>{};
+            final two = info[p2] is Map ? Map<String, dynamic>.from(info[p2] as Map) : const <String, dynamic>{};
+            final host = room != null && room['hostDeviceId'] == one['deviceId'];
+            final guest = room != null && room['guestDeviceId'] == two['deviceId'];
+            if (!host && !guest) result = 'both_absent';
+            if (host && !guest) { winner = p1; result = 'player2_absent'; }
+            if (!host && guest) { winner = p2; result = 'player1_absent'; }
+          }
+          if (result != null) {
+            final p1Half = winner == p1 ? 2 : 0;
+            final p2Half = winner == p2 ? 2 : 0;
+            m['status'] = 'completed';
+            m['winnerUid'] = winner;
+            m['result'] = result;
+            m['p1PointsHalf'] = p1Half;
+            m['p2PointsHalf'] = p2Half;
+            tx.update(refs[i], {
+              'status': 'completed', 'winnerUid': winner, 'result': result,
+              'p1PointsHalf': p1Half, 'p2PointsHalf': p2Half,
+              'resultAt': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+        data.add(m);
+      }
+      if (data.isEmpty || data.any((m) => m['status'] != 'completed')) return;
+
+      for (var i = 0; i < data.length; i++) {
+        final m = data[i];
+        if (m['isBye'] == true || m['scoreApplied'] == true) continue;
+        final a = m['player1Uid'] as String?;
+        final b = m['player2Uid'] as String?;
+        if (a == null || b == null) continue;
+        scores[a] = (scores[a] ?? 0) + ((m['p1PointsHalf'] as num?)?.toInt() ?? 0);
+        scores[b] = (scores[b] ?? 0) + ((m['p2PointsHalf'] as num?)?.toInt() ?? 0);
+        if (!opponents.putIfAbsent(a, () => []).contains(b)) opponents[a]!.add(b);
+        if (!opponents.putIfAbsent(b, () => []).contains(a)) opponents[b]!.add(a);
+        tx.update(refs[i], {'scoreApplied': true});
+      }
+
+      final total = (t['roundsTotal'] as num?)?.toInt() ?? round;
+      if (round >= total) {
+        final ordered = scores.keys.toList()..sort((a, b) {
+          final p = (scores[b] ?? 0).compareTo(scores[a] ?? 0);
+          if (p != 0) return p;
+          final bh = swissBuchholz(b, scores, opponents).compareTo(swissBuchholz(a, scores, opponents));
+          return bh != 0 ? bh : a.compareTo(b);
+        });
+        final prizes = Map<String, dynamic>.from(t['prizeStars'] as Map? ?? const {'1':100,'2':60,'3':30});
+        final placements = <String, dynamic>{};
+        var rank = 0;
+        String? last;
+        for (var i = 0; i < ordered.length; i++) {
+          final player = ordered[i];
+          final standing = '\${scores[player]}:\${swissBuchholz(player, scores, opponents)}';
+          if (standing != last) rank = i + 1;
+          if (rank <= 3) placements[player] = {
+            'rank': rank, 'pointsHalf': scores[player],
+            'buchholzHalf': swissBuchholz(player, scores, opponents),
+            'stars': (prizes['$rank'] as num?)?.toInt() ?? 0,
+          };
+          last = standing;
+        }
+        final winners = placements.entries.where((e) => e.value['rank'] == 1).map((e) => e.key).toList();
+        tx.update(tournament, {
+          'scoresHalf': scores, 'opponents': opponents, 'byeCounts': byes,
+          'status': 'completed', 'placements': placements,
+          'winnerUid': winners.length == 1 ? winners.first : null,
+          'tiedWinnerUids': winners.length > 1 ? winners : <String>[],
+          'completedAt': FieldValue.serverTimestamp(),
+        });
+        return;
+      }
+
+      final players = scores.keys.map((id) {
+        final p = info[id] is Map ? Map<String, dynamic>.from(info[id] as Map) : const <String, dynamic>{};
+        return SwissPlayer(uid: id, name: p['name'] as String? ?? 'Oyuncu',
+          points: scores[id] ?? 0, opponents: opponents[id] ?? const [], byeCount: byes[id] ?? 0);
+      }).toList();
+      final pairings = createSwissPairings(players, seed: round * 7919);
+      var index = 0;
+      for (final pairing in pairings) {
+        index++;
+        final a = pairing.player1;
+        final b = pairing.player2;
+        if (pairing.isBye) {
+          scores[a.uid] = (scores[a.uid] ?? 0) + 2;
+          byes[a.uid] = (byes[a.uid] ?? 0) + 1;
+        } else {
+          opponents.putIfAbsent(a.uid, () => []).add(b!.uid);
+          opponents.putIfAbsent(b.uid, () => []).add(a.uid);
+        }
+        final one = Map<String, dynamic>.from(info[a.uid] as Map);
+        final two = b == null ? null : Map<String, dynamic>.from(info[b.uid] as Map);
+        tx.set(tournament.collection('matches').doc('r\${round + 1}_m$index'), {
+          'round': round + 1, 'matchIndex': index,
+          'player1Uid': a.uid, 'player1DeviceId': one['deviceId'], 'player1Name': a.name,
+          'player2Uid': b?.uid, 'player2DeviceId': two?['deviceId'], 'player2Name': b?.name,
+          'winnerUid': pairing.isBye ? a.uid : null,
+          'result': pairing.isBye ? 'bye' : null,
+          'status': pairing.isBye ? 'completed' : 'ready',
+          'isBye': pairing.isBye, 'pointsAwarded': pairing.isBye ? 2 : 0,
+          'scoreApplied': pairing.isBye,
+          'joinDeadline': Timestamp.fromDate(now.add(const Duration(minutes: 5))),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      tx.update(tournament, {
+        'scoresHalf': scores, 'opponents': opponents, 'byeCounts': byes,
+        'currentRound': round + 1, 'matchCount': FieldValue.increment(index),
       });
     });
   }

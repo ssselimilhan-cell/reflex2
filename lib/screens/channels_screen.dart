@@ -1420,6 +1420,22 @@ class ChannelTournamentScreen extends StatefulWidget {
 class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final _repo = OnlineRoomRepository();
   bool _busy = false;
+  bool _isCreator = false;
+  Timer? _reconcileTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _reconcileTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (_isCreator) _repo.reconcileSwissTournament(
+        channelId: widget.channelId, tournamentId: widget.tournamentId,
+        creatorDeviceId: widget.deviceId,
+      ).catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() { _reconcileTimer?.cancel(); super.dispose(); }
 
   Future<void> _startTournamentMatch(String matchId, Map<String, dynamic> match) async {
     if (_busy || match['player1Uid'] != widget.deviceId ||
@@ -1499,50 +1515,6 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
     }
   }
 
-  Future<void> _setWinner(String matchId, Map<String, dynamic> match, {String? forcedWinnerUid}) async {
-    final player1 = match['player1Uid'] as String?;
-    final player2 = match['player2Uid'] as String?;
-    if (player1 == null || player2 == null) return;
-    final selected = forcedWinnerUid ?? await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1B293D),
-        title: const Text('Maç kazananını seç', style: TextStyle(color: Colors.white)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            title: Text(match['player1Name'] as String? ?? 'Oyuncu 1',
-              style: const TextStyle(color: Colors.white)),
-            leading: const Icon(Icons.person, color: Color(0xFFFBBF24)),
-            onTap: () => Navigator.pop(ctx, player1),
-          ),
-          ListTile(
-            title: Text(match['player2Name'] as String? ?? 'Oyuncu 2',
-              style: const TextStyle(color: Colors.white)),
-            leading: const Icon(Icons.person, color: Color(0xFFFBBF24)),
-            onTap: () => Navigator.pop(ctx, player2),
-          ),
-        ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Vazgeç'))],
-      ),
-    );
-    if (selected == null) return;
-    setState(() => _busy = true);
-    try {
-      await _repo.recordTournamentMatchWinner(
-        channelId: widget.channelId,
-        tournamentId: widget.tournamentId,
-        matchId: matchId,
-        creatorDeviceId: widget.deviceId,
-        winnerUid: selected,
-      );
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Maç sonucu kaydedilemedi: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1563,6 +1535,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         builder: (context, tournamentSnapshot) {
           final tournament = tournamentSnapshot.data?.data() ?? const <String, dynamic>{};
           final isCreator = tournament['creatorDeviceId'] == widget.deviceId;
+          _isCreator = isCreator;
           final status = tournament['status'] as String? ?? 'in_progress';
           return Column(children: [
             if (status == 'completed')
@@ -1677,7 +1650,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
             if (isCreator && status == 'in_progress')
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Text('Maçları oynattıktan sonra kazananı burada işle. Eleme turnuvasında sonraki tur otomatik oluşturulur.',
+                child: Text('Sonuçlar otomatik işlenir; tur eşleşmeleri puanlara göre yenilenir.',
                   style: TextStyle(color: Colors.white54, fontSize: 15)),
               ),
             Expanded(
@@ -1687,6 +1660,10 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                   if (snapshot.hasError) return Center(child: Text('Eşleşmeler yüklenemedi: ${snapshot.error}',
                     style: const TextStyle(color: Colors.white54)));
                   if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
+                  if (isCreator) _repo.reconcileSwissTournament(
+                    channelId: widget.channelId, tournamentId: widget.tournamentId,
+                    creatorDeviceId: widget.deviceId,
+                  ).catchError((_) {});
                   final matches = [...snapshot.data!.docs]
                     ..sort((a, b) {
                       final roundCompare = ((a.data()['round'] as num?) ?? 1).compareTo((b.data()['round'] as num?) ?? 1);
@@ -1807,7 +1784,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 }
                                 if (winnerUid != null && isCreator) {
                                   return Align(alignment: Alignment.centerRight, child: TextButton.icon(
-                                    onPressed: _busy ? null : () => _setWinner(doc.id, data, forcedWinnerUid: winnerUid),
+                                    onPressed: null,
                                     icon: const Icon(Icons.verified_rounded, size: 17),
                                     label: const Text('Gerçek maç sonucunu işle'),
                                   ));
@@ -1852,7 +1829,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                   );
                                 }
                                 return Align(alignment: Alignment.centerRight, child: Text(
-                                  winnerUid != null ? 'Maç bitti · Turnuva yöneticisi sonucu işleyecek'
+                                  winnerUid != null ? 'Maç tamamlandı · Sonuç otomatik işleniyor'
                                     : '${room?['guestDeviceId'] != null ? 'RAKİP MASADA · ' : 'RAKİP BEKLENİYOR · '}Oda ${data['roomCode']}',
                                   style: const TextStyle(color: Color(0xFFFFE7A3), fontSize: 16, fontWeight: FontWeight.w800)));
                               },
