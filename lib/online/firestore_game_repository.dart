@@ -191,8 +191,8 @@ class OnlineRoomRepository {
       tx.update(ref, {
         'guestDeviceId': guestDeviceId,
         'expiresAt': null,
-        // Joining a room only reserves the seat. Every mode uses the same
-        // two-player confirmation: ready -> start_requested -> active.
+        // Tournament matches start as soon as the assigned opponent joins;
+        // ordinary rooms still wait for the two-player confirmation flow.
         'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
@@ -595,8 +595,7 @@ class OnlineRoomRepository {
           data['player2Uid'] == null || data['roomCode'] != null ||
           roomData['tournamentChannelId'] != channelId ||
           roomData['tournamentId'] != tournamentId ||
-          roomData['tournamentMatchId'] != matchId ||
-          roomData['hostDeviceId'] != data['player1DeviceId']) {
+          roomData['tournamentMatchId'] != matchId) {
         throw StateError('Bu maçı yalnızca eşleşmedeki ilk oyuncu başlatabilir.');
       }
       final deadline = Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 3)));
