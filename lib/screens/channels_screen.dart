@@ -1424,6 +1424,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   Timer? _reconcileTimer;
   final Set<String> _openingMatches = <String>{};
   final Set<String> _joiningMatches = <String>{};
+  final Set<String> _joinedMatches = <String>{};
 
   @override
   void initState() {
@@ -1518,6 +1519,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
       final snap = await _repo.getRoomFromServer(roomCode);
       if (!mounted || !snap.exists) return;
       if (!joined && snap.data()?['guestDeviceId'] != widget.playerDeviceId) return;
+      _joinedMatches.add(matchId);
       await Navigator.push(context, MaterialPageRoute(builder: (_) => OnlineGameScreen(
         roomCode: roomCode, deviceId: widget.playerDeviceId, isHost: false, isTournamentMatch: true,
       )));
@@ -1683,6 +1685,20 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                       if (roundCompare != 0) return roundCompare;
                       return ((a.data()['matchIndex'] as num?) ?? 0).compareTo((b.data()['matchIndex'] as num?) ?? 0);
                     });
+                  for (final matchDoc in matches) {
+                    final matchData = matchDoc.data();
+                    if (matchData['status'] == 'ready' &&
+                        matchData['roomCode'] == null &&
+                        matchData['player1Uid'] == widget.deviceId &&
+                        matchData['isBye'] != true &&
+                        _openingMatches.add(matchDoc.id)) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        _startTournamentMatch(matchDoc.id, matchData).whenComplete(
+                          () => _openingMatches.remove(matchDoc.id));
+                      });
+                    }
+                  }
                   if (matches.isEmpty) return Center(child: Padding(
                     padding: const EdgeInsets.all(28),
                     child: Container(
@@ -1739,11 +1755,9 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                           _TournamentPlayerRow(name: p2, winner: p2Won, isBye: false),
                           if (ready && data['roomCode'] == null &&
                               data['player1Uid'] == widget.deviceId && !isBye)
-                            Align(alignment: Alignment.centerRight, child: TextButton.icon(
-                              onPressed: _busy ? null : () => _startTournamentMatch(doc.id, data),
-                              icon: const Icon(Icons.sports_esports_rounded, size: 17),
-                              label: const Text('MAÇ ODASINI AÇ · RAKİBİ ÇAĞIR', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
-                            )),
+                            const Align(alignment: Alignment.centerRight,
+                              child: Text('Maç odası otomatik hazırlanıyor…',
+                                style: TextStyle(color: Colors.white54, fontSize: 14))),
                           if (ready && data['roomCode'] is String)
                             StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                               stream: _repo.watchRoom(data['roomCode'] as String),
@@ -1804,6 +1818,15 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 }
                                 final isPlayer1 = data['player1Uid'] == widget.deviceId;
                                 final isPlayer2 = data['player2Uid'] == widget.deviceId;
+                                if (isPlayer2 && room != null &&
+                                    !_joinedMatches.contains(doc.id) &&
+                                    !_joiningMatches.contains(doc.id) &&
+                                    ((room['roomStatus'] == 'waiting' && room['guestDeviceId'] == null) ||
+                                     (room['roomStatus'] == 'active' && room['guestDeviceId'] == widget.playerDeviceId))) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) _joinTournamentMatch(doc.id, data['roomCode'] as String);
+                                  });
+                                }
                                 final canReturnToRoom = winnerUid == null &&
                                     ((isPlayer1 && room?['hostDeviceId'] == widget.playerDeviceId) ||
                                      (isPlayer2 && room?['guestDeviceId'] == widget.playerDeviceId));
