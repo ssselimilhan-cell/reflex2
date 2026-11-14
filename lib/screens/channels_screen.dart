@@ -1421,24 +1421,65 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final _repo = OnlineRoomRepository();
   bool _busy = false;
   bool _isCreator = false;
-  Timer? _reconcileTimer;
+  Timer? _reconcileDeadlineTimer;
+  DateTime? _scheduledReconcileDeadline;
+  bool _reconcileRunning = false;
+  bool _reconcilePending = false;
   final Set<String> _openingMatches = <String>{};
   final Set<String> _joiningMatches = <String>{};
   final Set<String> _joinedMatches = <String>{};
 
   @override
-  void initState() {
-    super.initState();
-    _reconcileTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (_isCreator) _repo.reconcileSwissTournament(
-        channelId: widget.channelId, tournamentId: widget.tournamentId,
-        creatorDeviceId: widget.deviceId,
-      ).catchError((_) {});
+  void initState() { super.initState(); }
+
+  @override
+  void dispose() { _reconcileDeadlineTimer?.cancel(); super.dispose(); }
+
+  void _requestSwissReconcile() {
+    if (!_isCreator) return;
+    if (_reconcileRunning) {
+      _reconcilePending = true;
+      return;
+    }
+    _reconcileRunning = true;
+    _repo.reconcileSwissTournament(
+      channelId: widget.channelId,
+      tournamentId: widget.tournamentId,
+      creatorDeviceId: widget.deviceId,
+    ).catchError((_) {}).whenComplete(() {
+      _reconcileRunning = false;
+      if (_reconcilePending && mounted) {
+        _reconcilePending = false;
+        _requestSwissReconcile();
+      }
     });
   }
 
-  @override
-  void dispose() { _reconcileTimer?.cancel(); super.dispose(); }
+  void _scheduleSwissDeadline(List<QueryDocumentSnapshot<Map<String, dynamic>>> matches) {
+    if (!_isCreator) return;
+    DateTime? earliest;
+    for (final doc in matches) {
+      final data = doc.data();
+      if (data['status'] != 'ready') continue;
+      final value = data['joinDeadline'];
+      if (value is Timestamp) {
+        final deadline = value.toDate();
+        if (earliest == null || deadline.isBefore(earliest)) earliest = deadline;
+      }
+    }
+    if (earliest == _scheduledReconcileDeadline) return;
+    _reconcileDeadlineTimer?.cancel();
+    _scheduledReconcileDeadline = earliest;
+    if (earliest == null) return;
+    final wait = earliest.difference(DateTime.now());
+    _reconcileDeadlineTimer = Timer(
+      wait.isNegative ? Duration.zero : wait + const Duration(milliseconds: 500),
+      () {
+        _scheduledReconcileDeadline = null;
+        _requestSwissReconcile();
+      },
+    );
+  }
 
   Future<void> _startTournamentMatch(String matchId, Map<String, dynamic> match) async {
     if (_busy || match['player1Uid'] != widget.deviceId ||
@@ -1728,16 +1769,14 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                   if (snapshot.hasError) return Center(child: Text('Eşleşmeler yüklenemedi: ${snapshot.error}',
                     style: const TextStyle(color: Colors.white54)));
                   if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFFFBBF24)));
-                  if (isCreator) _repo.reconcileSwissTournament(
-                    channelId: widget.channelId, tournamentId: widget.tournamentId,
-                    creatorDeviceId: widget.deviceId,
-                  ).catchError((_) {});
+                  if (isCreator) _requestSwissReconcile();
                   final matches = [...snapshot.data!.docs]
                     ..sort((a, b) {
                       final roundCompare = ((a.data()['round'] as num?) ?? 1).compareTo((b.data()['round'] as num?) ?? 1);
                       if (roundCompare != 0) return roundCompare;
                       return ((a.data()['matchIndex'] as num?) ?? 0).compareTo((b.data()['matchIndex'] as num?) ?? 0);
                     });
+                  _scheduleSwissDeadline(matches);
                   for (final matchDoc in matches) {
                     final matchData = matchDoc.data();
                     if (matchData['status'] == 'ready' &&
@@ -1816,6 +1855,9 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                               stream: _repo.watchRoom(data['roomCode'] as String),
                               builder: (context, roomSnapshot) {
                                 final room = roomSnapshot.data?.data();
+                                if (isCreator && (room?['status'] == 'player1Wins' || room?['status'] == 'player2Wins')) {
+                                  _requestSwissReconcile();
+                                }
                                 if (roomSnapshot.hasData &&
                                     (!roomSnapshot.data!.exists || room?['roomStatus'] == 'cancelled')) {
                                   final canRetry = data['player1Uid'] == widget.deviceId;
