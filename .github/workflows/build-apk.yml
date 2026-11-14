@@ -1,6 +1,6 @@
 name: Flutter Testleri
 # [build-preview-apk] Build final testable Android preview
-# [build-preview-apk] Full audit checkpoint for preview APK
+# [build-preview-apk] Verify automatic Swiss tournament flow
 
 on:
   # Preview APK: run this workflow manually and enable build_preview_apk.
