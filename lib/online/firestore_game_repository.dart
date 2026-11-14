@@ -808,7 +808,12 @@ class OnlineRoomRepository {
     final initial = await tournament.get();
     final td = initial.data();
     if (!initial.exists || td?['creatorDeviceId'] != uid ||
-        td?['status'] != 'in_progress' || td?['format'] != 'swiss') return;
+        td?['format'] != 'swiss') return;
+    if (td?['status'] == 'completed') {
+      await _publishSwissTournamentStats(channelId, tournamentId, uid);
+      return;
+    }
+    if (td?['status'] != 'in_progress') return;
     final round = (td?['currentRound'] as num?)?.toInt() ?? 0;
     final query = await tournament.collection('matches').where('round', isEqualTo: round).get();
     if (query.docs.isEmpty) return;
@@ -970,7 +975,51 @@ class OnlineRoomRepository {
         'currentRound': round + 1, 'matchCount': FieldValue.increment(index),
       });
     });
+    await _publishSwissTournamentStats(channelId, tournamentId, uid);
   }
+
+
+  Future<void> _publishSwissTournamentStats(String channelId, String tournamentId, String ownerUid) async {
+    final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final tournamentSnap = await tx.get(tournament);
+      if (!tournamentSnap.exists) return;
+      final data = tournamentSnap.data()!;
+      if (data['creatorDeviceId'] != ownerUid || data['status'] != 'completed') return;
+      final participantIds = List<String>.from(data['participantIds'] ?? const <String>[]);
+      final placements = Map<String, dynamic>.from(data['placements'] as Map? ?? const {});
+      final collection = _channels.doc(channelId).collection('tournament_stats');
+      final refs = participantIds.map((id) => collection.doc(id)).toList();
+      final snapshots = <DocumentSnapshot<Map<String, dynamic>>>[];
+      for (final ref in refs) { snapshots.add(await tx.get(ref)); }
+      for (var i = 0; i < refs.length; i++) {
+        final id = participantIds[i];
+        final previous = snapshots[i].data() ?? const <String, dynamic>{};
+        final ids = List<String>.from(previous['tournamentIds'] ?? const <String>[]);
+        if (ids.contains(tournamentId)) continue;
+        ids.add(tournamentId);
+        final placement = placements[id] is Map
+            ? Map<String, dynamic>.from(placements[id] as Map) : const <String, dynamic>{};
+        final rank = (placement['rank'] as num?)?.toInt() ?? 0;
+        final stars = (placement['stars'] as num?)?.toInt() ?? 0;
+        tx.set(refs[i], {
+          'uid': id,
+          'tournamentIds': ids,
+          'tournamentsPlayed': ids.length,
+          'championships': ((previous['championships'] as num?)?.toInt() ?? 0) + (rank == 1 ? 1 : 0),
+          'secondPlaces': ((previous['secondPlaces'] as num?)?.toInt() ?? 0) + (rank == 2 ? 1 : 0),
+          'thirdPlaces': ((previous['thirdPlaces'] as num?)?.toInt() ?? 0) + (rank == 3 ? 1 : 0),
+          'podiums': ((previous['podiums'] as num?)?.toInt() ?? 0) + (rank > 0 && rank <= 3 ? 1 : 0),
+          'starsEarned': ((previous['starsEarned'] as num?)?.toInt() ?? 0) + stars,
+          'lastTournamentId': tournamentId,
+          'lastRank': rank,
+          'lastStars': stars,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    });
+  }
+
 
   /// A participant can claim only their own published podium reward.
   /// Existing claims return zero: the same account must never be credited
