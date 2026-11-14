@@ -427,7 +427,7 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR2'), {
     hostDeviceId: 'device-player-b',
     guestDeviceId: 'device-owner-a',
-    roomStatus: 'active',
+    roomStatus: 'waiting',
     tournamentChannelId: 'private-one',
     tournamentId: 't1',
     tournamentMatchId: 'r1_m1',
