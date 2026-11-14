@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../settings/guest_progress_snapshot.dart';
 import '../game/game_engine.dart';
+import 'swiss_tournament.dart';
 
 /// Bekleme odaları için tek süre hesabı: yeni kayıtlarda expiresAt,
 /// eski kayıtlarda createdAt + 5 dakika kullanılır.
@@ -648,7 +649,7 @@ class OnlineRoomRepository {
   }) async {
     final uid = _requireChannelUid(creatorDeviceId);
     if (title.trim().length < 2 || title.trim().length > 40 ||
-        !['single_elimination', 'round_robin'].contains(format) ||
+        format != 'swiss' ||
         ![8, 16, 32, 64].contains(maxPlayers) ||
         (format == 'round_robin' && maxPlayers > 16)) {
       throw ArgumentError('Turnuva adı, formatı veya oyuncu sınırı geçersiz. Herkes birbiriyle formatında sınır en fazla 16 oyuncudur.');
@@ -705,6 +706,7 @@ class OnlineRoomRepository {
   }) async {
     final uid = _requireChannelUid(creatorDeviceId);
     final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
+    final pairingSeed = Random.secure().nextInt(0x7fffffff);
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final tournamentSnap = await tx.get(tournament);
       if (!tournamentSnap.exists ||
@@ -717,99 +719,77 @@ class OnlineRoomRepository {
       if (participantIds.length < 2) {
         throw StateError('Turnuvayı başlatmak için en az 2 oyuncu kayıt olmalı.');
       }
-      final players = <Map<String, String>>[];
+      final players = <SwissPlayer>[];
+      final playerInfo = <String, dynamic>{};
       for (final playerUid in participantIds) {
         final memberRef = _channels.doc(channelId).collection('members').doc(playerUid);
         final memberSnap = await tx.get(memberRef);
-        if (memberSnap.exists) {
-          final playerDeviceId = memberSnap.data()?['playerDeviceId'] as String? ?? '';
-          if (playerDeviceId.trim().isEmpty) {
-            throw StateError('Bir oyuncunun cihaz kimliği eksik. Her oyuncu kanalı yeniden açıp tekrar denemeli.');
-          }
-          players.add({
-            'uid': playerUid,
-            'deviceId': playerDeviceId,
-            'name': memberSnap.data()?['displayName'] as String? ?? 'Oyuncu',
-          });
+        if (!memberSnap.exists) continue;
+        final member = memberSnap.data()!;
+        final playerDeviceId = member['playerDeviceId'] as String? ?? '';
+        if (playerDeviceId.trim().isEmpty) {
+          throw StateError('Bir oyuncunun cihaz kimliği eksik. Her oyuncu kanalı yeniden açıp tekrar denemeli.');
         }
+        final name = member['displayName'] as String? ?? 'Oyuncu';
+        players.add(SwissPlayer(uid: playerUid, name: name));
+        playerInfo[playerUid] = {'name': name, 'deviceId': playerDeviceId};
       }
       if (players.length < 2) {
         throw StateError('Turnuvaya kayıtlı en az iki kanal üyesi bulunmalı.');
       }
-      if (players.map((player) => player['deviceId']).toSet().length != players.length) {
-        throw StateError('İki oyuncuda aynı cihaz kimliği kayıtlı. Oyuncular kanalı yeniden açıp tekrar denemeli.');
+      final deviceIds = players.map((p) => playerInfo[p.uid]['deviceId']).toSet();
+      if (deviceIds.length != players.length) {
+        throw StateError('İki oyuncuda aynı cihaz kimliği kayıtlı. Oyuncular kanalı kendi telefonlarında yeniden açmalı.');
       }
+
+      final roundCount = swissRoundCount(players.length);
+      final pairings = createSwissPairings(players, seed: pairingSeed);
       final matches = tournament.collection('matches');
-      final format = data['format'] as String? ?? 'single_elimination';
+      final scoresHalf = <String, int>{for (final player in players) player.uid: 0};
+      final opponents = <String, dynamic>{for (final player in players) player.uid: <String>[]};
+      final byeCounts = <String, int>{for (final player in players) player.uid: 0};
       var matchIndex = 0;
-      if (format == 'round_robin') {
-        for (var i = 0; i < players.length; i++) {
-          for (var j = i + 1; j < players.length; j++) {
-            matchIndex++;
-            tx.set(matches.doc('r1_m$matchIndex'), {
-              'round': 1,
-              'matchIndex': matchIndex,
-              'player1Uid': players[i]['uid'],
-              'player1DeviceId': players[i]['deviceId'],
-              'player1Name': players[i]['name'],
-              'player2Uid': players[j]['uid'],
-              'player2DeviceId': players[j]['deviceId'],
-              'player2Name': players[j]['name'],
-              'winnerUid': null,
-              'status': 'ready',
-              'createdAt': FieldValue.serverTimestamp(),
-            });
-          }
+      for (final pairing in pairings) {
+        matchIndex++;
+        final p1 = pairing.player1;
+        final p2 = pairing.player2;
+        if (pairing.isBye) {
+          scoresHalf[p1.uid] = 2; // Standard Swiss bye: one full point.
+          byeCounts[p1.uid] = 1;
+        } else {
+          opponents[p1.uid] = [p2!.uid];
+          opponents[p2.uid] = [p1.uid];
         }
-      } else {
-        // Draw a balanced power-of-two bracket. Randomized byes prevent an
-        // arbitrary registration-order advantage when the field is uneven.
-        var bracketSize = 1;
-        while (bracketSize < players.length) {
-          bracketSize *= 2;
-        }
-        players.shuffle(Random.secure());
-        final byeCount = bracketSize - players.length;
-        for (var i = 0; i < byeCount; i++) {
-          matchIndex++;
-          tx.set(matches.doc('r1_m$matchIndex'), {
-            'round': 1,
-            'matchIndex': matchIndex,
-            'player1Uid': players[i]['uid'],
-            'player1DeviceId': players[i]['deviceId'],
-            'player1Name': players[i]['name'],
-            'player2Uid': null,
-            'player2DeviceId': null,
-            'player2Name': null,
-            'winnerUid': players[i]['uid'],
-            'status': 'completed',
-            'isBye': true,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        }
-        for (var i = byeCount; i < players.length; i += 2) {
-          matchIndex++;
-          tx.set(matches.doc('r1_m$matchIndex'), {
-            'round': 1,
-            'matchIndex': matchIndex,
-            'player1Uid': players[i]['uid'],
-            'player1DeviceId': players[i]['deviceId'],
-            'player1Name': players[i]['name'],
-            'player2Uid': players[i + 1]['uid'],
-            'player2DeviceId': players[i + 1]['deviceId'],
-            'player2Name': players[i + 1]['name'],
-            'winnerUid': null,
-            'status': 'ready',
-            'isBye': false,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        }
+        final p1Info = Map<String, dynamic>.from(playerInfo[p1.uid] as Map);
+        final p2Info = p2 == null ? null : Map<String, dynamic>.from(playerInfo[p2.uid] as Map);
+        tx.set(matches.doc('r1_m$matchIndex'), {
+          'round': 1,
+          'matchIndex': matchIndex,
+          'player1Uid': p1.uid,
+          'player1DeviceId': p1Info['deviceId'],
+          'player1Name': p1.name,
+          'player2Uid': p2?.uid,
+          'player2DeviceId': p2Info?['deviceId'],
+          'player2Name': p2?.name,
+          'winnerUid': pairing.isBye ? p1.uid : null,
+          'result': pairing.isBye ? 'bye' : null,
+          'status': pairing.isBye ? 'completed' : 'ready',
+          'isBye': pairing.isBye,
+          'pointsAwarded': pairing.isBye ? 2 : 0,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
       tx.update(tournament, {
+        'format': 'swiss',
         'status': 'in_progress',
         'startedAt': FieldValue.serverTimestamp(),
         'currentRound': 1,
+        'roundsTotal': roundCount,
         'matchCount': matchIndex,
+        'playerInfo': playerInfo,
+        'scoresHalf': scoresHalf,
+        'opponents': opponents,
+        'byeCounts': byeCounts,
       });
     });
   }

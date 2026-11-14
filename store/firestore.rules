@@ -301,9 +301,9 @@ service cloud.firestore {
           && request.resource.data.title is string
           && request.resource.data.title.size() >= 2
           && request.resource.data.title.size() <= 40
-          && request.resource.data.format in ['single_elimination', 'round_robin']
+          && request.resource.data.format == 'swiss'
           && request.resource.data.maxPlayers in [8, 16, 32, 64]
-          && (request.resource.data.format != 'round_robin' || request.resource.data.maxPlayers <= 16)
+          
           && request.resource.data.participantIds is list
           && request.resource.data.participantIds.size() == 0;
         allow update: if request.auth != null && (
