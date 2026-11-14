@@ -354,6 +354,7 @@ test('private tournament data is member-only and members can only register thems
     player2Name: 'Player B',
     winnerUid: null,
     status: 'ready',
+    joinDeadline: new Date(Date.now() + 60_000),
     createdAt: serverTimestamp(),
   });
   await assertSucceeds(startBatch.commit());
@@ -372,6 +373,20 @@ test('private tournament data is member-only and members can only register thems
     guestDeviceId: 'device-outsider',
     roomStatus: 'active',
   }));
+
+  // Assigned players can record only their own arrival, and only before deadline.
+  const matchRefForPlayer = doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1');
+  await assertSucceeds(updateDoc(matchRefForPlayer, {
+    player2ArrivedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(matchRefForPlayer, {
+    player1ArrivedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(
+    doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'),
+    { player1ArrivedAt: serverTimestamp() },
+  ));
+
   await assertSucceeds(updateDoc(doc(playerDb, 'rooms/TOUR1'), {
     guestDeviceId: 'device-player-b',
     roomStatus: 'active',
