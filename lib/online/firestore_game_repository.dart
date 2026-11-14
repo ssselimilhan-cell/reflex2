@@ -724,7 +724,9 @@ class OnlineRoomRepository {
       for (final playerUid in participantIds) {
         final memberRef = _channels.doc(channelId).collection('members').doc(playerUid);
         final memberSnap = await tx.get(memberRef);
-        if (!memberSnap.exists) continue;
+        if (!memberSnap.exists) {
+          throw StateError('Turnuvaya kayıtlı bir oyuncunun kanal üyeliği bulunamadı. Kayıtları yenileyip tekrar dene.');
+        }
         final member = memberSnap.data()!;
         final playerDeviceId = member['playerDeviceId'] as String? ?? '';
         if (playerDeviceId.trim().isEmpty) {
@@ -893,6 +895,16 @@ class OnlineRoomRepository {
         data.add(m);
       }
       if (data.isEmpty || data.any((m) => m['status'] != 'completed')) return;
+      final hasAnyAttendee = data.any((m) =>
+          m['isBye'] != true && m['result'] != 'both_absent');
+      if (!hasAnyAttendee) {
+        tx.update(tournament, {
+          'status': 'cancelled',
+          'cancelReason': 'no_participants_showed',
+          'cancelledAt': FieldValue.serverTimestamp(),
+        });
+        return;
+      }
 
       for (var i = 0; i < data.length; i++) {
         final m = data[i];
