@@ -310,31 +310,44 @@ class _TopBar extends StatelessWidget {
                             child: Icon(Icons.person,
                                 color: Colors.white, size: 18),
                           ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              profile.hasProfile
-                                  ? profile.displayName!
-                                  : t('profile'),
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.visible,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  height: 1.1,
-                                  fontWeight: FontWeight.w800),
-                            ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    profile.hasProfile
+                                        ? profile.displayName!
+                                        : profile.guestDisplayName,
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      height: 1.1,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (rate != null) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Kazanma %' + rate.round().toString(),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  style: GameUi.display(11, color: GameUi.gold),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (profile.hasProfile && rate != null) ...[
-                          const SizedBox(width: 8),
-                          Text('${rate.round()}%',
-                              style: GameUi.display(13, color: GameUi.gold)),
-                        ],
                       ],
                     ),
                   ),
