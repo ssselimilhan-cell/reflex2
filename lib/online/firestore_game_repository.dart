@@ -193,7 +193,7 @@ class OnlineRoomRepository {
         'expiresAt': null,
         // Joining a room only reserves the seat. Every mode uses the same
         // two-player confirmation: ready -> start_requested -> active.
-        'roomStatus': 'ready',
+        'roomStatus': data['tournamentMatchId'] is String ? 'active' : 'ready',
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
         'guestAvatarIconIndex': guestAvatarIconIndex,

@@ -1463,7 +1463,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         throw StateError('Rakibin cihaz kimliği seninkiyle aynı görünüyor. Rakip kanalı kendi telefonunda yeniden açmalı.');
       }
       roomCode = await _repo.createRoom(
-        widget.deviceId,
+        widget.playerDeviceId,
         hostDisplayName: name,
         hostWinRate: profile.hasProfile ? profile.onlineWinRate : null,
         hostAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
@@ -1481,31 +1481,17 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         deviceId: widget.deviceId,
         roomCode: roomCode,
       );
-      await _repo.sendInvite(
-        toDeviceId: opponentDeviceId,
-        fromDeviceId: widget.deviceId,
-        roomCode: roomCode,
-        fromDisplayName: name,
-        fromAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
-        fromAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
-        fromPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
-        fromWinRate: profile.hasProfile ? profile.onlineWinRate : null,
-        inviteType: 'tournament',
-        tournamentChannelId: widget.channelId,
-        tournamentId: widget.tournamentId,
-        tournamentMatchId: matchId,
-      );
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) =>
         OnlineGameScreen(
           roomCode: roomCode!,
-          deviceId: widget.deviceId,
+          deviceId: widget.playerDeviceId,
           isHost: true,
           isTournamentMatch: true,
         )));
     } catch (e) {
       if (roomCode != null) {
-        try { await _repo.leaveRoom(roomCode, widget.deviceId, isHost: true); } catch (_) {}
+        try { await _repo.leaveRoom(roomCode, widget.playerDeviceId, isHost: true); } catch (_) {}
       }
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Turnuva maçı başlatılamadı: $e')),
