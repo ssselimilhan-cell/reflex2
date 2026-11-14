@@ -663,6 +663,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     }
   }
 
+  // Legacy invite acceptance remains for already-issued tournament invitations.
   Future<void> _acceptTournamentInvite(
     String inviteId,
     Map<String, dynamic> invite,
