@@ -59,16 +59,14 @@ List<SwissPairing> createSwissPairings(List<SwissPlayer> input, {int seed = 1}) 
     final value = players[i]; players[i] = players[j]; players[j] = value;
   }
   players.sort((a, b) {
-    final points = b.points.compareTo(a.points);
-    return points != 0 ? points : nextRandom(2) * 2 - 1;
+    return b.points.compareTo(a.points);
   });
 
   SwissPlayer? byePlayer;
   if (players.length.isOdd) {
     final eligible = players.where((p) => p.byeCount == 0).toList()
       ..sort((a, b) {
-        final score = a.points.compareTo(b.points);
-        return score != 0 ? score : nextRandom(2) * 2 - 1;
+        return a.points.compareTo(b.points);
       });
     byePlayer = eligible.isNotEmpty ? eligible.first : players.last;
     players.removeWhere((p) => p.uid == byePlayer!.uid);
