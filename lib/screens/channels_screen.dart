@@ -105,7 +105,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Vazgeç')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C), foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Kalıcı olarak sil'),
           ),
