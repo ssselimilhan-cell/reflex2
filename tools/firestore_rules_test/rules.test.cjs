@@ -399,6 +399,7 @@ test('private tournament data is member-only and members can only register thems
     player1ArrivedAt: serverTimestamp(),
   }));
   console.log('RULE_DIAG: player1 arrival');
+  console.log('RULE_DIAG: match before player1 arrival', JSON.stringify((await getDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'))).data()));
   await assertSucceeds(updateDoc(
     doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'),
     { player1ArrivedAt: serverTimestamp() },
