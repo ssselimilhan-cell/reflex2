@@ -952,6 +952,7 @@ class OnlineRoomRepository {
               if (!p1Arrived && !p2Arrived) result = 'both_absent';
               if (p1Arrived && !p2Arrived) { winner = p1; result = 'player2_absent'; }
               if (!p1Arrived && p2Arrived) { winner = p2; result = 'player1_absent'; }
+              if (p1Arrived && p2Arrived) result = 'room_not_started';
             } else {
               if (!host && !guest) result = 'both_absent';
               if (host && !guest) { winner = p1; result = 'player2_absent'; }
