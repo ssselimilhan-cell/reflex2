@@ -93,6 +93,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   String? _currentRoomStatus;
   Timer? _roomExpiryTimer;
   Timer? _roomCountdownTimer;
+  Timer? _tournamentStartTimer;
+  Timer? _tournamentFinishTimer;
+  DateTime? _scheduledTournamentStartAt;
+  int _tournamentSecondsLeft = 5;
+  bool _tournamentExitScheduled = false;
   DateTime? _roomExpiresAt;
   int _waitingSecondsLeft = 300;
   bool _opponentArrivalNotified = false;
@@ -124,6 +129,30 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         _roomExpiryTimer = null;
       }
     });
+  }
+
+  void _scheduleTournamentStart(Map<String, dynamic> data) {
+    final value = data['tournamentStartAt'];
+    if (value is! Timestamp) return;
+    final startAt = value.toDate();
+    if (_scheduledTournamentStartAt == startAt) return;
+    _scheduledTournamentStartAt = startAt;
+    _tournamentStartTimer?.cancel();
+    void tick() {
+      if (!mounted) return;
+      final remaining = startAt.difference(DateTime.now()).inMilliseconds;
+      final seconds = remaining <= 0 ? 0 : (remaining / 1000).ceil();
+      if (seconds != _tournamentSecondsLeft) {
+        setState(() => _tournamentSecondsLeft = seconds);
+      }
+      if (remaining <= 0) {
+        _tournamentStartTimer?.cancel();
+        _repo.activateTournamentRoom(widget.roomCode).catchError((_) => false);
+      }
+    }
+    tick();
+    _tournamentStartTimer = Timer.periodic(
+      const Duration(milliseconds: 250), (_) => tick());
   }
 
   void _minimizeRoom() {
@@ -458,6 +487,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     _friendSub?.cancel();
     _roomExpiryTimer?.cancel();
     _roomCountdownTimer?.cancel();
+    _tournamentStartTimer?.cancel();
+    _tournamentFinishTimer?.cancel();
     for (final t in _pendingTimers) {
       t.cancel();
     }
@@ -742,6 +773,30 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 );
               }
 
+              if (roomStatus == 'countdown' && widget.isTournamentMatch) {
+                _scheduleTournamentStart(data);
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.sports_esports_rounded,
+                        color: Color(0xFFFBBF24), size: 58),
+                      const SizedBox(height: 18),
+                      const Text('MAÇ BAŞLIYOR',
+                        style: TextStyle(color: Colors.white, fontSize: 24,
+                          fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      const SizedBox(height: 12),
+                      Text('$_tournamentSecondsLeft',
+                        style: const TextStyle(color: Color(0xFFFFD76A),
+                          fontSize: 76, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 8),
+                      const Text('Oyun otomatik başlayacak',
+                        style: TextStyle(color: Colors.white70, fontSize: 17)),
+                    ],
+                  ),
+                );
+              }
+
               if (roomStatus == 'ready') {
                 _roomExpiryTimer?.cancel();
                 _roomCountdownTimer?.cancel();
@@ -883,6 +938,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         duration: const Duration(seconds: 8),
                         content: Text('Sonuç liderlik tablosuna kaydedilemedi: $saveError')));
+                  }
+                  if (widget.isTournamentMatch && mounted && !_tournamentExitScheduled) {
+                    _tournamentExitScheduled = true;
+                    _tournamentFinishTimer = Timer(const Duration(seconds: 5), () {
+                      if (mounted) Navigator.of(context).maybePop();
+                    });
                   }
                 });
               } else if (!finished) {
