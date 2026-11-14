@@ -150,9 +150,12 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         _repo.activateTournamentRoom(widget.roomCode).catchError((_) => false);
       }
     }
-    tick();
-    _tournamentStartTimer = Timer.periodic(
-      const Duration(milliseconds: 250), (_) => tick());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      tick();
+      _tournamentStartTimer = Timer.periodic(
+        const Duration(milliseconds: 250), (_) => tick());
+    });
   }
 
   void _minimizeRoom() {
