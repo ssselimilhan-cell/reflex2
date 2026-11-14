@@ -390,12 +390,15 @@ test('private tournament data is member-only and members can only register thems
 
   // Assigned players can record only their own arrival, and only before deadline.
   const matchRefForPlayer = doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1');
+  console.log('RULE_DIAG: player2 arrival');
   await assertSucceeds(updateDoc(matchRefForPlayer, {
     player2ArrivedAt: serverTimestamp(),
   }));
+  console.log('RULE_DIAG: player2 forged player1 arrival (expected fail)');
   await assertFails(updateDoc(matchRefForPlayer, {
     player1ArrivedAt: serverTimestamp(),
   }));
+  console.log('RULE_DIAG: player1 arrival');
   await assertSucceeds(updateDoc(
     doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'),
     { player1ArrivedAt: serverTimestamp() },
