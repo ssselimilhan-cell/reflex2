@@ -662,7 +662,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                   final arrivalMessage = data['quickMatch'] == true
                       ? '$arrivedName ile hızlı eşleştin. Oyun, biriniz başlatma isteği gönderip diğeri kabul edince başlayacak.'
                       : data['tournamentMatchId'] is String
-                          ? '$arrivedName masaya oturdu! Oyun 5 saniye içinde otomatik başlayacak.'
+                          ? '$arrivedName masaya oturdu! Seçilen geri sayımın ardından oyun otomatik başlayacak.'
                           : '$arrivedName masaya oturdu! Oyunu başlatabilirsin.';
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (!mounted) return;
