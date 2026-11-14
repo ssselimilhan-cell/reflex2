@@ -42,6 +42,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> with WidgetsBindi
   Timer? _presenceTimer;
   bool _showOnlineOnly = false;
   DateTime _presenceUiNow = DateTime.now();
+  DateTime? _lastPresenceWriteAt;
+  bool _presenceWriteInFlight = false;
 
   Future<void> _openRoom({required String code, required String deviceId, required bool isHost}) async {
     final minimized = await Navigator.push<bool>(
@@ -72,7 +74,10 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> with WidgetsBindi
     _presenceTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (!mounted) return;
       setState(() => _presenceUiNow = DateTime.now());
-      if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      final lastWrite = _lastPresenceWriteAt;
+      if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed &&
+          (lastWrite == null ||
+              DateTime.now().difference(lastWrite) >= const Duration(seconds: 30))) {
         unawaited(_updateOwnPresence(true));
       }
     });
@@ -115,16 +120,21 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> with WidgetsBindi
     }
   }
 
+  // [build-preview-apk] Presence heartbeat throttled to limit Firestore writes.
   Future<void> _updateOwnPresence(bool online) async {
     final id = _myDeviceId;
-    if (id == null || !UserProfile.instance.hasProfile) return;
+    if (id == null || !UserProfile.instance.hasProfile || _presenceWriteInFlight) return;
+    _presenceWriteInFlight = true;
     try {
       await FirebaseFirestore.instance.collection('profiles').doc(id).set({
         'isOnline': online,
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      _lastPresenceWriteAt = DateTime.now();
     } catch (_) {
       // Bağlantı yoksa son durum zaman aşımıyla çevrim dışı sayılır.
+    } finally {
+      _presenceWriteInFlight = false;
     }
   }
 
