@@ -75,6 +75,34 @@ async function createChannel({ id, ownerUid, visibility, inviteCode }) {
   await assertSucceeds(batch.commit());
 }
 
+test('published theme artwork is readable by players and writable only by the verified admin', async () => {
+  const adminDb = env.authenticatedContext('admin', {
+    email: 'ssselimilhan@gmail.com',
+    email_verified: true,
+  }).firestore();
+  const playerDb = env.authenticatedContext('theme-player').firestore();
+
+  await assertSucceeds(setDoc(doc(adminDb, 'cosmetic_catalog/custom-theme'), {
+    name: 'Gece Bahçesi',
+    isPublished: true,
+  }));
+  await assertSucceeds(setDoc(doc(adminDb, 'cosmetic_catalog/custom-theme/assets/card_art'), {
+    base64: 'compressed-image-data',
+    contentType: 'image/jpeg',
+  }));
+  await assertSucceeds(getDoc(doc(playerDb, 'cosmetic_catalog/custom-theme')));
+  await assertSucceeds(getDoc(doc(playerDb, 'cosmetic_catalog/custom-theme/assets/card_art')));
+  await assertFails(setDoc(doc(playerDb, 'cosmetic_catalog/custom-theme/assets/card_art'), {
+    base64: 'player-overwrite',
+  }));
+
+  await assertSucceeds(setDoc(doc(adminDb, 'cosmetic_catalog/draft-theme'), {
+    name: 'Taslak',
+    isPublished: false,
+  }));
+  await assertFails(getDoc(doc(playerDb, 'cosmetic_catalog/draft-theme/assets/card_art')));
+});
+
 test('account nicknames are globally unique and owned by one authenticated UID', async () => {
   const ownerDb = env.authenticatedContext('nickname-owner').firestore();
   const otherDb = env.authenticatedContext('nickname-other').firestore();
