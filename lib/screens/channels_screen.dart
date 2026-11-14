@@ -423,8 +423,8 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
 
   Future<void> _createTournament() async {
     final title = TextEditingController();
+    final maxPlayersController = TextEditingController(text: '16');
     String format = 'swiss';
-    int maxPlayers = 16;
     final result = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDialogState) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
@@ -438,11 +438,19 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             title: Text('İsviçre sistemi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
             subtitle: Text('Herkes tüm turlarda puan toplar. Tur sayısı kayıtlı oyuncu sayısına göre otomatik belirlenir.', style: TextStyle(color: Colors.white70)),
           ),
-          DropdownButtonFormField<int>(
-            value: maxPlayers, dropdownColor: const Color(0xFF1B293D),
-            decoration: const InputDecoration(labelText: 'Oyuncu sınırı', labelStyle: TextStyle(color: Colors.white70)),
-            items: [8, 16, 32, 64].map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
-            onChanged: (v) => setDialogState(() => maxPlayers = v ?? maxPlayers),
+          TextField(
+            controller: maxPlayersController,
+            keyboardType: TextInputType.number,
+            maxLength: 3,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              labelText: 'En fazla katılımcı sayısı',
+              helperText: '2–256 arasında istediğin sayıyı belirle.',
+              labelStyle: TextStyle(color: Colors.white70),
+              helperStyle: TextStyle(color: Colors.white54),
+              counterStyle: TextStyle(color: Colors.white54),
+            ),
           ),
           const SizedBox(height: 10),
           Container(
@@ -471,8 +479,16 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       ),
     ));
     final cleanTitle = title.text.trim();
+    final maxPlayers = int.tryParse(maxPlayersController.text.trim());
     title.dispose();
+    maxPlayersController.dispose();
     if (result != true || cleanTitle.length < 2) return;
+    if (maxPlayers == null || maxPlayers < 2 || maxPlayers > 256) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Katılımcı sınırı 2 ile 256 arasında olmalı.')),
+      );
+      return;
+    }
     try {
       await _repo.createChannelTournament(
         channelId: widget.channelId, creatorDeviceId: widget.deviceId,

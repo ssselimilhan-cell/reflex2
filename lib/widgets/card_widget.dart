@@ -697,15 +697,6 @@ class _CivilizationEmblemPainter extends CustomPainter {
   void _dotRing(Canvas canvas,Offset c,double r,Paint p,int n) {
     for(var i=0;i<n;i++){final a=i*math.pi*2/n;canvas.drawCircle(Offset(c.dx+math.cos(a)*r,c.dy+math.sin(a)*r),r*0.035,p);}
   }
-  void _dome(Canvas canvas,Offset c,double r,Color gold,Paint line,Paint fill) {
-    for(var i=-1;i<=1;i++){
-      final x=c.dx+i*r*0.29;final w=r*0.25;final rect=Rect.fromLTWH(x-w/2,c.dy-r*0.02,w,r*0.42);
-      canvas.drawRect(rect,fill);canvas.drawRect(rect,line);
-      final dome=Path()..moveTo(x-w/2,c.dy-r*0.02)..quadraticBezierTo(x-w/2,c.dy-r*0.48,x,c.dy-r*0.48)..quadraticBezierTo(x+w/2,c.dy-r*0.48,x+w/2,c.dy-r*0.02)..close();
-      canvas.drawPath(dome,fill);canvas.drawPath(dome,line);
-      canvas.drawLine(Offset(x,c.dy-r*0.48),Offset(x,c.dy-r*0.62),line);
-    }
-  }
 
   void _rosette(Canvas canvas, Offset center, double radius, int points, Paint outer, Paint inner) {
     final path = Path();

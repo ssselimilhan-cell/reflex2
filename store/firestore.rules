@@ -302,7 +302,9 @@ service cloud.firestore {
           && request.resource.data.title.size() >= 2
           && request.resource.data.title.size() <= 40
           && request.resource.data.format == 'swiss'
-          && request.resource.data.maxPlayers in [8, 16, 32, 64]
+          && request.resource.data.maxPlayers is int
+          && request.resource.data.maxPlayers >= 2
+          && request.resource.data.maxPlayers <= 256
           
           && request.resource.data.participantIds is list
           && request.resource.data.participantIds.size() == 0;

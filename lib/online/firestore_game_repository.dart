@@ -650,9 +650,8 @@ class OnlineRoomRepository {
     final uid = _requireChannelUid(creatorDeviceId);
     if (title.trim().length < 2 || title.trim().length > 40 ||
         format != 'swiss' ||
-        ![8, 16, 32, 64].contains(maxPlayers) ||
-        (format == 'round_robin' && maxPlayers > 16)) {
-      throw ArgumentError('Turnuva adı, formatı veya oyuncu sınırı geçersiz. Herkes birbiriyle formatında sınır en fazla 16 oyuncudur.');
+        maxPlayers < 2 || maxPlayers > 256) {
+      throw ArgumentError('Turnuva adı veya oyuncu sınırı geçersiz. Katılımcı sınırı 2–256 arasında olmalı.');
     }
     final channel = _channels.doc(channelId);
     final snapshot = await channel.get();
