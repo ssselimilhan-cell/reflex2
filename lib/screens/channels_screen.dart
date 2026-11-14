@@ -1452,9 +1452,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
       if (opponentUid == null || opponentUid.isEmpty) {
         throw StateError('Bu eşleşmede rakip oyuncu kaydı bulunamadı.');
       }
-      // Bracket kayıtları turnuva başladığı anda oluşturulur ve cihaz kimliği
-      // sonradan değişmiş olabilir. Eski turnuvalarda da davetin doğru telefona
-      // gitmesi için her davette güncel kanal üyeliğini esas al.
+      // Eşleşme anında rakibin güncel cihaz kimliğini kanal üyeliğinden al.
       final opponent = await FirebaseFirestore.instance.collection('channels')
           .doc(widget.channelId).collection('members')
           .doc(opponentUid).get();
@@ -1670,7 +1668,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                 child: Text('Sonuçlar otomatik işlenir; tur eşleşmeleri puanlara göre yenilenir.',
                   style: TextStyle(color: Colors.white54, fontSize: 15)),
               ),
-            if (status == 'in_progress' && tournament['scoresHalf'] is Map)
+            if ((status == 'in_progress' || status == 'completed') && tournament['scoresHalf'] is Map)
               Builder(builder: (context) {
                 final scores = Map<String, dynamic>.from(tournament['scoresHalf'] as Map);
                 final opponents = Map<String, dynamic>.from(tournament['opponents'] as Map? ?? const {});
@@ -1694,7 +1692,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                     border: Border.all(color: const Color(0x66FBBF24)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('PUAN DURUMU', style: TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, letterSpacing: .7)),
+                    Text(status == 'completed' ? 'SON SIRALAMA' : 'PUAN DURUMU', style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, letterSpacing: .7)),
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 150,
