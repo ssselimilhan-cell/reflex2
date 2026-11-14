@@ -88,11 +88,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     await batch.commit();
   }
 
-  String _displayThemeName(String value) => switch (value) {
-    'Almanya' => 'Alman', 'Fransa' => 'Fransız', 'Rusya' => 'Rus',
-    'Hindistan' => 'Hint', 'Japonya' => 'Japon', 'Firavun' => 'Mısır',
-    _ => value,
-  };
+  String _displayThemeName(String value) => value;
 
   String _templateName(int index) {
     if (index >= 0 && index < CardFaceTheme.values.length) {
@@ -186,6 +182,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
               const SizedBox(height: 10),
               _artworkPreview(artworkBytes, null),
               const SizedBox(height: 8),
+              const Text('Görsel, kartların üzerinde tema resmi olarak kullanılır. En fazla 420 KB.', style: TextStyle(color: Colors.white54, fontSize: 11)),
               OutlinedButton.icon(
                 onPressed: () async {
                   final bytes = await _pickArtwork();
@@ -344,7 +341,10 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
         ],
       ),
     );
-    if (confirmed == true) await doc.reference.delete();
+    if (confirmed == true) {
+      await doc.reference.collection('assets').doc('card_art').delete();
+      await doc.reference.delete();
+    }
   }
 
   void _message(String value) {
