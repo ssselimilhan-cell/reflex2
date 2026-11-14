@@ -1441,6 +1441,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   bool _isCreator = false;
   Timer? _reconcileDeadlineTimer;
   Timer? _reconcileTimer;
+  Timer? _reconcilePollTimer;
   DateTime? _scheduledReconcileDeadline;
   bool _reconcileRunning = false;
   bool _reconcilePending = false;
@@ -1451,10 +1452,22 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final Set<String> _routedMatches = <String>{}; // Prevent duplicate automatic room navigation.
 
   @override
-  void initState() { super.initState(); }
+  void initState() {
+    super.initState();
+    // Son hamleden sonraki cevapsızlık süresini de takip et; ekran açıkken
+    // kurucu istemci her 30 saniyede bir güvenli/idempotent kontrol yapar.
+    _reconcilePollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_isCreator && mounted) _requestSwissReconcile();
+    });
+  }
 
   @override
-  void dispose() { _reconcileDeadlineTimer?.cancel(); _reconcileTimer?.cancel(); super.dispose(); }
+  void dispose() {
+    _reconcileDeadlineTimer?.cancel();
+    _reconcileTimer?.cancel();
+    _reconcilePollTimer?.cancel();
+    super.dispose();
+  }
 
   void _requestSwissReconcile() {
     if (!_isCreator || !mounted) return;
