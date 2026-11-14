@@ -621,6 +621,11 @@ class OnlineRoomRepository {
       }
       final data = matchSnap.data()!;
       final roomData = roomSnap.data()!;
+      final initialDeadline = data['joinDeadline'];
+      if (initialDeadline is Timestamp &&
+          !DateTime.now().isBefore(initialDeadline.toDate())) {
+        throw StateError('Bu maçın katılım süresi doldu.');
+      }
       if (data['status'] != 'ready' || data['player1Uid'] != uid ||
           data['player2Uid'] == null || data['roomCode'] != null ||
           roomData['tournamentChannelId'] != channelId ||
