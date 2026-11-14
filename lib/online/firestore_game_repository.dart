@@ -45,6 +45,7 @@ class OnlineRoomRepository {
     String? tournamentChannelId,
     String? tournamentId,
     String? tournamentMatchId,
+    int tournamentStartDelaySeconds = 5,
   }) async {
     final engine = GameEngine()..startNewGame();
     String code = _generateRoomCode();
@@ -70,6 +71,8 @@ class OnlineRoomRepository {
       if (tournamentChannelId != null) 'tournamentChannelId': tournamentChannelId,
       if (tournamentId != null) 'tournamentId': tournamentId,
       if (tournamentMatchId != null) 'tournamentMatchId': tournamentMatchId,
+      if (tournamentMatchId != null) 'tournamentStartDelaySeconds': [5, 10, 15].contains(tournamentStartDelaySeconds) ? tournamentStartDelaySeconds : 5,
+      if (tournamentMatchId != null) 'tournamentMoveCount': 0,
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
       ...engine.toMap(),
@@ -197,7 +200,7 @@ class OnlineRoomRepository {
         'roomStatus': isTournament ? 'countdown' : 'ready',
         if (isTournament)
           'tournamentStartAt': Timestamp.fromDate(
-            DateTime.now().add(const Duration(seconds: 5))),
+            DateTime.now().add(Duration(seconds: (data['tournamentStartDelaySeconds'] as num?)?.toInt() ?? 5))),
         'guestDisplayName': guestDisplayName,
         'guestWinRate': guestWinRate,
         'guestAvatarIconIndex': guestAvatarIconIndex,
@@ -321,8 +324,13 @@ class OnlineRoomRepository {
       if (!ok) return false;
 
       final gameUpdate = engine.toMap();
+      final isTournament = data['tournamentMatchId'] is String;
+      if (isTournament) {
+        gameUpdate['tournamentMoveCount'] = FieldValue.increment(1);
+        gameUpdate['tournamentLastMoveSide'] = side == PlayerSide.player1 ? 'player1' : 'player2';
+        gameUpdate['tournamentLastMoveAt'] = FieldValue.serverTimestamp();
+      }
       if (engine.status != GameStatus.playing) {
-        final isTournament = data['tournamentMatchId'] is String;
         final retentionDays = isTournament ? 30 : 1;
         gameUpdate['expiresAt'] = Timestamp.fromDate(
           DateTime.now().add(Duration(days: retentionDays)),
@@ -721,11 +729,12 @@ class OnlineRoomRepository {
     required String title,
     required String format,
     required int maxPlayers,
+    int startDelaySeconds = 5,
   }) async {
     final uid = _requireChannelUid(creatorDeviceId);
     if (title.trim().length < 2 || title.trim().length > 40 ||
         format != 'swiss' ||
-        maxPlayers < 2 || maxPlayers > 256) {
+        maxPlayers < 2 || maxPlayers > 256 || ![5, 10, 15].contains(startDelaySeconds)) {
       throw ArgumentError('Turnuva adı veya oyuncu sınırı geçersiz. Katılımcı sınırı 2–256 arasında olmalı.');
     }
     final channel = _channels.doc(channelId);
@@ -738,6 +747,7 @@ class OnlineRoomRepository {
       'title': title.trim(),
       'format': format,
       'maxPlayers': maxPlayers,
+      'startDelaySeconds': startDelaySeconds,
       'status': 'registration',
       'creatorDeviceId': uid,
       'participantIds': <String>[],
@@ -853,6 +863,7 @@ class OnlineRoomRepository {
           'isBye': pairing.isBye,
           'pointsAwarded': pairing.isBye ? 2 : 0,
           'scoreApplied': pairing.isBye,
+          'startDelaySeconds': (data['startDelaySeconds'] as num?)?.toInt() ?? 5,
           'joinDeadline': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
           'createdAt': FieldValue.serverTimestamp(),
         });
