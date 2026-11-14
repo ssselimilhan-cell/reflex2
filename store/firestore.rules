@@ -178,11 +178,27 @@ service cloud.firestore {
           && request.resource.data.playerDeviceId.size() <= 128
           && request.resource.data.status == 'pending';
         allow delete: if isChannelOwner(channelId);
-        allow update: if isChannelOwner(channelId)
-          && resource.data.status == 'pending'
-          && request.resource.data.status in ['accepted', 'rejected']
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt'])
-          && request.resource.data.respondedAt == request.time;
+        allow update: if (
+            isChannelOwner(channelId)
+            && resource.data.status == 'pending'
+            && request.resource.data.status in ['accepted', 'rejected']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt'])
+            && request.resource.data.respondedAt == request.time
+          ) || (
+            request.auth != null
+            && request.auth.uid == uid
+            && resource.data.status in ['accepted', 'rejected']
+            && !exists(channelMemberPath(channelId, uid))
+            && request.resource.data.keys().hasOnly(['uid', 'displayName', 'playerDeviceId', 'status', 'requestedAt'])
+            && request.resource.data.uid == uid
+            && request.resource.data.displayName is string
+            && request.resource.data.displayName.size() >= 1
+            && request.resource.data.displayName.size() <= 32
+            && request.resource.data.playerDeviceId is string
+            && request.resource.data.playerDeviceId.size() <= 128
+            && request.resource.data.status == 'pending'
+            && request.resource.data.requestedAt == request.time
+          );
       }
 
       match /members/{uid} {
