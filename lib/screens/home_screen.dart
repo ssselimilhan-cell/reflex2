@@ -339,10 +339,10 @@ class _TopBar extends StatelessWidget {
                               if (rate != null) ...[
                                 const SizedBox(height: 3),
                                 Text(
-                                  'Kazanma %' + rate.round().toString(),
+                                  '${rate.round()}%',
                                   maxLines: 1,
                                   softWrap: false,
-                                  style: GameUi.display(11, color: GameUi.gold),
+                                  style: GameUi.display(13, color: GameUi.gold),
                                 ),
                               ],
                             ],
