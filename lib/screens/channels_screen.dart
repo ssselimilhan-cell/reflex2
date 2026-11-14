@@ -423,6 +423,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     final title = TextEditingController();
     final maxPlayersController = TextEditingController(text: '16');
     String format = 'swiss';
+    int startDelaySeconds = 5;
     final result = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDialogState) => AlertDialog(
         backgroundColor: const Color(0xFF1B293D),
@@ -435,6 +436,24 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
             leading: Icon(Icons.leaderboard_rounded, color: Color(0xFFFBBF24)),
             title: Text('İsviçre sistemi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
             subtitle: Text('Herkes tüm turlarda puan toplar. Tur sayısı kayıtlı oyuncu sayısına göre otomatik belirlenir.', style: TextStyle(color: Colors.white70)),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int>(
+            value: startDelaySeconds,
+            dropdownColor: const Color(0xFF25364C),
+            decoration: const InputDecoration(
+              labelText: 'Maç başlangıç geri sayımı',
+              labelStyle: TextStyle(color: Colors.white70),
+              helperText: 'Oyuncular otomatik yerleşir; onay gerekmez.',
+              helperStyle: TextStyle(color: Colors.white54),
+            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            items: const [5, 10, 15].map((seconds) => DropdownMenuItem(
+              value: seconds, child: Text('${seconds} saniye'),
+            )).toList(),
+            onChanged: (value) {
+              if (value != null) setDialogState(() => startDelaySeconds = value);
+            },
           ),
           TextField(
             controller: maxPlayersController,
@@ -491,6 +510,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       await _repo.createChannelTournament(
         channelId: widget.channelId, creatorDeviceId: widget.deviceId,
         title: cleanTitle, format: format, maxPlayers: maxPlayers,
+        startDelaySeconds: startDelaySeconds,
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Turnuva oluşturulamadı: ' + e.toString())));
@@ -1522,6 +1542,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
         tournamentChannelId: widget.channelId,
         tournamentId: widget.tournamentId,
         tournamentMatchId: matchId,
+        tournamentStartDelaySeconds: (match['startDelaySeconds'] as num?)?.toInt() ?? 5,
       );
       await _repo.linkTournamentMatchRoom(
         channelId: widget.channelId,
