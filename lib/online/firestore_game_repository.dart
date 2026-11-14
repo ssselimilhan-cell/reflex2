@@ -580,23 +580,32 @@ class OnlineRoomRepository {
     final uid = _requireChannelUid(deviceId);
     final tournament = _channels.doc(channelId).collection('tournaments').doc(tournamentId);
     final match = tournament.collection('matches').doc(matchId);
+    final room = _rooms.doc(roomCode);
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final tournamentSnap = await tx.get(tournament);
       final matchSnap = await tx.get(match);
-      if (!tournamentSnap.exists || !matchSnap.exists ||
+      final roomSnap = await tx.get(room);
+      if (!tournamentSnap.exists || !matchSnap.exists || !roomSnap.exists ||
           tournamentSnap.data()?['status'] != 'in_progress') {
         throw StateError('Turnuva maçı artık başlatılamıyor.');
       }
       final data = matchSnap.data()!;
+      final roomData = roomSnap.data()!;
       if (data['status'] != 'ready' || data['player1Uid'] != uid ||
-          data['player2Uid'] == null || data['roomCode'] != null) {
-        throw StateError('Bu maçı yalnızca ilk oyuncu, bir kez başlatabilir.');
+          data['player2Uid'] == null || data['roomCode'] != null ||
+          roomData['tournamentChannelId'] != channelId ||
+          roomData['tournamentId'] != tournamentId ||
+          roomData['tournamentMatchId'] != matchId ||
+          roomData['hostDeviceId'] != data['player1DeviceId']) {
+        throw StateError('Bu maçı yalnızca eşleşmedeki ilk oyuncu başlatabilir.');
       }
+      final deadline = Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 3)));
+      tx.update(room, {'expiresAt': deadline});
       tx.update(match, {
         'roomCode': roomCode,
         'roomCreatedBy': uid,
         'roomLinkedAt': FieldValue.serverTimestamp(),
-        'joinDeadline': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 3))),
+        'joinDeadline': deadline,
       });
     });
   }
@@ -870,12 +879,16 @@ class OnlineRoomRepository {
           if (result == null && deadline != null && !now.isBefore(deadline)) {
             final one = info[p1] is Map ? Map<String, dynamic>.from(info[p1] as Map) : const <String, dynamic>{};
             final two = info[p2] is Map ? Map<String, dynamic>.from(info[p2] as Map) : const <String, dynamic>{};
-            final roomOpen = room != null && room['roomStatus'] != 'cancelled';
-            final host = roomOpen && room['hostDeviceId'] == one['deviceId'] && room['hostLeftAt'] == null;
-            final guest = roomOpen && room['guestDeviceId'] == two['deviceId'] && room['guestLeftAt'] == null;
+            final host = room != null && room['hostDeviceId'] == one['deviceId'];
+            final guest = room != null && room['guestDeviceId'] == two['deviceId'];
+            final hostLeft = room?['hostLeftAt'] != null;
+            final guestLeft = room?['guestLeftAt'] != null;
             if (!host && !guest) result = 'both_absent';
             if (host && !guest) { winner = p1; result = 'player2_absent'; }
             if (!host && guest) { winner = p2; result = 'player1_absent'; }
+            if (host && guest && hostLeft && !guestLeft) { winner = p2; result = 'player1_left'; }
+            if (host && guest && guestLeft && !hostLeft) { winner = p1; result = 'player2_left'; }
+            if (host && guest && hostLeft && guestLeft) result = 'both_left';
           }
           if (result != null) {
             final p1Half = winner == p1 ? 2 : 0;
