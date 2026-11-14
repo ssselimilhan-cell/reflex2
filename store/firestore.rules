@@ -445,7 +445,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1ArrivedAt'])
             && resource.data.joinDeadline is timestamp
             && resource.data.joinDeadline > request.time
-            && request.resource.data.player1ArrivedAt == request.time;
+            && request.resource.data.get('player1ArrivedAt', null) is timestamp;
 
           allow update: if request.auth != null
             && request.auth.uid == resource.data.player2Uid
@@ -454,7 +454,7 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player2ArrivedAt'])
             && resource.data.joinDeadline is timestamp
             && resource.data.joinDeadline > request.time
-            && request.resource.data.player2ArrivedAt == request.time;
+            && request.resource.data.get('player2ArrivedAt', null) is timestamp;
 
           allow delete: if isChannelOwner(channelId);
         }
