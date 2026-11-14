@@ -1,5 +1,5 @@
 name: Flutter Testleri
-# [build-preview-apk] Final audited preview APK build
+# [build-preview-apk] Build from final rules audit checkpoint
 # [build-preview-apk] Full audit checkpoint for preview APK
 
 on:
