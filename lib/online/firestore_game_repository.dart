@@ -910,7 +910,7 @@ class OnlineRoomRepository {
       }
       if (data.isEmpty || data.any((m) => m['status'] != 'completed')) return;
       final hasAnyAttendee = data.any((m) =>
-          m['isBye'] != true && m['result'] != 'both_absent');
+          m['isBye'] != true && m['result'] != 'both_absent' && m['result'] != 'both_left');
       if (!hasAnyAttendee) {
         tx.update(tournament, {
           'status': 'cancelled',
