@@ -40,11 +40,7 @@ class StarShopScreen extends StatelessWidget {
   // Tema mağazası test süresince tüm yayınlanmış temaları 1 yıldızdan sunar.
   static const int _testThemePrice = 1;
 
-  static String _displayThemeName(String value) => switch (value) {
-    'Almanya' => 'Alman', 'Fransa' => 'Fransız', 'Rusya' => 'Rus',
-    'Hindistan' => 'Hint', 'Japonya' => 'Japon', 'Firavun' => 'Mısır',
-    _ => value,
-  };
+  static String _displayThemeName(String value) => value;
 
   // Temel koleksiyon uygulamayla birlikte gelir; Firestore boş veya çevrimdışı olsa da görünür.
   static const List<Map<String, dynamic>> _builtInCatalog = [
