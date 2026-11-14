@@ -268,7 +268,7 @@ class _LeaderboardShortcut extends StatelessWidget {
   );
 }
 
-/// Üst çubuk: solda profil hapı, sağda yıldız sayısı ve ayarlar.
+/// Üst çubuk: profil adı ve kazanma oranı, yıldız sayısı ve ayarlar.
 class _TopBar extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onSettings;
