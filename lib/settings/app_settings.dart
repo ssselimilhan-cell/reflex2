@@ -41,6 +41,7 @@ class AppSettings extends ChangeNotifier {
   CardFaceTheme cardTheme = CardFaceTheme.classic; // seçili temanın yerel görsel şablonu
   String selectedThemeId = 'builtin_classic'; // katalog kimliği; tema sayısından bağımsız
   String selectedThemeName = 'Klasik';
+  String? selectedThemeImageBase64;
   /// "Yardımlı mod" — açıkken aktif (eşleşen) kolonlar parlak çerçeyle
   /// vurgulanır; kapalıyken hamle mantığı aynı kalır ama vurgu
   /// gösterilmez (oyuncu eşleşmeyi kendi bulmalıdır). İki taraf için de
@@ -108,6 +109,7 @@ class AppSettings extends ChangeNotifier {
       }
       selectedThemeId = prefs.getString('selectedThemeId') ?? 'builtin_classic';
       selectedThemeName = prefs.getString('selectedThemeName') ?? 'Klasik';
+      selectedThemeImageBase64 = prefs.getString('selectedThemeImageBase64');
       final themeIndex = prefs.getInt('cardTheme');
       if (themeIndex != null &&
           themeIndex >= 0 &&
@@ -153,6 +155,11 @@ class AppSettings extends ChangeNotifier {
       await prefs.setInt('cardTheme', cardTheme.index);
       await prefs.setString('selectedThemeId', selectedThemeId);
       await prefs.setString('selectedThemeName', selectedThemeName);
+      if (selectedThemeImageBase64 == null || selectedThemeImageBase64!.isEmpty) {
+        await prefs.remove('selectedThemeImageBase64');
+      } else {
+        await prefs.setString('selectedThemeImageBase64', selectedThemeImageBase64!);
+      }
       await prefs.setBool('assistedMode', assistedMode);
       await prefs.setBool('soundEnabled', soundEnabled);
       await prefs.setBool('hapticsEnabled', hapticsEnabled);
@@ -195,14 +202,21 @@ class AppSettings extends ChangeNotifier {
     cardTheme = t;
     selectedThemeId = 'builtin_${t.name}';
     selectedThemeName = t == CardFaceTheme.fruit ? 'Meyve' : 'Klasik';
+    selectedThemeImageBase64 = null;
     notifyListeners();
     _persist();
   }
 
-  void setCatalogTheme({required String id, required String name, required CardFaceTheme visualStyle}) {
+  void setCatalogTheme({
+    required String id,
+    required String name,
+    required CardFaceTheme visualStyle,
+    String? imageBase64,
+  }) {
     selectedThemeId = id;
     selectedThemeName = name;
     cardTheme = visualStyle;
+    selectedThemeImageBase64 = imageBase64;
     notifyListeners();
     _persist();
   }
