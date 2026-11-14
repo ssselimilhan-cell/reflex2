@@ -953,37 +953,24 @@ class OnlineRoomRepository {
           final deadlineValue = m['joinDeadline'];
           final deadline = deadlineValue is Timestamp ? deadlineValue.toDate() : null;
           if (result == null && deadline != null && !now.isBefore(deadline)) {
-            final host = room != null && room['hostDeviceId'] == m['player1DeviceId'];
-            final guest = room != null && room['guestDeviceId'] == m['player2DeviceId'];
-            final hostLeft = room?['hostLeftAt'] != null;
-            final guestLeft = room?['guestLeftAt'] != null;
             if (room == null) {
-              final p1Arrived = m['player1ArrivedAt'] != null;
-              final p2Arrived = m['player2ArrivedAt'] != null;
-              if (!p1Arrived && !p2Arrived) result = 'both_absent';
-              if (p1Arrived && !p2Arrived) { winner = p1; result = 'player2_absent'; }
-              if (!p1Arrived && p2Arrived) { winner = p2; result = 'player1_absent'; }
-              if (p1Arrived && p2Arrived) result = 'room_not_started';
+              // Oda kurulmamışsa veya iki oyuncu da hamleye başlamamışsa puan yok.
+              result = 'both_absent';
             } else {
-              if (!host && !guest) result = 'both_absent';
-              if (host && !guest) { winner = p1; result = 'player2_absent'; }
-              if (!host && guest) { winner = p2; result = 'player1_absent'; }
-            }
-            if (host && guest && hostLeft && !guestLeft) { winner = p2; result = 'player1_left'; }
-            if (host && guest && guestLeft && !hostLeft) { winner = p1; result = 'player2_left'; }
-            if (host && guest && hostLeft && guestLeft) result = 'both_left';
-            // Süre sonunda oyun hâlâ sürüyorsa, son hamleyi yapan kazanır.
-            // Hiç hamle yoksa iki oyuncu da puan alamaz.
-            if (host && guest && result == null && gameStatus == 'playing') {
-              final moveCount = (room?['tournamentMoveCount'] as num?)?.toInt() ?? 0;
-              final lastMoveSide = room?['tournamentLastMoveSide'] as String?;
+              final moveCount = (room['tournamentMoveCount'] as num?)?.toInt() ?? 0;
+              final lastMoveSide = room['tournamentLastMoveSide'] as String?;
+              final hostLeft = room['hostLeftAt'] != null;
+              final guestLeft = room['guestLeftAt'] != null;
               if (moveCount > 0 && lastMoveSide == 'player1') {
                 winner = p1;
                 result = 'player2_no_reply';
               } else if (moveCount > 0 && lastMoveSide == 'player2') {
                 winner = p2;
                 result = 'player1_no_reply';
+              } else if (hostLeft && guestLeft) {
+                result = 'both_left';
               } else {
+                // Oyuncular gelmiş olsa bile hiç hamle yapılmadıysa puan verilmez.
                 result = 'room_not_started';
               }
             }
