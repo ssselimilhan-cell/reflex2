@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import '../settings/app_settings.dart';
 import '../settings/auth_service.dart';
@@ -115,6 +118,46 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     return 'Görsel şablon';
   }
 
+  Future<Uint8List?> _pickArtwork() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 720,
+      maxHeight: 1080,
+      imageQuality: 68,
+    );
+    if (picked == null) return null;
+    final bytes = await picked.readAsBytes();
+    // Görsel ayrı Firestore belgesinde tutulur; 420 KB sınırı belge ve
+    // base64 büyümesi nedeniyle güvenli pay bırakır. Storage/ücret gerekmez.
+    if (bytes.lengthInBytes > 420 * 1024) {
+      _message('Görsel sıkıştırıldıktan sonra 420 KB altında olmalı. Daha küçük bir görsel seç.');
+      return null;
+    }
+    return bytes;
+  }
+
+  Widget _artworkPreview(Uint8List? bytes, String? existingBase64) {
+    if (bytes != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(bytes, height: 112, width: double.infinity, fit: BoxFit.contain),
+      );
+    }
+    if (existingBase64 != null && existingBase64.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(base64Decode(existingBase64), height: 112, width: double.infinity, fit: BoxFit.contain),
+      );
+    }
+    return Container(
+      height: 74,
+      width: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: Colors.white.withOpacity(.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white24)),
+      child: const Text('Henüz özel görsel seçilmedi', style: TextStyle(color: Colors.white60)),
+    );
+  }
+
   Future<void> _addTheme(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) async {
     // Görsel şablonlar tekrar kullanılabilir; katalogda tema adedi sınırsızdır.
     final available = <int>[3, 4, 5, 10, 11, 12, 13, 14, 15];
@@ -123,6 +166,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
     final description = TextEditingController();
     final price = TextEditingController();
     final sortOrder = TextEditingController(text: '100');
+    Uint8List? artworkBytes;
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -134,11 +178,23 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
               DropdownButtonFormField<int>(
                 value: selected,
                 dropdownColor: const Color(0xFF17243A),
-                decoration: const InputDecoration(labelText: 'Görsel şablon', labelStyle: TextStyle(color: Colors.white70)),
+                decoration: const InputDecoration(labelText: 'Kart sembol şablonu (özel görsel de yükleyebilirsin)', labelStyle: TextStyle(color: Colors.white70)),
                 items: available.map((i) => DropdownMenuItem(value: i, child: Text(_templateName(i), style: const TextStyle(color: Colors.white)))).toList(),
                 onChanged: (value) { if (value != null) setDialogState(() => selected = value); },
               ),
-              TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Mağazada gösterilecek ad', labelStyle: TextStyle(color: Colors.white70))),
+              TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tema adı (serbestçe yazabilirsin)', labelStyle: TextStyle(color: Colors.white70))),
+              const SizedBox(height: 10),
+              _artworkPreview(artworkBytes, null),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final bytes = await _pickArtwork();
+                  if (bytes != null) setDialogState(() => artworkBytes = bytes);
+                },
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Tema görseli yükle'),
+                style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold, side: const BorderSide(color: GameUi.gold)),
+              ),
               TextField(controller: description, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Açıklama', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: price, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Yıldız fiyatı', hintText: 'Boş bırak: taslak', hintStyle: TextStyle(color: Colors.white38), labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: sortOrder, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Mağaza sırası', labelStyle: TextStyle(color: Colors.white70))),
@@ -161,15 +217,28 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
       'visualStyleIndex': selected,
       'name': cleanName,
       'description': description.text.trim(),
+      'hasCustomImage': artworkBytes != null,
       'priceStars': parsedPrice != null && parsedPrice > 0 ? parsedPrice : null,
       'isPublished': false,
       'sortOrder': int.tryParse(sortOrder.text.trim()) ?? 100,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    if (artworkBytes != null) {
+      await doc.collection('assets').doc('card_art').set({
+        'base64': base64Encode(artworkBytes!),
+        'contentType': 'image/jpeg',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   Future<void> _edit(DocumentSnapshot<Map<String, dynamic>> doc) async {
     final data = doc.data() ?? {};
+    final artworkRef = doc.reference.collection('assets').doc('card_art');
+    final artworkSnapshot = await artworkRef.get();
+    final existingArtwork = artworkSnapshot.data()?['base64'] as String?;
+    Uint8List? artworkBytes;
+    var removeArtwork = false;
     final name = TextEditingController(text: _displayThemeName(data['name'] as String? ?? ''));
     final description = TextEditingController(text: data['description'] as String? ?? '');
     final price = TextEditingController(text: data['priceStars']?.toString() ?? '');
@@ -192,7 +261,32 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
                 items: availableStyles.map((i) => DropdownMenuItem(value: i, child: Text(_templateName(i), style: const TextStyle(color: Colors.white)))).toList(),
                 onChanged: (value) { if (value != null) setDialogState(() => selectedStyle = value); },
               ),
-              TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tema adı', labelStyle: TextStyle(color: Colors.white70))),
+              TextField(controller: name, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tema adı (serbest metin)', labelStyle: TextStyle(color: Colors.white70))),
+              const SizedBox(height: 10),
+              _artworkPreview(artworkBytes, removeArtwork ? null : existingArtwork),
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final bytes = await _pickArtwork();
+                      if (bytes != null) setDialogState(() { artworkBytes = bytes; removeArtwork = false; });
+                    },
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Görsel seç/değiştir'),
+                    style: OutlinedButton.styleFrom(foregroundColor: GameUi.gold),
+                  ),
+                  if (existingArtwork != null || artworkBytes != null)
+                    TextButton.icon(
+                      onPressed: () => setDialogState(() { artworkBytes = null; removeArtwork = true; }),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Görseli kaldır'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                    ),
+                ],
+              ),
               TextField(controller: description, maxLines: 3, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Açıklama', labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: price, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Yıldız fiyatı', hintText: 'Boş bırak: satışa kapalı', hintStyle: TextStyle(color: Colors.white38), labelStyle: TextStyle(color: Colors.white70))),
               TextField(controller: sortOrder, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Mağaza sırası', helperText: 'Küçük sayı önce gösterilir', helperStyle: TextStyle(color: Colors.white54), labelStyle: TextStyle(color: Colors.white70))),
@@ -219,11 +313,21 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
       'description': description.text.trim(),
       'visualStyleIndex': selectedStyle,
       'themeIndex': selectedStyle,
+      'hasCustomImage': artworkBytes != null || (!removeArtwork && existingArtwork != null),
       'priceStars': validPrice ? parsedPrice : null,
       'isPublished': published && validPrice && name.text.trim().isNotEmpty,
       'sortOrder': int.tryParse(sortOrder.text.trim()) ?? (data['sortOrder'] as int? ?? 0),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    if (artworkBytes != null) {
+      await artworkRef.set({
+        'base64': base64Encode(artworkBytes!),
+        'contentType': 'image/jpeg',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else if (removeArtwork) {
+      await artworkRef.delete();
+    }
   }
 
   Future<void> _remove(DocumentSnapshot<Map<String, dynamic>> doc) async {
