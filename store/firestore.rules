@@ -436,7 +436,7 @@ service cloud.firestore {
             && resource.data.status == 'completed'
             && request.resource.data.status == 'completed'
             && resource.data.get('scoreApplied', false) != true
-            && request.resource.data.scoreApplied == true
+            && request.resource.data.get('scoreApplied', false) == true
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['scoreApplied']));
           allow update: if request.auth != null
             && request.auth.uid == resource.data.player1Uid
