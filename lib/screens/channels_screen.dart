@@ -1422,6 +1422,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   bool _busy = false;
   bool _isCreator = false;
   Timer? _reconcileTimer;
+  final Set<String> _openingMatches = <String>{};
+  final Set<String> _joiningMatches = <String>{};
 
   @override
   void initState() {
@@ -1498,6 +1500,31 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
       );
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+
+  Future<void> _joinTournamentMatch(String matchId, String roomCode) async {
+    if (!_joiningMatches.add(matchId)) return;
+    try {
+      final profile = UserProfile.instance;
+      final joined = await _repo.joinRoom(roomCode, widget.playerDeviceId,
+        guestDisplayName: profile.hasProfile ? profile.displayName : 'Oyuncu',
+        guestWinRate: profile.hasProfile ? profile.onlineWinRate : null,
+        guestAvatarIconIndex: profile.hasProfile ? profile.avatarIconIndex : null,
+        guestAvatarColorValue: profile.hasProfile ? profile.avatarColor.value : null,
+        guestPhotoBase64: profile.hasProfile ? profile.photoBase64 : null,
+      );
+      final snap = await _repo.getRoomFromServer(roomCode);
+      if (!mounted || !snap.exists) return;
+      if (!joined && snap.data()?['guestDeviceId'] != widget.playerDeviceId) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => OnlineGameScreen(
+        roomCode: roomCode, deviceId: widget.playerDeviceId, isHost: false, isTournamentMatch: true,
+      )));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Turnuva maçına katılınamadı: $e')));
+    } finally {
+      _joiningMatches.remove(matchId);
     }
   }
 
@@ -1778,7 +1805,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                                 final isPlayer1 = data['player1Uid'] == widget.deviceId;
                                 final isPlayer2 = data['player2Uid'] == widget.deviceId;
                                 final canReturnToRoom = winnerUid == null &&
-                                    ((isPlayer1 && room?['hostDeviceId'] == widget.deviceId) ||
+                                    ((isPlayer1 && room?['hostDeviceId'] == widget.playerDeviceId) ||
                                      (isPlayer2 && room?['guestDeviceId'] == widget.playerDeviceId));
                                 if (canReturnToRoom) {
                                   final myRoomDeviceId = isPlayer1
