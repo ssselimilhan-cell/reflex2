@@ -13,6 +13,30 @@ import 'admin_theme_screen.dart';
 class StarShopScreen extends StatelessWidget {
   const StarShopScreen({super.key});
 
+  Widget _themeCardPreview(CardFaceTheme theme, String? artwork) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CardWidget(
+          card: const PlayingCard(Suit.hearts, 7),
+          themeOverride: theme,
+          themeImageBase64: artwork,
+          width: 62,
+          height: 90,
+        ),
+        const SizedBox(width: 7),
+        CardWidget(
+          card: const PlayingCard(Suit.spades, 12),
+          faceDown: true,
+          themeOverride: theme,
+          themeImageBase64: artwork,
+          width: 62,
+          height: 90,
+        ),
+      ],
+    );
+  }
+
   // Tema mağazası test süresince tüm yayınlanmış temaları 1 yıldızdan sunar.
   static const int _testThemePrice = 1;
 
@@ -110,17 +134,50 @@ class StarShopScreen extends StatelessWidget {
                           boxShadow:[if(equipped) BoxShadow(color:const Color(0xFFFFC928).withOpacity(.55),blurRadius:22,spreadRadius:2),BoxShadow(color:Colors.black.withOpacity(.16),blurRadius:10,offset:const Offset(0,4))]),
                         child:Column(children:[
                           if(equipped) const Align(alignment:Alignment.topRight,child:Padding(padding:EdgeInsets.only(bottom:2),child:Row(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.verified_rounded,color:Color(0xFFFFD54A),size:15),SizedBox(width:4),Text('SEÇİLİ TEMA',style:TextStyle(color:Color(0xFFFFD54A),fontSize:10,fontWeight:FontWeight.w900,letterSpacing:.6))]))),
-                          Expanded(child:Center(child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-                            CardWidget(card:const PlayingCard(Suit.hearts,7),themeOverride:theme,width:62,height:90),
-                            const SizedBox(width:7),
-                            CardWidget(card:const PlayingCard(Suit.spades,12),faceDown:true,themeOverride:theme,width:62,height:90),
-                          ]))),
+                          Expanded(
+                            child: Center(
+                              child: data['hasCustomImage'] == true
+                                  ? FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                                      future: FirebaseFirestore.instance
+                                          .collection('cosmetic_catalog')
+                                          .doc(id)
+                                          .collection('assets')
+                                          .doc('card_art')
+                                          .get(),
+                                      builder: (context, artworkSnapshot) {
+                                        final artwork = artworkSnapshot.data?.data()?['base64'] as String?;
+                                        return _themeCardPreview(theme, artwork);
+                                      },
+                                    )
+                                  : _themeCardPreview(theme, null),
+                            ),
+                          ),
                           const SizedBox(height:8),
                           Text(name,maxLines:2,softWrap:true,overflow:TextOverflow.visible,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:15,height:1.15)),
                           if((data['description'] as String? ?? '').isNotEmpty) Padding(padding:const EdgeInsets.only(top:3),child:Text(data['description'] as String,maxLines:3,softWrap:true,overflow:TextOverflow.visible,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:11,height:1.2))),
                           const SizedBox(height:8),
                           SizedBox(width:double.infinity,height:36,child:owned
-                            ? OutlinedButton(onPressed:equipped?null:()=>AppSettings.instance.setCatalogTheme(id:id,name:name,visualStyle:theme),
+                            ? OutlinedButton(
+                                onPressed: equipped ? null : () async {
+                                  String? artwork;
+                                  if (data['hasCustomImage'] == true) {
+                                    final imageDoc = await FirebaseFirestore.instance
+                                        .collection('cosmetic_catalog')
+                                        .doc(id)
+                                        .collection('assets')
+                                        .doc('card_art')
+                                        .get();
+                                    artwork = imageDoc.data()?['base64'] as String?;
+                                  }
+                                  if (context.mounted) {
+                                    AppSettings.instance.setCatalogTheme(
+                                      id: id,
+                                      name: name,
+                                      visualStyle: theme,
+                                      imageBase64: artwork,
+                                    );
+                                  }
+                                },
                                 style:OutlinedButton.styleFrom(foregroundColor:GameUi.gold,side:const BorderSide(color:GameUi.gold)),
                                 child:GameUi.fitLabel(equipped?'Kullanılıyor':t('star_shop_equip'),style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900),maxLines:2))
                             : FilledButton(onPressed:progress.stars>=price?(){
