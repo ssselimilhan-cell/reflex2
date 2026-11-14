@@ -286,7 +286,12 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> with WidgetsBindi
                     icon: const Icon(Icons.send),
                     label: Text(t('send_invite')),
                     style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                      backgroundColor: const Color(0xFFFBBF24),
+                      foregroundColor: const Color(0xFF101827),
+                      disabledBackgroundColor: const Color(0xFFB58A2B),
+                      disabledForegroundColor: const Color(0xFF26313A),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
