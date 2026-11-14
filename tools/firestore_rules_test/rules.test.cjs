@@ -359,7 +359,7 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(startBatch.commit());
 
   await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR1'), {
-    hostDeviceId: 'owner-a',
+    hostDeviceId: 'device-owner-a',
     guestDeviceId: null,
     inviteToDeviceId: 'device-player-b',
     roomStatus: 'waiting',
