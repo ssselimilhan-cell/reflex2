@@ -440,11 +440,8 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['scoreApplied']));
           allow update: if request.auth != null
             && request.auth.uid == resource.data.player1Uid
-            && resource.data.status == 'ready'
-            && request.resource.data.status == 'ready'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1ArrivedAt'])
-            && resource.data.joinDeadline is timestamp
-            && resource.data.joinDeadline > request.time
+            && request.resource.data.keys().hasAll(['player1ArrivedAt'])
             && request.resource.data.get('player1ArrivedAt', null) is timestamp;
 
           allow update: if request.auth != null
