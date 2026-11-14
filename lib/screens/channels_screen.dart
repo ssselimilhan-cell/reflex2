@@ -1428,6 +1428,7 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   final Set<String> _openingMatches = <String>{};
   final Set<String> _joiningMatches = <String>{};
   final Set<String> _joinedMatches = <String>{};
+  final Set<String> _arrivedMatches = <String>{};
 
   @override
   void initState() { super.initState(); }
@@ -1779,6 +1780,25 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                   _scheduleSwissDeadline(matches);
                   for (final matchDoc in matches) {
                     final matchData = matchDoc.data();
+                    final isAssignedPlayer = matchData['player1Uid'] == widget.deviceId ||
+                        matchData['player2Uid'] == widget.deviceId;
+                    if (matchData['status'] == 'ready' &&
+                        isAssignedPlayer &&
+                        matchData[matchData['player1Uid'] == widget.deviceId
+                            ? 'player1ArrivedAt' : 'player2ArrivedAt'] == null &&
+                        _arrivedMatches.add(matchDoc.id)) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        _repo.markTournamentMatchArrived(
+                          channelId: widget.channelId,
+                          tournamentId: widget.tournamentId,
+                          matchId: matchDoc.id,
+                          deviceId: widget.deviceId,
+                        ).catchError((_) {
+                          _arrivedMatches.remove(matchDoc.id);
+                        });
+                      });
+                    }
                     if (matchData['status'] == 'ready' &&
                         matchData['roomCode'] == null &&
                         matchData['player1Uid'] == widget.deviceId &&
