@@ -706,7 +706,6 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
       }
       await _repo.closeInvite(inviteId);
       if (!mounted) return;
-      _routedMatches.add(matchId);
       await Navigator.push(context, MaterialPageRoute(builder: (_) =>
         OnlineGameScreen(
           roomCode: code,
