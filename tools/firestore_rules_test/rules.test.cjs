@@ -268,6 +268,20 @@ test('invite-only channel join requests require owner approval before membership
   });
   await assertSucceeds(approval.commit());
   await assertSucceeds(getDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
+
+  // A player who was approved and later leaves must be able to request access again.
+  await assertSucceeds(deleteDoc(doc(playerDb, 'channels/request-channel/members/player-c')));
+  await assertSucceeds(setDoc(requestRef, {
+    uid: 'player-c',
+    displayName: 'Player C',
+    playerDeviceId: 'device-player-c',
+    status: 'pending',
+    requestedAt: serverTimestamp(),
+  }));
+  const renewedRequest = await assertSucceeds(getDoc(requestRef));
+  if (renewedRequest.data()?.status !== 'pending') {
+    throw new Error('A resolved request must return to pending when the player requests again.');
+  }
 });
 
 test('guest clients may check an exact nickname but cannot enumerate account names', async () => {
