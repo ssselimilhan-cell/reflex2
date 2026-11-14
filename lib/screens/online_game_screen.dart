@@ -173,9 +173,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         backgroundColor: const Color(0xFF1B293D),
         title: const Text('Odadan ayrıl?', style: TextStyle(color: Colors.white)),
         content: Text(
-          widget.isHost
-              ? 'Odadan ayrılırsan bu masa iptal edilir ve davet kodu geçersiz olur.'
-              : 'Odadan ayrılırsan masadan çıkarsın. Oyun başlamadıysa masa yeniden beklemeye açılır.',
+          widget.isTournamentMatch
+              ? 'Maçtan ayrılacaksın. Oda, eşleşmiş iki oyuncu da ayrıldığında kapanır.'
+              : widget.isHost
+                  ? 'Odadan ayrılırsan bu masa iptal edilir ve davet kodu geçersiz olur.'
+                  : 'Odadan ayrılırsan masadan çıkarsın. Oyun başlamadıysa masa yeniden beklemeye açılır.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
