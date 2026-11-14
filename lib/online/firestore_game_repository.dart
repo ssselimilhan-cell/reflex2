@@ -863,7 +863,7 @@ class OnlineRoomRepository {
           if (result == null && deadline != null && !now.isBefore(deadline)) {
             final one = info[p1] is Map ? Map<String, dynamic>.from(info[p1] as Map) : const <String, dynamic>{};
             final two = info[p2] is Map ? Map<String, dynamic>.from(info[p2] as Map) : const <String, dynamic>{};
-            final roomOpen = room != null && !['cancelled', 'finished'].contains(room['roomStatus']);
+            final roomOpen = room != null && room['roomStatus'] != 'cancelled';
             final host = roomOpen && room!['hostDeviceId'] == one['deviceId'] && room['hostLeftAt'] == null;
             final guest = roomOpen && room!['guestDeviceId'] == two['deviceId'] && room['guestLeftAt'] == null;
             if (!host && !guest) result = 'both_absent';
@@ -916,7 +916,7 @@ class OnlineRoomRepository {
         String? last;
         for (var i = 0; i < ordered.length; i++) {
           final player = ordered[i];
-          final standing = '\${scores[player]}:\${swissBuchholz(player, scores, opponents)}';
+          final standing = '${scores[player]}:${swissBuchholz(player, scores, opponents)}';
           if (standing != last) rank = i + 1;
           if (rank <= 3) placements[player] = {
             'rank': rank, 'pointsHalf': scores[player],
@@ -956,7 +956,7 @@ class OnlineRoomRepository {
         }
         final one = Map<String, dynamic>.from(info[a.uid] as Map);
         final two = b == null ? null : Map<String, dynamic>.from(info[b.uid] as Map);
-        tx.set(tournament.collection('matches').doc('r\${round + 1}_m$index'), {
+        tx.set(tournament.collection('matches').doc('r${round + 1}_m$index'), {
           'round': round + 1, 'matchIndex': index,
           'player1Uid': a.uid, 'player1DeviceId': one['deviceId'], 'player1Name': a.name,
           'player2Uid': b?.uid, 'player2DeviceId': two?['deviceId'], 'player2Name': b?.name,
