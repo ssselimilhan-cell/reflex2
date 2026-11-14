@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/playing_card.dart';
 import '../settings/app_settings.dart';
@@ -43,6 +44,8 @@ class CardWidget extends StatefulWidget {
   /// Verilirse, AppSettings'teki kayıtlı tema yerine bunu kullanır —
   /// ayarlar ekranında "henüz kaydedilmemiş" bir temayı önizlemek için.
   final CardFaceTheme? themeOverride;
+  /// Katalogdan seçilen özel kart görseli (base64 JPEG/PNG).
+  final String? themeImageBase64;
   /// null: geliş animasyonu yok (ör. ayarlar ekranındaki örnek kart).
   /// true: bu kolon "yukarıdaki" satırda — kart yukarıdan gelir gibi
   /// hafifçe kayarak belirir. false: "aşağıdaki" satırda — aşağıdan gelir.
@@ -59,6 +62,7 @@ class CardWidget extends StatefulWidget {
     this.width = 64,
     this.height = 92,
     this.themeOverride,
+    this.themeImageBase64,
     this.fromAbove,
   });
 
@@ -117,6 +121,12 @@ class _CardWidgetState extends State<CardWidget>
     _arrivalController.dispose();
     super.dispose();
   }
+
+  String? get _customArtworkBase64 =>
+      widget.themeImageBase64 ??
+      (widget.themeOverride == null
+          ? AppSettings.instance.selectedThemeImageBase64
+          : null);
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +235,14 @@ class _CardWidgetState extends State<CardWidget>
             child: Stack(
               fit: StackFit.expand,
               children: [
+                if (_customArtworkBase64 != null && _customArtworkBase64!.isNotEmpty)
+                  Positioned.fill(
+                    child: Image.memory(
+                      base64Decode(_customArtworkBase64!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
                 CustomPaint(painter: _CardBackPatternPainter(theme: theme)),
                 Center(
                   child: Container(
@@ -347,6 +365,20 @@ class _CardWidgetState extends State<CardWidget>
 
   Widget _buildCenterSymbol(
       PlayingCard c, Color color, double size, CardFaceTheme theme) {
+    final artwork = _customArtworkBase64;
+    if (artwork != null && artwork.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.18),
+        child: Image.memory(
+          base64Decode(artwork),
+          width: size * 1.35,
+          height: size * 1.35,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Text(c.suitSymbol,
+            style: TextStyle(color: color, fontSize: size)),
+        ),
+      );
+    }
     if (theme == CardFaceTheme.classic) {
       return Text(c.suitSymbol, style: TextStyle(
         color: color, fontSize: size,
