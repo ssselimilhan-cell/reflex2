@@ -16,6 +16,14 @@ service cloud.firestore {
     match /cosmetic_catalog/{itemId} {
       allow read: if isShopAdmin() || resource.data.isPublished == true;
       allow create, update, delete: if isShopAdmin();
+
+      // Uploaded theme artwork is kept in a separate document so the
+      // catalog query does not download image bytes for every store item.
+      match /assets/{assetId} {
+        allow read: if isShopAdmin()
+          || get(/databases/$(database)/documents/cosmetic_catalog/$(itemId)).data.isPublished == true;
+        allow create, update, delete: if isShopAdmin();
+      }
     }
 
     // Account-owned cloud progress; each user can access only their own data.
