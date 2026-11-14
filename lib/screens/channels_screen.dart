@@ -506,11 +506,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     );
   }
 
-  Future<void> _startTournament(
-    String id, {
-    required String title,
-    required int participantCount,
-  }) async {
+  Future<void> _startTournament(String id) async {
     if (!_startingTournamentIds.add(id)) return;
     if (mounted) setState(() {});
     try {
