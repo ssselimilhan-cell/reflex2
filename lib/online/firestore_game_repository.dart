@@ -1311,7 +1311,9 @@ class OnlineRoomRepository {
         throw StateError('Bu kanal şu anda katılma talebi kabul etmiyor.');
       }
       if (memberSnap.exists) throw StateError('Zaten bu kanalın üyesisin.');
-      if (requestSnap.exists) return; // One active request per user.
+      // Keep an outstanding request unique, but allow a player to request again
+      // after a previous request was accepted or rejected (including after leaving).
+      if (requestSnap.exists && requestSnap.data()?['status'] == 'pending') return;
       tx.set(request, {
         'uid': uid,
         'displayName': displayName.trim().isEmpty ? 'Oyuncu' : displayName.trim(),
