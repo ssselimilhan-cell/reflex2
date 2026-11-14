@@ -568,6 +568,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                 if (widget.isTournamentMatch || _currentRoomStatus == 'waiting') {
                   // Tournament rooms remain linked to the bracket; back returns
                   // to the match list instead of cancelling the shared room.
+                  // Swiss match countdown and result closure are handled automatically.
                   _minimizeRoom();
                 } else {
                   _confirmLeaveRoom();
