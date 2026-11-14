@@ -972,6 +972,21 @@ class OnlineRoomRepository {
             if (host && guest && hostLeft && !guestLeft) { winner = p2; result = 'player1_left'; }
             if (host && guest && guestLeft && !hostLeft) { winner = p1; result = 'player2_left'; }
             if (host && guest && hostLeft && guestLeft) result = 'both_left';
+            // Süre sonunda oyun hâlâ sürüyorsa, son hamleyi yapan kazanır.
+            // Hiç hamle yoksa iki oyuncu da puan alamaz.
+            if (host && guest && result == null && gameStatus == 'playing') {
+              final moveCount = (room?['tournamentMoveCount'] as num?)?.toInt() ?? 0;
+              final lastMoveSide = room?['tournamentLastMoveSide'] as String?;
+              if (moveCount > 0 && lastMoveSide == 'player1') {
+                winner = p1;
+                result = 'player2_no_reply';
+              } else if (moveCount > 0 && lastMoveSide == 'player2') {
+                winner = p2;
+                result = 'player1_no_reply';
+              } else {
+                result = 'room_not_started';
+              }
+            }
           }
           if (result != null) {
             final p1Half = winner == p1 ? 2 : 0;
@@ -1074,6 +1089,7 @@ class OnlineRoomRepository {
           'status': pairing.isBye ? 'completed' : 'ready',
           'isBye': pairing.isBye, 'pointsAwarded': pairing.isBye ? 2 : 0,
           'scoreApplied': pairing.isBye,
+          'startDelaySeconds': (t['startDelaySeconds'] as num?)?.toInt() ?? 5,
           'joinDeadline': Timestamp.fromDate(now.add(const Duration(minutes: 5))),
           'createdAt': FieldValue.serverTimestamp(),
         });
