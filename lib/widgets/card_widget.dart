@@ -566,7 +566,7 @@ class _CivilizationEmblemPainter extends CustomPainter {
       ..lineTo(c.dx+r*.14,c.dy-r*.12)..lineTo(c.dx+r*.42,c.dy-r*.45)
       ..lineTo(c.dx+r*.54,c.dy+r*.02)..close();
     canvas.drawPath(crown,fill); canvas.drawPath(crown,line);
-    for(final x in [-.42,0.0,.42]) canvas.drawCircle(Offset(c.dx+r*x,c.dy-r*(x==0?.58:.45)),r*.055,Paint()..color=gold);
+    for(final x in [-.42,0.0,.42]) canvas.drawCircle(Offset(c.dx+r*x,c.dy-r*(x == 0 ? .58 : .45)),r*.055,Paint()..color=gold);
     canvas.drawCircle(Offset(c.dx,c.dy-r*.03),r*.10,Paint()..color=gold);
   }
 
