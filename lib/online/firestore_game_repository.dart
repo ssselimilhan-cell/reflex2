@@ -648,6 +648,7 @@ class OnlineRoomRepository {
         'roomCode': FieldValue.delete(),
         'roomCreatedBy': FieldValue.delete(),
         'roomLinkedAt': FieldValue.delete(),
+        'joinDeadline': FieldValue.delete(),
       });
     });
   }
