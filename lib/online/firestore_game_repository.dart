@@ -864,8 +864,8 @@ class OnlineRoomRepository {
             final one = info[p1] is Map ? Map<String, dynamic>.from(info[p1] as Map) : const <String, dynamic>{};
             final two = info[p2] is Map ? Map<String, dynamic>.from(info[p2] as Map) : const <String, dynamic>{};
             final roomOpen = room != null && !['cancelled', 'finished'].contains(room['roomStatus']);
-            final host = roomOpen && room!['hostDeviceId'] == one['deviceId'];
-            final guest = roomOpen && room!['guestDeviceId'] == two['deviceId'];
+            final host = roomOpen && room!['hostDeviceId'] == one['deviceId'] && room['hostLeftAt'] == null;
+            final guest = roomOpen && room!['guestDeviceId'] == two['deviceId'] && room['guestLeftAt'] == null;
             if (!host && !guest) result = 'both_absent';
             if (host && !guest) { winner = p1; result = 'player2_absent'; }
             if (!host && guest) { winner = p2; result = 'player1_absent'; }

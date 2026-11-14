@@ -385,10 +385,11 @@ service cloud.firestore {
               && resource.data.status == 'ready'
               && request.resource.data.status == 'ready'
               && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt'])
+                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt', 'joinDeadline'])
               && !('roomCode' in request.resource.data)
               && !('roomCreatedBy' in request.resource.data)
               && !('roomLinkedAt' in request.resource.data)
+              && !('joinDeadline' in request.resource.data)
               && resource.data.roomCode is string
               && (!exists(/databases/$(database)/documents/rooms/$(resource.data.roomCode))
                 || (get(/databases/$(database)/documents/rooms/$(resource.data.roomCode)).data.roomStatus == 'cancelled'
