@@ -28,13 +28,26 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.resource.data.roomStatus == 'waiting'
                     && request.resource.data.hostDeviceId is string;
-      allow update: if request.resource.data.hostDeviceId == resource.data.hostDeviceId
+      allow update: if (
+        request.resource.data.hostDeviceId == resource.data.hostDeviceId
         && (!('tournamentMatchId' in resource.data)
           || request.resource.data.guestDeviceId == resource.data.guestDeviceId
           || (request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
             && request.auth != null
             && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)/tournaments/$(resource.data.tournamentId)/matches/$(resource.data.tournamentMatchId)).data.player2Uid == request.auth.uid)
-          || request.resource.data.guestDeviceId == null);
+          || request.resource.data.guestDeviceId == null)
+      ) || (
+        request.auth != null
+        && resource.data.tournamentChannelId is string
+        && resource.data.tournamentId is string
+        && resource.data.tournamentMatchId is string
+        && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)).data.ownerDeviceId == request.auth.uid
+        && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)/tournaments/$(resource.data.tournamentId)/matches/$(resource.data.tournamentMatchId)).data.status == 'ready'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roomStatus', 'expiresAt', 'tournamentResultClosedAt'])
+        && request.resource.data.roomStatus == 'finished'
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.tournamentResultClosedAt == request.time
+      );
       allow delete: if false;
 
 
