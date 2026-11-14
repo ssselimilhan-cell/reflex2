@@ -605,6 +605,8 @@ class OnlineRoomRepository {
         'roomCode': roomCode,
         'roomCreatedBy': uid,
         'roomLinkedAt': FieldValue.serverTimestamp(),
+        'player1DeviceId': roomData['hostDeviceId'],
+        'player2DeviceId': roomData['inviteToDeviceId'],
         'joinDeadline': deadline,
       });
     });
@@ -877,10 +879,8 @@ class OnlineRoomRepository {
           final deadlineValue = m['joinDeadline'];
           final deadline = deadlineValue is Timestamp ? deadlineValue.toDate() : null;
           if (result == null && deadline != null && !now.isBefore(deadline)) {
-            final one = info[p1] is Map ? Map<String, dynamic>.from(info[p1] as Map) : const <String, dynamic>{};
-            final two = info[p2] is Map ? Map<String, dynamic>.from(info[p2] as Map) : const <String, dynamic>{};
-            final host = room != null && room['hostDeviceId'] == one['deviceId'];
-            final guest = room != null && room['guestDeviceId'] == two['deviceId'];
+            final host = room != null && room['hostDeviceId'] == m['player1DeviceId'];
+            final guest = room != null && room['guestDeviceId'] == m['player2DeviceId'];
             final hostLeft = room?['hostLeftAt'] != null;
             final guestLeft = room?['guestLeftAt'] != null;
             if (!host && !guest) result = 'both_absent';

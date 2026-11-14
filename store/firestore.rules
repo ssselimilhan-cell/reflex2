@@ -370,7 +370,7 @@ service cloud.firestore {
               && resource.data.status == 'ready'
               && request.resource.data.status == 'ready'
               && request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt', 'joinDeadline'])
+                .hasOnly(['roomCode', 'roomCreatedBy', 'roomLinkedAt', 'joinDeadline', 'player1DeviceId', 'player2DeviceId'])
               && request.resource.data.roomCreatedBy == request.auth.uid
               && request.resource.data.roomCode is string
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId == get(/databases/$(database)/documents/channels/$(channelId)/members/$(resource.data.player1Uid)).data.playerDeviceId

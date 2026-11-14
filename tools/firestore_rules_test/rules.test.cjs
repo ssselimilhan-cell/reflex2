@@ -385,6 +385,8 @@ test('private tournament data is member-only and members can only register thems
     roomCode: 'TOUR1',
     roomCreatedBy: 'owner-a',
     roomLinkedAt: serverTimestamp(),
+    player1DeviceId: 'device-owner-a',
+    player2DeviceId: 'device-player-b',
   }));
 
   await assertSucceeds(updateDoc(doc(ownerDb, 'rooms/TOUR1'), {
