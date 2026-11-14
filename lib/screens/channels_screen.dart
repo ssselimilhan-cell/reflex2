@@ -989,9 +989,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
                             if (status == 'registration' && isCreator)
                               IconButton(
                                 onPressed: _startingTournamentIds.contains(doc.id)
-                                    ? null : () => _startTournament(doc.id,
-                                        title: data['title'] as String? ?? 'Turnuva',
-                                        participantCount: participants.length),
+                                    ? null : () => _startTournament(doc.id),
                                 tooltip: 'Turnuvayı başlat',
                                 icon: _startingTournamentIds.contains(doc.id)
                                     ? const SizedBox(
