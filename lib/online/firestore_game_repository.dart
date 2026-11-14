@@ -397,7 +397,7 @@ class OnlineRoomRepository {
         final retentionDays = data['tournamentMatchId'] is String ? 30 : 1;
         tx.update(ref, {
           'roomStatus': gameFinished ? 'finished' : 'cancelled',
-          if (gameFinished) 'hostLeftAt': FieldValue.serverTimestamp(),
+          'hostLeftAt': FieldValue.serverTimestamp(),
           if (!gameFinished) 'cancelledBy': deviceId,
           if (!gameFinished) 'cancelledAt': FieldValue.serverTimestamp(),
           'startRequestedBy': null,
