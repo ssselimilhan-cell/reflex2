@@ -1454,8 +1454,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
   @override
   void initState() {
     super.initState();
-    // Son hamleden sonraki cevapsızlık süresini de takip et; ekran açıkken
-    // kurucu istemci her 30 saniyede bir güvenli/idempotent kontrol yapar.
+    // Turnuva ekranı açıkken kurucu istemci, oda/sonuç akışını düzenli
+    // kontrol eder; maçın kendisi kurucudan bağımsız olarak oyuncular arasında sürer.
     _reconcilePollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (_isCreator && mounted) _requestSwissReconcile();
     });
