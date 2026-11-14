@@ -287,7 +287,7 @@ test('private tournament data is member-only and members can only register thems
   const ownerDb = env.authenticatedContext('owner-a').firestore();
   await assertSucceeds(setDoc(doc(ownerDb, 'channels/private-one/tournaments/t1'), {
     title: 'Test Cup',
-    format: 'single_elimination',
+    format: 'swiss',
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,
@@ -422,7 +422,7 @@ test('channel tournament stats are updated only once from a completed tournament
   const tournament = doc(ownerDb, 'channels/stats-channel/tournaments/stats-cup');
   await assertSucceeds(setDoc(tournament, {
     title: 'Stats Cup',
-    format: 'single_elimination',
+    format: 'swiss',
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,
@@ -472,7 +472,7 @@ test('tournament podium rewards can only be claimed once by the eligible member'
   const tournament = doc(ownerDb, 'channels/public-one/tournaments/podium');
   await assertSucceeds(setDoc(tournament, {
     title: 'Podium Cup',
-    format: 'single_elimination',
+    format: 'swiss',
     status: 'registration',
     creatorDeviceId: 'owner-a',
     maxPlayers: 8,

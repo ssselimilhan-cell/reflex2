@@ -423,7 +423,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
 
   Future<void> _createTournament() async {
     final title = TextEditingController();
-    String format = 'single_elimination';
+    String format = 'swiss';
     int maxPlayers = 16;
     final result = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDialogState) => AlertDialog(
@@ -432,22 +432,16 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: title, maxLength: 40, style: const TextStyle(color: Colors.white),
             decoration: const InputDecoration(labelText: 'Turnuva adı', labelStyle: TextStyle(color: Colors.white70))),
-          DropdownButtonFormField<String>(
-            value: format, dropdownColor: const Color(0xFF1B293D),
-            decoration: const InputDecoration(labelText: 'Format', labelStyle: TextStyle(color: Colors.white70)),
-            items: const [
-              DropdownMenuItem(value: 'single_elimination', child: Text('Eleme usulü', style: TextStyle(color: Colors.white))),
-              DropdownMenuItem(value: 'round_robin', child: Text('Herkes birbiriyle', style: TextStyle(color: Colors.white))),
-            ],
-            onChanged: (v) => setDialogState(() {
-              format = v ?? format;
-              if (format == 'round_robin' && maxPlayers > 16) maxPlayers = 16;
-            }),
+          const ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.leaderboard_rounded, color: Color(0xFFFBBF24)),
+            title: Text('İsviçre sistemi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            subtitle: Text('Herkes tüm turlarda puan toplar. Tur sayısı kayıtlı oyuncu sayısına göre otomatik belirlenir.', style: TextStyle(color: Colors.white70)),
           ),
           DropdownButtonFormField<int>(
             value: maxPlayers, dropdownColor: const Color(0xFF1B293D),
             decoration: const InputDecoration(labelText: 'Oyuncu sınırı', labelStyle: TextStyle(color: Colors.white70)),
-            items: (format == 'round_robin' ? [8, 16] : [8, 16, 32, 64]).map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
+            items: [8, 16, 32, 64].map((n) => DropdownMenuItem(value: n, child: Text('$n oyuncu', style: const TextStyle(color: Colors.white)))).toList(),
             onChanged: (v) => setDialogState(() => maxPlayers = v ?? maxPlayers),
           ),
           const SizedBox(height: 10),
