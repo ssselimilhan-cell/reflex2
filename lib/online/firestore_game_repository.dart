@@ -648,15 +648,12 @@ class OnlineRoomRepository {
           roomData['tournamentMatchId'] != matchId) {
         throw StateError('Bu maçı yalnızca eşleşmedeki ilk oyuncu başlatabilir.');
       }
-      final deadline = Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 3)));
-      tx.update(room, {'expiresAt': deadline});
       tx.update(match, {
         'roomCode': roomCode,
         'roomCreatedBy': uid,
         'roomLinkedAt': FieldValue.serverTimestamp(),
         'player1DeviceId': roomData['hostDeviceId'],
         'player2DeviceId': roomData['inviteToDeviceId'],
-        'joinDeadline': deadline,
       });
     });
   }
@@ -968,14 +965,17 @@ class OnlineRoomRepository {
 
           final deadlineValue = m['joinDeadline'];
           final deadline = deadlineValue is Timestamp ? deadlineValue.toDate() : null;
-          if (result == null && gameStatus == 'playing' &&
-              deadline != null && !now.isBefore(deadline)) {
-            if (room == null) {
+          if (result == null && deadline != null &&
+              !now.isBefore(deadline) &&
+              (room == null || gameStatus == 'playing')) {
+            final nobodyArrived = m['player1ArrivedAt'] == null &&
+                m['player2ArrivedAt'] == null;
+            if (room == null || nobodyArrived) {
               result = 'both_absent';
             } else if (bothLeft) {
               result = 'both_left';
             } else {
-              // Katılım süresi doldu, tamamlanmış oyun yok: iki tarafa da puan yok.
+              // Süre doldu ama Reflex oyunu tamamlanmadı: iki tarafa da puan yok.
               result = 'room_not_started';
             }
           }
