@@ -84,6 +84,33 @@ class StresApp extends StatelessWidget {
             // Üst çubuk her temada koyu zemin + beyaz yazı: açık zeminde
             // açık renkli yazı (ör. liderlik sekmeleri) okunmaz hale
             // geliyordu.
+            // Koyu yüzeylerde varsayılan buton metinleri daima açık renkte
+            // kalsın. Açık/sarı buton kullanan ekranlar kendi foregroundColor
+            // değerini koyu olarak açıkça belirler.
+            filledButtonTheme: FilledButtonThemeData(
+              style: FilledButton.styleFrom(
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white60,
+              ),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white60,
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white38,
+              ),
+            ),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                disabledForegroundColor: Colors.white38,
+              ),
+            ),
             appBarTheme: AppBarTheme(
               backgroundColor: const Color(0xFF713116),
               foregroundColor: Colors.white,
