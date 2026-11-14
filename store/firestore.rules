@@ -30,12 +30,15 @@ service cloud.firestore {
                     && request.resource.data.hostDeviceId is string;
       allow update: if (
         request.resource.data.hostDeviceId == resource.data.hostDeviceId
+        // A tournament room may only be finalized through the channel-owner
+        // branch below; the general room update path must not bypass it.
         && (!('tournamentMatchId' in resource.data)
-          || request.resource.data.guestDeviceId == resource.data.guestDeviceId
-          || (request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
-            && request.auth != null
-            && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)/tournaments/$(resource.data.tournamentId)/matches/$(resource.data.tournamentMatchId)).data.player2Uid == request.auth.uid)
-          || request.resource.data.guestDeviceId == null)
+          || (request.resource.data.roomStatus != 'finished'
+            && (request.resource.data.guestDeviceId == resource.data.guestDeviceId
+              || (request.resource.data.guestDeviceId == resource.data.inviteToDeviceId
+                && request.auth != null
+                && get(/databases/$(database)/documents/channels/$(resource.data.tournamentChannelId)/tournaments/$(resource.data.tournamentId)/matches/$(resource.data.tournamentMatchId)).data.player2Uid == request.auth.uid)
+              || request.resource.data.guestDeviceId == null)))
       ) || (
         request.auth != null
         && resource.data.tournamentChannelId is string
