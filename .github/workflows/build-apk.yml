@@ -1,4 +1,5 @@
 name: Flutter Testleri
+# [build-preview-apk] Full audit checkpoint for preview APK
 
 on:
   # Preview APK: run this workflow manually and enable build_preview_apk.
