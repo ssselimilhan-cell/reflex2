@@ -508,6 +508,7 @@ class _ChannelDetailScreenState extends State<ChannelDetailScreen> {
     );
   }
 
+  // Turnuva başlamadan önce yöneticinin kuralları okuyup açıkça onaylaması gerekir.
   Future<bool> _confirmTournamentStart({
     required String title,
     required int participantCount,
