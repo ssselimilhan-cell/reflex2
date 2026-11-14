@@ -375,6 +375,8 @@ service cloud.firestore {
               && request.resource.data.roomCode is string
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId == get(/databases/$(database)/documents/channels/$(channelId)/members/$(resource.data.player1Uid)).data.playerDeviceId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.inviteToDeviceId == get(/databases/$(database)/documents/channels/$(channelId)/members/$(resource.data.player2Uid)).data.playerDeviceId
+              && request.resource.data.player1DeviceId == get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostDeviceId
+              && request.resource.data.player2DeviceId == get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.inviteToDeviceId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentChannelId == channelId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentId == tournamentId
               && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.tournamentMatchId == matchId)
