@@ -641,6 +641,34 @@ class OnlineRoomRepository {
     });
   }
 
+  /// Oyuncunun eşleşmesine geldiğini otomatik kaydeder; kullanıcıya ek adım gösterilmez.
+  Future<void> markTournamentMatchArrived({
+    required String channelId,
+    required String tournamentId,
+    required String matchId,
+    required String deviceId,
+  }) async {
+    final uid = _requireChannelUid(deviceId);
+    final match = _channels.doc(channelId)
+        .collection('tournaments').doc(tournamentId)
+        .collection('matches').doc(matchId);
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final snap = await tx.get(match);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      if (data['status'] != 'ready') return;
+      final deadline = data['joinDeadline'];
+      if (deadline is Timestamp && !DateTime.now().isBefore(deadline.toDate())) return;
+      final field = data['player1Uid'] == uid
+          ? 'player1ArrivedAt'
+          : data['player2Uid'] == uid
+              ? 'player2ArrivedAt'
+              : null;
+      if (field == null || data[field] != null) return;
+      tx.update(match, {field: FieldValue.serverTimestamp()});
+    });
+  }
+
   /// Oda iptal edilmişse aynı fikstür maçı için yeni oda açılmasına izin verir.
   /// Yalnızca eşleşmenin ilk oyuncusu, eşleşmeye bağlı mevcut oda gerçekten
   /// cancelled durumundaysa bağlantıyı kaldırabilir.
@@ -913,9 +941,17 @@ class OnlineRoomRepository {
             final guest = room != null && room['guestDeviceId'] == m['player2DeviceId'];
             final hostLeft = room?['hostLeftAt'] != null;
             final guestLeft = room?['guestLeftAt'] != null;
-            if (!host && !guest) result = 'both_absent';
-            if (host && !guest) { winner = p1; result = 'player2_absent'; }
-            if (!host && guest) { winner = p2; result = 'player1_absent'; }
+            if (room == null) {
+              final p1Arrived = m['player1ArrivedAt'] != null;
+              final p2Arrived = m['player2ArrivedAt'] != null;
+              if (!p1Arrived && !p2Arrived) result = 'both_absent';
+              if (p1Arrived && !p2Arrived) { winner = p1; result = 'player2_absent'; }
+              if (!p1Arrived && p2Arrived) { winner = p2; result = 'player1_absent'; }
+            } else {
+              if (!host && !guest) result = 'both_absent';
+              if (host && !guest) { winner = p1; result = 'player2_absent'; }
+              if (!host && guest) { winner = p2; result = 'player1_absent'; }
+            }
             if (host && guest && hostLeft && !guestLeft) { winner = p2; result = 'player1_left'; }
             if (host && guest && guestLeft && !hostLeft) { winner = p1; result = 'player2_left'; }
             if (host && guest && hostLeft && guestLeft) result = 'both_left';
