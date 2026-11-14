@@ -236,7 +236,7 @@ class _AdminThemeScreenState extends State<AdminThemeScreen> {
         content: Text('"$name" mağazadan ve tema kataloğundan kaldırılacak. Daha önce açmış oyuncuların yerel tema kayıtları silinmez.', style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Vazgeç')),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), style: FilledButton.styleFrom(backgroundColor: const Color(0xFF9B3434)), child: const Text('Kaldır')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), style: FilledButton.styleFrom(backgroundColor: const Color(0xFF9B3434), foregroundColor: Colors.white), child: const Text('Kaldır')),
         ],
       ),
     );
