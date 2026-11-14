@@ -994,6 +994,16 @@ class OnlineRoomRepository {
               'p1PointsHalf': p1Half, 'p2PointsHalf': p2Half,
               'resultAt': FieldValue.serverTimestamp(),
             });
+            // Close timeout/no-show rooms when the result is finalized.
+            final roomRef = roomRefs[i];
+            if (roomRef != null && rooms[i]?.exists == true &&
+                rooms[i]?.data()?['roomStatus'] != 'finished') {
+              tx.update(roomRef, {
+                'roomStatus': 'finished',
+                'expiresAt': Timestamp.fromDate(now.add(const Duration(days: 30))),
+                'tournamentResultClosedAt': FieldValue.serverTimestamp(),
+              });
+            }
           }
         }
         data.add(m);
