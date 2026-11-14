@@ -730,6 +730,11 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                         onPressed: () => shareRoomCode(widget.roomCode),
                         icon: const Icon(Icons.share),
                         label: Text(t('share_code_button')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: GameUi.gold,
+                          foregroundColor: GameUi.ink,
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -840,6 +845,8 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                           label: const Text('OYUNU BAŞLAT',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: GameUi.gold,
+                            foregroundColor: GameUi.ink,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 28, vertical: 16),
                           ),
