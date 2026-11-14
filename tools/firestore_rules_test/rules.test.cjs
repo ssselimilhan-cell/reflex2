@@ -447,11 +447,13 @@ test('private tournament data is member-only and members can only register thems
     roomCode: deleteField(),
     roomCreatedBy: deleteField(),
     roomLinkedAt: deleteField(),
+    joinDeadline: deleteField(),
   }));
   await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     roomCode: deleteField(),
     roomCreatedBy: deleteField(),
     roomLinkedAt: deleteField(),
+    joinDeadline: deleteField(),
   }));
 
   await assertFails(updateDoc(doc(playerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
