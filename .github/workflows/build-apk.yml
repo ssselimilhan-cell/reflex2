@@ -1,6 +1,6 @@
 name: Flutter Testleri
 # [build-preview-apk] Build final testable Android preview
-# [build-preview-apk] Validate final tournament countdown and inactivity scoring
+# [build-preview-apk] Build APK after passing tournament and security checks
 
 on:
   # Preview APK: run this workflow manually and enable build_preview_apk.
