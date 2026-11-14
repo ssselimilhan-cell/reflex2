@@ -1553,6 +1553,8 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
           _isCreator = isCreator;
           final status = tournament['status'] as String? ?? 'in_progress';
           return Column(children: [
+            if (status == 'cancelled')
+              const Padding(padding: EdgeInsets.all(24), child: Text('Turnuva iptal edildi · Eşleşmelerde hiçbir oyuncu yer almadı.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16))),
             if (status == 'completed')
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _repo.watchChannelMembers(widget.channelId),

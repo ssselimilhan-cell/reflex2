@@ -1021,7 +1021,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                             ),
                           ),
                         ),
-                        if (finished) _buildRematchArea(data),
+                        if (finished && !widget.isTournamentMatch) _buildRematchArea(data),
                         ChatPanel(
                           roomCode: widget.roomCode,
                           mySide: mySide,

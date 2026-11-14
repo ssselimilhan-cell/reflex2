@@ -333,7 +333,7 @@ class OnlineRoomRepository {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
-      if (data['roomStatus'] != 'active') return false;
+      if (data['roomStatus'] != 'active' || data['tournamentMatchId'] is String) return false;
       if (data['rematchRequestedBy'] != null) return false;
 
       final engine = GameEngine()..loadFromMap(data);
@@ -352,7 +352,7 @@ class OnlineRoomRepository {
       final snap = await tx.get(ref);
       if (!snap.exists) return false;
       final data = snap.data()!;
-      if (data['rematchRequestedBy'] == null) return false;
+      if (data['rematchRequestedBy'] == null || data['tournamentMatchId'] is String) return false;
 
       final engine = GameEngine()..loadFromMap(data);
       engine.startNewGame();
