@@ -72,7 +72,6 @@ class OnlineRoomRepository {
       if (tournamentId != null) 'tournamentId': tournamentId,
       if (tournamentMatchId != null) 'tournamentMatchId': tournamentMatchId,
       if (tournamentMatchId != null) 'tournamentStartDelaySeconds': [5, 10, 15].contains(tournamentStartDelaySeconds) ? tournamentStartDelaySeconds : 5,
-      if (tournamentMatchId != null) 'tournamentMoveCount': 0,
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 5))),
       ...engine.toMap(),
@@ -325,19 +324,13 @@ class OnlineRoomRepository {
 
       final gameUpdate = engine.toMap();
       final isTournament = data['tournamentMatchId'] is String;
-      if (isTournament) {
-        gameUpdate['tournamentMoveCount'] = FieldValue.increment(1);
-        gameUpdate['tournamentLastMoveSide'] = side == PlayerSide.player1 ? 'player1' : 'player2';
-        gameUpdate['tournamentLastMoveAt'] = FieldValue.serverTimestamp();
-      }
-      if (engine.status != GameStatus.playing) {
-        final retentionDays = isTournament ? 30 : 1;
+      if (engine.status != GameStatus.playing && !isTournament) {
         gameUpdate['expiresAt'] = Timestamp.fromDate(
-          DateTime.now().add(Duration(days: retentionDays)),
+          DateTime.now().add(const Duration(days: 1)),
         );
-        // Final oyun durumu ve oda kapanışı aynı atomik yazımda kaydedilir.
-        if (isTournament) gameUpdate['roomStatus'] = 'finished';
       }
+      // Turnuva odası oyun sonucu yazılınca kapanmaz. İki eşleşmiş oyuncu da
+      // odadan ayrıldığında leaveRoom tarafından doğal olarak kapatılır.
       tx.update(ref, gameUpdate);
       return true;
     });
@@ -414,9 +407,8 @@ class OnlineRoomRepository {
     });
   }
 
-  /// Odadan açıkça ayrılma işlemi. Ev sahibi odayı iptal eder;
-  /// misafir oyun başlamadan ayrılırsa masa yeniden beklemeye açılır.
-  /// Ekranın dispose edilmesi veya geri tuşu bu metodu çağırmaz.
+  /// Odadan ayrılan taraf kendi çıkışını kaydeder. Turnuva odası yalnızca
+  /// iki eşleşmiş oyuncu da ayrıldığında kapanır; kurucu/host ayrıcalığı yoktur.
   Future<void> leaveRoom(
     String code,
     String deviceId, {
@@ -427,12 +419,29 @@ class OnlineRoomRepository {
       final snap = await tx.get(ref);
       if (!snap.exists) return;
       final data = snap.data()!;
-      final status = data['roomStatus'] as String? ?? 'finished';
+      final isTournament = data['tournamentMatchId'] is String;
 
+      if (isTournament) {
+        final field = isHost ? 'hostLeftAt' : 'guestLeftAt';
+        final expectedDevice = isHost ? data['hostDeviceId'] : data['guestDeviceId'];
+        if (expectedDevice != deviceId || data[field] != null) return;
+        final otherField = isHost ? 'guestLeftAt' : 'hostLeftAt';
+        final bothLeft = data[otherField] != null;
+        tx.update(ref, {
+          field: FieldValue.serverTimestamp(),
+          if (bothLeft) 'roomStatus': 'finished',
+          if (bothLeft)
+            'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 30)),
+            ),
+        });
+        return;
+      }
+
+      final status = data['roomStatus'] as String? ?? 'finished';
       if (isHost) {
         if (data['hostDeviceId'] != deviceId) return;
         final gameFinished = (data['status'] as String? ?? 'playing') != 'playing';
-        final retentionDays = data['tournamentMatchId'] is String ? 30 : 1;
         tx.update(ref, {
           'roomStatus': gameFinished ? 'finished' : 'cancelled',
           'hostLeftAt': FieldValue.serverTimestamp(),
@@ -440,7 +449,7 @@ class OnlineRoomRepository {
           if (!gameFinished) 'cancelledAt': FieldValue.serverTimestamp(),
           'startRequestedBy': null,
           'rematchRequestedBy': null,
-          'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: gameFinished ? retentionDays : 1))),
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
         });
         return;
       }
@@ -451,9 +460,7 @@ class OnlineRoomRepository {
         tx.update(ref, {
           'roomStatus': 'finished',
           'guestLeftAt': FieldValue.serverTimestamp(),
-          'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(
-            days: data['tournamentMatchId'] is String ? 30 : 1,
-          ))),
+          'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
         });
       } else {
         tx.update(ref, {
@@ -948,37 +955,28 @@ class OnlineRoomRepository {
           final gameStatus = room?['status'];
           String? winner;
           String? result;
-          if (gameStatus == 'player1Wins') { winner = p1; result = 'played'; }
-          if (gameStatus == 'player2Wins') { winner = p2; result = 'played'; }
+          final bothLeft = room != null &&
+              room['hostLeftAt'] != null && room['guestLeftAt'] != null;
+          // Kazananı yalnızca Reflex motorunun tamamlanmış sonucu belirler.
+          if (bothLeft && gameStatus == 'player1Wins') {
+            winner = p1;
+            result = 'played';
+          } else if (bothLeft && gameStatus == 'player2Wins') {
+            winner = p2;
+            result = 'played';
+          }
+
           final deadlineValue = m['joinDeadline'];
           final deadline = deadlineValue is Timestamp ? deadlineValue.toDate() : null;
-          if (result == null && deadline != null) {
-            final moveCount = (room?['tournamentMoveCount'] as num?)?.toInt() ?? 0;
-            final lastMoveAt = room?['tournamentLastMoveAt'];
-            final inactivityDeadline = moveCount > 0 && lastMoveAt is Timestamp
-                ? lastMoveAt.toDate().add(const Duration(minutes: 3))
-                : deadline;
-            if (!now.isBefore(inactivityDeadline)) {
-              if (room == null) {
-                // Oda kurulmamışsa veya iki oyuncu da hamleye başlamamışsa puan yok.
-                result = 'both_absent';
-              } else {
-                final lastMoveSide = room['tournamentLastMoveSide'] as String?;
-                final hostLeft = room['hostLeftAt'] != null;
-                final guestLeft = room['guestLeftAt'] != null;
-                if (moveCount > 0 && lastMoveSide == 'player1') {
-                  winner = p1;
-                  result = 'player2_no_reply';
-                } else if (moveCount > 0 && lastMoveSide == 'player2') {
-                  winner = p2;
-                  result = 'player1_no_reply';
-                } else if (hostLeft && guestLeft) {
-                  result = 'both_left';
-                } else {
-                  // Oyuncular gelmiş olsa bile hiç hamle yapılmadıysa puan verilmez.
-                  result = 'room_not_started';
-                }
-              }
+          if (result == null && gameStatus == 'playing' &&
+              deadline != null && !now.isBefore(deadline)) {
+            if (room == null) {
+              result = 'both_absent';
+            } else if (bothLeft) {
+              result = 'both_left';
+            } else {
+              // Katılım süresi doldu, tamamlanmış oyun yok: iki tarafa da puan yok.
+              result = 'room_not_started';
             }
           }
           if (result != null) {
@@ -994,16 +992,6 @@ class OnlineRoomRepository {
               'p1PointsHalf': p1Half, 'p2PointsHalf': p2Half,
               'resultAt': FieldValue.serverTimestamp(),
             });
-            // Close timeout/no-show rooms when the result is finalized.
-            final roomRef = roomRefs[i];
-            if (roomRef != null && rooms[i]?.exists == true &&
-                rooms[i]?.data()?['roomStatus'] != 'finished') {
-              tx.update(roomRef, {
-                'roomStatus': 'finished',
-                'expiresAt': Timestamp.fromDate(now.add(const Duration(days: 30))),
-                'tournamentResultClosedAt': FieldValue.serverTimestamp(),
-              });
-            }
           }
         }
         data.add(m);
