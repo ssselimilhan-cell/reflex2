@@ -71,7 +71,17 @@ class StresApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: rootMessengerKey,
           theme: ThemeData(
-            colorSchemeSeed: AppSettings.instance.themeColor,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFFFB000),
+              brightness: Brightness.dark,
+            ).copyWith(
+              primary: const Color(0xFFFFD23F),
+              onPrimary: const Color(0xFF1A1208),
+              secondary: const Color(0xFFFFE08A),
+              onSecondary: const Color(0xFF1A1208),
+              surface: const Color(0xFF1B293D),
+              onSurface: Colors.white,
+            ),
             useMaterial3: true,
             textTheme: const TextTheme(
               bodyLarge: TextStyle(fontSize: 16, height: 1.35),
@@ -81,33 +91,35 @@ class StresApp extends StatelessWidget {
               labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
-            // Üst çubuk her temada koyu zemin + beyaz yazı: açık zeminde
-            // açık renkli yazı (ör. liderlik sekmeleri) okunmaz hale
-            // geliyordu.
-            // [build-preview-apk] Koyu yüzeylerde varsayılan buton metinleri daima açık renkte
-            // kalsın. Açık/sarı buton kullanan ekranlar kendi foregroundColor
-            // değerini koyu olarak açıkça belirler.
+            // Ortak kontrast kuralı: dolu düğmeler altın zeminde koyu yazı;
+            // yükseltilmiş/çerçeveli düğmeler koyu yüzeyde açık-altın yazı.
+            // Ekrana özel açık renkli zemin kullanan düğmeler ayrıca koyu
+            // foregroundColor belirtir.
             filledButtonTheme: FilledButtonThemeData(
               style: FilledButton.styleFrom(
-                foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white60,
+                backgroundColor: const Color(0xFFFFD23F),
+                foregroundColor: const Color(0xFF1A1208),
+                disabledBackgroundColor: Colors.white24,
+                disabledForegroundColor: Colors.black54,
               ),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white60,
+                backgroundColor: const Color(0xFF1B293D),
+                foregroundColor: const Color(0xFFFFD23F),
+                disabledBackgroundColor: const Color(0xFF344256),
+                disabledForegroundColor: Colors.white54,
               ),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
+                foregroundColor: const Color(0xFFFFD23F),
                 disabledForegroundColor: Colors.white38,
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
+                foregroundColor: const Color(0xFFFFD23F),
                 disabledForegroundColor: Colors.white38,
               ),
             ),
