@@ -1668,6 +1668,59 @@ class _ChannelTournamentScreenState extends State<ChannelTournamentScreen> {
                 child: Text('Sonuçlar otomatik işlenir; tur eşleşmeleri puanlara göre yenilenir.',
                   style: TextStyle(color: Colors.white54, fontSize: 15)),
               ),
+            if (status == 'in_progress' && tournament['scoresHalf'] is Map)
+              Builder(builder: (context) {
+                final scores = Map<String, dynamic>.from(tournament['scoresHalf'] as Map);
+                final opponents = Map<String, dynamic>.from(tournament['opponents'] as Map? ?? const {});
+                final info = Map<String, dynamic>.from(tournament['playerInfo'] as Map? ?? const {});
+                int buchholz(String id) {
+                  final list = List<String>.from(opponents[id] as List? ?? const []);
+                  return list.fold<int>(0, (sum, other) => sum + ((scores[other] as num?)?.toInt() ?? 0));
+                }
+                final ids = scores.keys.toList()..sort((a, b) {
+                  final points = ((scores[b] as num?)?.toInt() ?? 0).compareTo((scores[a] as num?)?.toInt() ?? 0);
+                  if (points != 0) return points;
+                  final tie = buchholz(b).compareTo(buchholz(a));
+                  return tie != 0 ? tie : a.compareTo(b);
+                });
+                return Container(
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B293D),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0x66FBBF24)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('PUAN DURUMU', style: TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900, letterSpacing: .7)),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 150,
+                      child: ListView.builder(
+                        itemCount: ids.length,
+                        itemBuilder: (context, index) {
+                          final id = ids[index];
+                          final half = (scores[id] as num?)?.toInt() ?? 0;
+                          final points = (half ~/ 2).toString() + (half.isOdd ? '½' : '');
+                          final player = info[id] is Map ? Map<String, dynamic>.from(info[id] as Map) : const <String, dynamic>{};
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(children: [
+                              SizedBox(width: 28, child: Text('${index + 1}.', style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.w800))),
+                              Expanded(child: Text(player['name'] as String? ?? 'Oyuncu', maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                              SizedBox(width: 58, child: Text('$points p.', textAlign: TextAlign.end,
+                                style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w900))),
+                              SizedBox(width: 74, child: Text('BH ${(buchholz(id) / 2).toStringAsFixed(1)}',
+                                textAlign: TextAlign.end, style: const TextStyle(color: Colors.white60, fontSize: 12))),
+                            ]),
+                          );
+                        },
+                      ),
+                    ),
+                  ]),
+                );
+              }),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _repo.watchTournamentMatches(widget.channelId, widget.tournamentId),

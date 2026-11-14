@@ -912,18 +912,14 @@ class OnlineRoomRepository {
         });
         final prizes = Map<String, dynamic>.from(t['prizeStars'] as Map? ?? const {'1':100,'2':60,'3':30});
         final placements = <String, dynamic>{};
-        var rank = 0;
-        String? last;
         for (var i = 0; i < ordered.length; i++) {
           final player = ordered[i];
-          final standing = '${scores[player]}:${swissBuchholz(player, scores, opponents)}';
-          if (standing != last) rank = i + 1;
+          final rank = i + 1;
           if (rank <= 3) placements[player] = {
             'rank': rank, 'pointsHalf': scores[player],
             'buchholzHalf': swissBuchholz(player, scores, opponents),
             'stars': (prizes['$rank'] as num?)?.toInt() ?? 0,
           };
-          last = standing;
         }
         final winners = placements.entries.where((e) => e.value['rank'] == 1).map((e) => e.key).toList();
         tx.update(tournament, {
