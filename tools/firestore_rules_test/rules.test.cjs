@@ -334,6 +334,14 @@ test('private tournament data is member-only and members can only register thems
     startedAt: serverTimestamp(),
     currentRound: 1,
     matchCount: 1,
+    roundsTotal: 2,
+    playerInfo: {
+      'owner-a': {name: 'Owner', deviceId: 'device-owner-a'},
+      'player-b': {name: 'Player B', deviceId: 'device-player-b'},
+    },
+    scoresHalf: {'owner-a': 0, 'player-b': 0},
+    opponents: {'owner-a': [], 'player-b': []},
+    byeCounts: {'owner-a': 0, 'player-b': 0},
   });
   startBatch.set(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     round: 1,
@@ -406,7 +414,14 @@ test('private tournament data is member-only and members can only register thems
   await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     winnerUid: 'player-b',
     status: 'completed',
+    result: 'played',
+    p1PointsHalf: 0,
+    p2PointsHalf: 2,
+    scoreApplied: false,
     resultAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
+    scoreApplied: true,
   }));
   await assertFails(updateDoc(doc(outsiderDb, 'channels/private-one/tournaments/t1/matches/r1_m1'), {
     winnerUid: 'owner-a',
