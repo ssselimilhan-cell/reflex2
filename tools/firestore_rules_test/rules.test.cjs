@@ -422,6 +422,27 @@ test('private tournament data is member-only and members can only register thems
     roomStatus: 'cancelled',
   }));
 
+  // The tournament creator can close a room even when another participant
+  // originally created it; unrelated users cannot use this owner-only path.
+  await assertSucceeds(setDoc(doc(ownerDb, 'rooms/TOUR2'), {
+    hostDeviceId: 'device-player-b',
+    guestDeviceId: 'device-owner-a',
+    roomStatus: 'active',
+    tournamentChannelId: 'private-one',
+    tournamentId: 't1',
+    tournamentMatchId: 'r1_m1',
+  }));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'rooms/TOUR2'), {
+    roomStatus: 'finished',
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    tournamentResultClosedAt: serverTimestamp(),
+  }));
+  await assertFails(updateDoc(doc(outsiderDb, 'rooms/TOUR2'), {
+    roomStatus: 'finished',
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    tournamentResultClosedAt: serverTimestamp(),
+  }));
+
   // TTL can remove the cancelled room document after its retention window.
   await env.withSecurityRulesDisabled(async (context) => {
     await deleteDoc(doc(context.firestore(), 'rooms/TOUR1'));
