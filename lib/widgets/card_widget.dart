@@ -785,6 +785,37 @@ class _CardFaceOrnamentPainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(short * 0.045)), thin);
     final inner = rect.deflate(short * 0.035);
     canvas.drawRRect(RRect.fromRectAndRadius(inner, Radius.circular(short * 0.035)), bold);
+
+    // Üçüncü, saç teli inceliğinde iç hat: kartı basılı koleksiyon
+    // destesindeki çok katmanlı metal çerçeveye yaklaştırır.
+    final hairline = Paint()
+      ..color = accent.withOpacity(0.22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.35, short * 0.005);
+    final micro = Paint()
+      ..color = accent.withOpacity(0.48)
+      ..style = PaintingStyle.fill;
+    final innerMost = inner.deflate(short * 0.018);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(innerMost, Radius.circular(short * 0.024)),
+      hairline,
+    );
+
+    // Kenarlarda düzenli mücevher noktaları; köşe indeksleri ve kart
+    // değerlerinin bulunduğu alanlardan uzak tutulur.
+    for (var i = 0; i < 9; i++) {
+      final t = (i + 1) / 10;
+      final x = size.width * t;
+      final y = size.height * t;
+      canvas.drawCircle(Offset(x, inset + short * 0.012), short * 0.009, micro);
+      canvas.drawCircle(Offset(x, size.height - inset - short * 0.012), short * 0.009, micro);
+      if (i > 1 && i < 8) {
+        canvas.drawCircle(Offset(inset + short * 0.012, y), short * 0.008, micro);
+        canvas.drawCircle(Offset(size.width - inset - short * 0.012, y), short * 0.008, micro);
+      }
+    }
+
+    // Temaya göre değişen, simetrik köşe yaprakları.
     final cornerR = short * 0.105;
     for (final x in [inset + cornerR * 0.72, size.width - inset - cornerR * 0.72]) {
       for (final y in [inset + cornerR * 0.72, size.height - inset - cornerR * 0.72]) {
@@ -844,6 +875,57 @@ class _CardBackPatternPainter extends CustomPainter {
     // Çift çerçeve ve köşe rozetleri: küçük kartta dahi koleksiyon hissi.
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(short * 0.035, short * 0.035, size.width - short * 0.07, size.height - short * 0.07), Radius.circular(short * 0.045)), thin);
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(short * 0.085, short * 0.085, size.width - short * 0.17, size.height - short * 0.17), Radius.circular(short * 0.035)), bold);
+
+    // Arka yüzde düşük kontrastlı gravür dokusu. Merkez arma bölgesi
+    // boş bırakılır; desen kartın kenarlarında derinlik oluşturur.
+    final textureBounds = Rect.fromLTWH(
+      short * 0.12, short * 0.12,
+      size.width - short * 0.24, size.height - short * 0.24,
+    );
+    canvas.save();
+    canvas.clipRRect(RRect.fromRectAndRadius(
+      textureBounds, Radius.circular(short * 0.025),
+    ));
+    final texture = Paint()
+      ..color = accent.withOpacity(0.075)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.35, short * 0.004);
+    final step = short * 0.105;
+    for (var x = -size.height; x < size.width + size.height; x += step) {
+      canvas.drawLine(
+        Offset(x, textureBounds.top),
+        Offset(x + textureBounds.height, textureBounds.bottom),
+        texture,
+      );
+      canvas.drawLine(
+        Offset(x, textureBounds.bottom),
+        Offset(x + textureBounds.height, textureBounds.top),
+        texture,
+      );
+    }
+    canvas.restore();
+
+    // İç çerçeveye paralel ince altın hat ve minik perçinler.
+    final insetHairline = Paint()
+      ..color = accent.withOpacity(0.30)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.4, short * 0.005);
+    final innerFrame = Rect.fromLTWH(
+      short * 0.13, short * 0.13,
+      size.width - short * 0.26, size.height - short * 0.26,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(innerFrame, Radius.circular(short * 0.025)),
+      insetHairline,
+    );
+    for (var i = 0; i < 7; i++) {
+      final t = (i + 1) / 8;
+      for (final x in [short * 0.11, size.width - short * 0.11]) {
+        canvas.drawCircle(Offset(x, size.height * t), short * 0.012, soft);
+        canvas.drawCircle(Offset(x, size.height * t), short * 0.006, bold);
+      }
+    }
+
     for (final x in [size.width * 0.16, size.width * 0.84]) {
       for (final y in [size.height * 0.12, size.height * 0.88]) {
         final point = Offset(x, y);
