@@ -307,28 +307,36 @@ class _CardWidgetState extends State<CardWidget>
       );
     }
 
+    final ornate = theme != CardFaceTheme.classic && theme != CardFaceTheme.fruit;
+    final accent = CardThemePalette.primary(theme);
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFFFFFF), Color(0xFFFFFDF7), Color(0xFFF1F0E9)],
+          colors: ornate
+              ? [Color.lerp(Colors.white, accent, 0.10)!, const Color(0xFFFFFDF7), Color.lerp(const Color(0xFFF1F0E9), accent, 0.08)!]
+              : [const Color(0xFFFFFFFF), const Color(0xFFFFFDF7), const Color(0xFFF1F0E9)],
         ),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD7D9DE), width: 0.9),
-        boxShadow: const [
-          BoxShadow(color: Color(0x180B1424), blurRadius: 3, offset: Offset(0, 1)),
+        border: Border.all(color: ornate ? accent.withOpacity(0.92) : const Color(0xFFD7D9DE), width: ornate ? 1.8 : 0.9),
+        boxShadow: [
+          BoxShadow(color: ornate ? accent.withOpacity(0.20) : const Color(0x180B1424), blurRadius: ornate ? 7 : 3, spreadRadius: ornate ? 0.5 : 0, offset: const Offset(0, 1)),
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(widget.width * 0.045),
+        padding: EdgeInsets.all(widget.width * (ornate ? 0.065 : 0.045)),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: const Color(0x1C64748B), width: 0.65),
+            border: Border.all(color: ornate ? accent.withOpacity(0.62) : const Color(0x1C64748B), width: ornate ? 1.0 : 0.65),
           ),
           child: Stack(
             children: [
+              if (ornate)
+                Positioned.fill(
+                  child: CustomPaint(painter: _CardFaceOrnamentPainter(theme: theme)),
+                ),
               Positioned(
                 top: widget.height * 0.018,
                 left: widget.width * 0.025,
@@ -351,7 +359,11 @@ class _CardWidgetState extends State<CardWidget>
                         color.withOpacity(0.025),
                       ],
                     ),
-                    border: Border.all(color: color.withOpacity(0.10), width: 0.8),
+                    border: Border.all(color: ornate ? accent.withOpacity(0.58) : color.withOpacity(0.10), width: ornate ? 1.25 : 0.8),
+                    boxShadow: ornate ? [
+                      BoxShadow(color: accent.withOpacity(0.13), blurRadius: 10, spreadRadius: 1),
+                      BoxShadow(color: Colors.white.withOpacity(0.65), blurRadius: 2, spreadRadius: -1),
+                    ] : const [],
                   ),
                   child: Center(child: _buildCenterSymbol(c, color, centerSize, theme)),
                 ),
@@ -753,6 +765,65 @@ class _CivilizationEmblemPainter extends CustomPainter {
       old.theme != theme || old.suit != suit || old.ink != ink;
 }
 
+
+
+/// Açık kart yüzünde temaya ait gravür köşeleri, çift metalik çerçeve ve
+/// hafif filigran dokusu. Rakamların bulunduğu alanı boş bırakarak okunurluğu korur.
+class _CardFaceOrnamentPainter extends CustomPainter {
+  final CardFaceTheme theme;
+  const _CardFaceOrnamentPainter({required this.theme});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final accent = CardThemePalette.primary(theme);
+    final short = size.shortestSide;
+    final thin = Paint()..color = accent.withOpacity(0.42)..style = PaintingStyle.stroke..strokeWidth = math.max(0.55, short * 0.012);
+    final bold = Paint()..color = accent.withOpacity(0.78)..style = PaintingStyle.stroke..strokeWidth = math.max(0.8, short * 0.021);
+    final glow = Paint()..color = accent.withOpacity(0.08);
+    final inset = short * 0.055;
+    final rect = Rect.fromLTWH(inset, inset, size.width - inset * 2, size.height - inset * 2);
+    canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(short * 0.045)), thin);
+    final inner = rect.deflate(short * 0.035);
+    canvas.drawRRect(RRect.fromRectAndRadius(inner, Radius.circular(short * 0.035)), bold);
+    final cornerR = short * 0.105;
+    for (final x in [inset + cornerR * 0.72, size.width - inset - cornerR * 0.72]) {
+      for (final y in [inset + cornerR * 0.72, size.height - inset - cornerR * 0.72]) {
+        canvas.drawCircle(Offset(x, y), cornerR, glow);
+        canvas.drawCircle(Offset(x, y), cornerR * 0.72, thin);
+        canvas.drawCircle(Offset(x, y), cornerR * 0.22, bold);
+        final sign = x < size.width / 2 ? 1.0 : -1.0;
+        final vertical = y < size.height / 2 ? 1.0 : -1.0;
+        final flourish = Path()
+          ..moveTo(x, y + vertical * cornerR * 0.72)
+          ..quadraticBezierTo(x + sign * cornerR * 0.95, y + vertical * cornerR * 0.95, x + sign * cornerR * 1.25, y)
+          ..quadraticBezierTo(x + sign * cornerR * 0.95, y - vertical * cornerR * 0.95, x, y - vertical * cornerR * 0.72);
+        canvas.drawPath(flourish, thin);
+      }
+    }
+    // Üst ve alt kenarda küçük koleksiyon mühürleri.
+    final centerX = size.width / 2;
+    for (final y in [inset + short * 0.025, size.height - inset - short * 0.025]) {
+      final path = Path()
+        ..moveTo(centerX, y - short * 0.035)
+        ..lineTo(centerX + short * 0.035, y)
+        ..lineTo(centerX, y + short * 0.035)
+        ..lineTo(centerX - short * 0.035, y)
+        ..close();
+      canvas.drawPath(path, bold);
+    }
+    // Tema kimliğine göre kenarlarda farklı gravür ritmi.
+    final count = theme == CardFaceTheme.japan || theme == CardFaceTheme.persia ? 5 : 3;
+    for (var i = 0; i < count; i++) {
+      final t = (i + 1) / (count + 1);
+      final y = size.height * t;
+      canvas.drawCircle(Offset(inset + short * 0.025, y), short * 0.012, thin);
+      canvas.drawCircle(Offset(size.width - inset - short * 0.025, y), short * 0.012, thin);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CardFaceOrnamentPainter old) => old.theme != theme;
+}
 
 /// İnce çapraz çizgiler ve köşe motifleri, kapalı kartın arkasına
 /// baskılı oyun kartı hissi verir. Çizim tamamen vektöreldir.
