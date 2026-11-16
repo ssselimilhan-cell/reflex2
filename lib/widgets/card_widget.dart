@@ -846,8 +846,33 @@ class _CardBackPatternPainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(short * 0.085, short * 0.085, size.width - short * 0.17, size.height - short * 0.17), Radius.circular(short * 0.035)), bold);
     for (final x in [size.width * 0.16, size.width * 0.84]) {
       for (final y in [size.height * 0.12, size.height * 0.88]) {
-        canvas.drawCircle(Offset(x, y), short * 0.025, bold);
+        final point = Offset(x, y);
+        canvas.drawCircle(point, short * 0.035, soft);
+        canvas.drawCircle(point, short * 0.025, bold);
+        final diamond = Path()
+          ..moveTo(x, y - short * 0.055)
+          ..lineTo(x + short * 0.042, y)
+          ..lineTo(x, y + short * 0.055)
+          ..lineTo(x - short * 0.042, y)
+          ..close();
+        canvas.drawPath(diamond, thin);
       }
+    }
+    // Kartın arkasına ışık alan metalik bir baskı etkisi veren ince radyal
+    // çizgiler; merkez ambleminin çevresinde kontrollü tutulur.
+    final rays = Paint()
+      ..color = accent.withOpacity(0.16)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.45, short * 0.006);
+    for (var i = 0; i < 24; i++) {
+      final angle = i * math.pi / 12;
+      final start = r * 1.18;
+      final end = r * 1.48;
+      canvas.drawLine(
+        Offset(center.dx + math.cos(angle) * start, center.dy + math.sin(angle) * start),
+        Offset(center.dx + math.cos(angle) * end, center.dy + math.sin(angle) * end),
+        rays,
+      );
     }
 
     switch (theme) {
